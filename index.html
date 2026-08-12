@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Confluence Character</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="supabase-auth.js"></script>
+</head>
+<body>
+<div class="app">
+<header class="hero">
+  <div>
+    <div class="eyebrow">CONFLUENCE CHARACTER · HOSTED PROTOTYPE v0.4</div>
+    <h1>Character Portal</h1>
+    <div class="muted" id="identity">Checking authentication…</div>
+  </div>
+  <div class="actions"><button id="logout" class="ghost">Sign Out</button></div>
+</header>
+
+<div id="notice" class="status">Loading your campaigns and characters…</div>
+
+<section class="panel">
+  <div class="panel-head"><div><div class="eyebrow">YOUR ACCESS</div><h2>Campaigns & Characters</h2></div></div>
+  <div id="content" class="grid"></div>
+</section>
+</div>
+
+<script>
+(async()=>{
+  try{
+    const session=await requireSession();
+    identity.textContent=session.user.email||'Signed in';
+    const uid=session.user.id;
+
+    const {data:memberships,error:mErr}=await confluenceSupabase
+      .from('campaign_members').select('campaign_id,role').eq('user_id',uid);
+    if(mErr) throw mErr;
+
+    const {data:owned,error:oErr}=await confluenceSupabase
+      .from('character_users').select('character_id,access_role').eq('user_id',uid);
+    if(oErr) throw oErr;
+
+    const characterIds=(owned||[]).map(x=>x.character_id);
+    let characters=[];
+    if(characterIds.length){
+      const {data,error}=await confluenceSupabase.from('characters')
+        .select('id,campaign_id,name,ancestry_definition_id,available_xp')
+        .in('id',characterIds).order('name');
+      if(error) throw error;
+      characters=data||[];
+    }
+
+    const gmCampaigns=(memberships||[]).filter(x=>x.role==='GM').map(x=>x.campaign_id);
+    const cards=[];
+
+    if(gmCampaigns.length){
+      cards.push(`<article class="card">
+        <div class="eyebrow">GAME MASTER</div>
+        <h3>GM Dashboard</h3>
+        <p>Manage XP and hidden Essence/Power assignments for your campaigns.</p>
+        <a href="gm.html">Open GM Dashboard</a>
+      </article>`);
+    }
+
+    for(const c of characters){
+      cards.push(`<article class="card">
+        <div class="eyebrow">${esc(c.ancestry_definition_id||'CHARACTER')}</div>
+        <h3>${esc(c.name)}</h3>
+        <div class="big">${Number(c.available_xp)||0} XP</div>
+        <p class="muted">Your character record</p>
+        <a href="character/index.html?character=${encodeURIComponent(c.id)}">Open Character</a>
+      </article>`);
+    }
+
+    content.innerHTML=cards.join('')||`<div class="empty">
+      Your account is authenticated, but no Campaign or Character has been assigned yet.
+      A GM must link your account to a campaign/character.
+    </div>`;
+    notice.textContent='Connected to Confluence Character.';
+    notice.className='status good';
+  }catch(err){
+    notice.textContent=err.message||String(err);
+    notice.className='status bad';
+  }
+})();
+logout.onclick=signOut;
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+</script>
+</body>
+</html>

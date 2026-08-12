@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Confluence Character Hosted Connected Prototype v0.4</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../supabase-config.js"></script><script src="../supabase-auth.js"></script></head>
+<body>
+<div class="app">
+<header class="hero">
+  <div>
+    <div class="eyebrow">CONFLUENCE SYSTEM · HOSTED PLAYER v0.4</div>
+    <h1 id="characterName">Skarr</h1>
+    <div class="subtitle" id="profileLine"></div>
+  </div>
+  <div class="hero-actions">
+    <button id="combatToggle" class="primary">Enter Combat Mode</button>
+    <button id="gmToggle" class="ghost">GM Dashboard</button>
+    <button data-export-character="1" class="ghost">Export Character</button>
+    <button id="resetBtn" class="ghost">Reload from Backend</button>
+    <span id="saveState" class="save">Connecting…</span>
+  </div>
+</header>
+
+<main>
+<section id="normalMode">
+  <div id="resourceGrid" class="resource-grid"></div>
+  <section id="restPanel" class="panel"></section>
+  <section id="conditionReviewPanel" class="panel hidden"></section>
+
+  <section class="panel">
+    <div class="panel-head"><div><div class="eyebrow">DERIVED CHARACTER</div><h2>Attributes & Defenses</h2></div><span class="muted">Data Model v0.8 rules</span></div>
+    <div id="attributeGrid" class="attribute-grid"></div>
+    <div id="defenseGrid" class="defense-grid"></div>
+  </section>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="powers">Powers</button>
+    <button class="tab" data-tab="essences">Essences</button>
+    <button class="tab" data-tab="training">Training</button>
+    <button class="tab" data-tab="equipment">Equipment</button>
+    <button class="tab" data-tab="ledger">XP Ledger</button>
+  </nav>
+
+  <section id="tab-powers" class="tab-panel active">
+    <div class="two-col">
+      <section class="panel">
+        <div class="panel-head"><div><div class="eyebrow">CURRENT LOADOUT</div><h2>Equipped Powers</h2></div><span class="muted">Owned powers only</span></div>
+        <div id="loadout"></div>
+        <div class="subhead">Ancestry Powers</div>
+        <div id="ancestryPowers" class="card-list"></div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><div><div class="eyebrow">POWER LIBRARY</div><h2>Owned Powers</h2></div><span class="pill">20 XP / rank</span></div>
+        <div id="powerLibrary"></div>
+      </section>
+    </div>
+    <section class="panel player-only">
+      <div class="panel-head"><div><div class="eyebrow">KNOWN POWERS</div><h2>Character Knowledge</h2></div><span class="muted">Only discovered powers are visible</span></div>
+      <div class="empty">New Essences and Powers are assigned by the GM. Undiscovered game data is hidden from Player Mode.</div>
+    </section>
+  </section>
+
+  <section id="tab-essences" class="tab-panel">
+    <section class="panel">
+      <div class="panel-head"><div><div class="eyebrow">PROGRESSION ENGINE</div><h2>Essence Progress</h2></div><span class="muted">Five slots · average rounded down</span></div>
+      <div id="essenceProgress"></div>
+    </section>
+  </section>
+
+  <section id="tab-training" class="tab-panel">
+    <section class="panel">
+      <div class="panel-head"><div><div class="eyebrow">TRAINING</div><h2>Proficiencies & Ratings</h2></div><span class="muted">Proficiency gates masteries; Ratings are numeric</span></div>
+      <div id="training"></div>
+    </section>
+  </section>
+
+  <section id="tab-equipment" class="tab-panel">
+    <div class="two-col">
+      <section class="panel">
+        <div class="panel-head"><div><div class="eyebrow">OWNED EQUIPMENT</div><h2>Inventory & Equipment</h2></div></div>
+        <div id="ownedEquipment"></div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><div><div class="eyebrow">CATALOG</div><h2>Equipment Database</h2></div></div>
+        <div class="selector-row">
+          <select id="catalogSelect"></select>
+          <button id="addEquipmentBtn" class="primary">Add Equipment</button>
+        </div>
+        <div id="catalogDetail"></div>
+      </section>
+    </div>
+  </section>
+
+  <section id="tab-ledger" class="tab-panel">
+    <section class="panel">
+      <div class="panel-head"><div><div class="eyebrow">CHARACTER XP</div><h2>Transaction Ledger</h2></div><span id="ledgerBalance" class="pill"></span></div>
+      
+      <div id="xpLedger"></div>
+    </section>
+  </section>
+</section>
+
+<section id="gmMode" class="hidden">
+  <section class="panel">
+    <div class="panel-head"><div><div class="eyebrow">GM MODE</div><h2>Hidden Character Assignment</h2></div><span class="muted">Essence and Power catalogs are GM-only</span></div>
+    <div id="gmOverview"></div>
+  </section>
+  <section class="panel">
+    <div class="panel-head"><div><div class="eyebrow">ASSIGN ESSENCE</div><h2>Essence Slots</h2></div><span class="pill">Maximum 4</span></div>
+    <div id="gmEssenceSlots"></div>
+  </section>
+  <section class="panel">
+    <div class="panel-head"><div><div class="eyebrow">ASSIGN POWER</div><h2>Known Essence Power Slots</h2></div><span class="muted">Choose or randomize from hidden candidates</span></div>
+    <div id="gmPowerAssignment"></div>
+  </section>
+</section>
+
+<section id="combatMode" class="hidden">
+  <div class="combat-header panel">
+    <div><div class="eyebrow">COMBAT MODE</div><h2>Round <span id="roundNumber">1</span></h2></div>
+    <div class="actions"><button id="combatToggleInline">End Combat</button><button id="nextRoundBtn" class="primary">Next Round</button></div>
+  </div>
+  <div id="combatResources" class="resource-grid"></div>
+  <div id="combatDefenses" class="defense-grid"></div>
+  <section class="panel">
+    <div class="panel-head"><div><div class="eyebrow">READY POWERS</div><h2>Table Combat Cards</h2></div><span class="muted">Final modifiers first · roll physical dice</span></div>
+    <div id="combatPowers" class="combat-power-grid"></div>
+  </section>
+  <div class="two-col">
+    <section class="panel">
+      <div class="panel-head"><div><div class="eyebrow">QUICK CHECKS</div><h2>Skills</h2></div><span class="muted">All-in modifiers</span></div>
+      <div id="combatSkills" class="quick-skill-grid"></div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><div><div class="eyebrow">ACTIVE MATH</div><h2>Temporary Modifiers</h2></div><span class="muted">Only modifiers you explicitly add are assumed</span></div>
+      <div class="modifier-form"><input id="modifierLabel" placeholder="Blessing, cover, stance…"><select id="modifierScope"><option value="all">All checks</option><option value="attacks">All attacks</option><option value="power_attacks">Power attacks</option><option value="weapon_attacks">Weapon attacks</option><option value="defenses">All defenses</option><option value="ac">AC</option><option value="fortitude">Fortitude</option><option value="reflex">Reflex</option><option value="will">Will</option><option value="initiative">Initiative</option><option value="skills">All skills</option></select><select id="modifierDuration"><option value="manual">Manual</option><option value="combat">Combat</option><option value="encounter">Encounter</option><option value="until_rest">Until Rest</option><option value="until_long_rest">Until Long Rest</option></select><input id="modifierValue" type="number" value="1"><button id="addModifierBtn">Add Modifier</button></div>
+      <div id="activeModifiers"></div>
+    </section>
+  </div>
+  <div class="two-col">
+    <section class="panel">
+      <div class="panel-head"><div><div class="eyebrow">ATTACKS</div><h2>Weapons</h2></div></div>
+      <div id="combatWeapons"></div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><div><div class="eyebrow">DAMAGE</div><h2>Resolve Incoming Damage</h2></div></div>
+      <div class="damage-form">
+        <label>Damage <input id="incomingDamage" type="number" min="0" value="8"></label>
+        <label><input id="bypassBarrier" type="checkbox"> Bypass Barrier</label>
+        <label><input id="bypassTemp" type="checkbox"> Bypass Temp HP</label>
+        <label><input id="bypassShield" type="checkbox"> Bypass Shield</label>
+        <label><input id="ignoreShieldHardness" type="checkbox"> Ignore Shield Hardness</label>
+        <label><input id="bypassArmor" type="checkbox"> Bypass Armor</label>
+        <label><input id="ignoreArmorHardness" type="checkbox"> Ignore Armor Hardness</label>
+        <button id="resolveDamageBtn" class="danger">Resolve Damage</button>
+      </div>
+      <div id="damageResult"></div>
+    </section>
+  </div>
+  <div class="two-col">
+    <section class="panel">
+      <div class="panel-head"><div><div class="eyebrow">CONDITIONS</div><h2>Active Conditions</h2></div></div>
+      <div class="selector-row"><select id="conditionSelect"></select><input id="conditionValue" aria-label="Condition value" type="number" min="1" value="1"><button id="addConditionBtn">Add</button></div>
+      <div id="conditions"></div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><div><div class="eyebrow">DURABILITY</div><h2>Armor & Shields</h2></div></div>
+      <div id="combatEquipment"></div>
+    </section>
+  </div>
+</section>
+</main>
+<div id="toast" class="toast"></div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

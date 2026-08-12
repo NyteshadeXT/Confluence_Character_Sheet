@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Confluence GM Dashboard</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="supabase-auth.js"></script>
+</head>
+<body>
+<div class="app">
+<header class="hero">
+  <div>
+    <div class="eyebrow">CONFLUENCE · GM DASHBOARD v0.4</div>
+    <h1>Campaign Management</h1>
+    <div class="muted" id="identity">Checking authentication…</div>
+  </div>
+  <div class="actions"><a href="index.html">Character Portal</a><button id="logout">Sign Out</button></div>
+</header>
+
+<div id="notice" class="status">Loading GM access…</div>
+
+<section class="panel">
+  <div class="actions">
+    <label>Campaign <select id="campaignSelect"></select></label>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Characters</h2>
+  <div id="characters" class="grid"></div>
+</section>
+
+<div class="two">
+<section class="panel">
+  <h2>Selected Character</h2>
+  <div id="selected"><div class="muted">Select a character.</div></div>
+</section>
+
+<section class="panel">
+  <h2>GM Actions</h2>
+  <div class="card">
+    <h3>Grant / Adjust XP</h3>
+    <div class="actions">
+      <input id="xpAmount" type="number" value="20">
+      <input id="xpNote" placeholder="Reason">
+      <button class="primary" id="grantXp">Apply XP</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Assign Essence</h3>
+    <div class="actions">
+      <select id="essenceSelect"></select>
+      <button id="assignEssence">Assign Essence</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Assign Power</h3>
+    <div class="actions">
+      <select id="powerEssence"></select>
+      <select id="powerSelect"></select>
+      <button id="assignPower">Assign Power</button>
+    </div>
+  </div>
+</section>
+</div>
+
+<section class="panel">
+  <h2>Character Powers</h2>
+  <div id="powers"></div>
+</section>
+</div>
+
+<script>
+let selectedId=null,current=null,catalog={essences:[],powers:[],eligibility:[]},campaigns=[];
+
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function show(msg,bad=false){notice.textContent=msg;notice.className='status '+(bad?'bad':'good')}
+
+async function loadCatalog(){
+  const [{data:essences,error:e1},{data:powers,error:e2},{data:eligibility,error:e3}]=await Promise.all([
+    confluenceSupabase.from('essence_definitions').select('id,name').eq('is_active',true).order('name'),
+    confluenceSupabase.from('power_definitions').select('id,name,slot_index').eq('is_active',true).order('slot_index').order('name'),
+    confluenceSupabase.from('essence_power_eligibility').select('essence_id,power_id')
+  ]);
+  if(e1)throw e1;if(e2)throw e2;if(e3)throw e3;
+  catalog={essences:essences||[],powers:(powers||[]).map(p=>({...p,slot:p.slot_index})),eligibility:eligibility||[]};
+  essenceSelect.innerHTML=catalog.essences.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('');
+}
+
+async function loadCharacters(){
+  const campaignId=campaignSelect.value;
+  selectedId=null;current=null;
+  selected.innerHTML='<div class="muted">Select a character.</div>';
+  powers.innerHTML='';
+  if(!campaignId){characters.innerHTML='<div class="empty">No GM campaign found.</div>';return}
+  const {data,error}=await confluenceSupabase.from('characters')
+    .select('id,name,ancestry_definition_id,available_xp').eq('campaign_id',campaignId).order('name');
+  if(error)throw error;
+  characters.innerHTML=(data||[]).map(c=>`<button class="card" onclick="selectChar('${c.id}')">
+    <div class="eyebrow">${esc(c.ancestry_definition_id||'CHARACTER')}</div>
+    <h3>${esc(c.name)}</h3><div class="big">${c.available_xp} XP</div>
+  </button>`).join('')||'<div class="empty">No Characters have been created in this campaign yet.</div>';
+}
+
+async function selectChar(id){
+  selectedId=id;
+  const {data,error}=await confluenceSupabase.rpc('get_character_snapshot',{p_character_id:id});
+  if(error)throw error;
+  current=data;renderCurrent();show(`Selected ${current.name}`);
+}
+
+function renderCurrent(){
+  selected.innerHTML=`<div class="eyebrow">${esc(current.ancestry)}</div>
+    <h2>${esc(current.name)}</h2><div class="big">${current.available_xp} XP</div>
+    <div class="actions"><a href="character/index.html?character=${encodeURIComponent(current.id)}" target="_blank">Open Character Sheet</a></div>
+    <h3>Essences</h3>${current.essences.map(e=>`<span class="pill">${esc(e.name)} · ${e.tier} ${e.rank}</span>`).join(' ')||'<span class="muted">None</span>'}`;
+  powerEssence.innerHTML=current.essences.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('');
+  refreshPowerOptions();
+  powers.innerHTML=current.powers.map(p=>`<div class="row"><span><b>${esc(p.name)}</b> · ${esc(p.source_essence_id)} · Slot ${p.slot}</span><span>${p.tier} ${p.rank}</span></div>`).join('')||'<div class="muted">No Powers assigned.</div>';
+}
+
+function refreshPowerOptions(){
+  const eid=powerEssence.value;
+  const eligible=new Set(catalog.eligibility.filter(x=>x.essence_id===eid).map(x=>x.power_id));
+  powerSelect.innerHTML=catalog.powers.filter(p=>eligible.has(p.id)).map(p=>`<option value="${p.id}">Slot ${p.slot} · ${esc(p.name)}</option>`).join('');
+}
+
+async function init(){
+  const session=await requireSession();
+  identity.textContent=session.user.email||'Signed in';
+  const {data,error}=await confluenceSupabase.from('campaign_members')
+    .select('campaign_id,role').eq('user_id',session.user.id).eq('role','GM');
+  if(error)throw error;
+  const ids=(data||[]).map(x=>x.campaign_id);
+  if(!ids.length)throw new Error('This account is not a GM in any Confluence campaign.');
+  const {data:campaignRows,error:cErr}=await confluenceSupabase.from('campaigns').select('id,name').in('id',ids).order('name');
+  if(cErr)throw cErr;
+  campaigns=campaignRows||[];
+  campaignSelect.innerHTML=campaigns.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  await loadCatalog();await loadCharacters();show('GM access verified.');
+}
+
+campaignSelect.onchange=()=>loadCharacters().catch(e=>show(e.message,true));
+powerEssence.onchange=refreshPowerOptions;
+grantXp.onclick=async()=>{
+  if(!selectedId)return show('Select a character first.',true);
+  const {error}=await confluenceSupabase.rpc('gm_grant_xp',{p_character_id:selectedId,p_amount:Number(xpAmount.value),p_note:xpNote.value||null});
+  if(error)return show(error.message,true);await selectChar(selectedId);await loadCharacters();show('XP updated.');
+};
+assignEssence.onclick=async()=>{
+  if(!selectedId)return show('Select a character first.',true);
+  const {error}=await confluenceSupabase.rpc('gm_assign_essence',{p_character_id:selectedId,p_essence_id:essenceSelect.value});
+  if(error)return show(error.message,true);await selectChar(selectedId);show('Essence assigned.');
+};
+assignPower.onclick=async()=>{
+  if(!selectedId)return show('Select a character first.',true);
+  const {error}=await confluenceSupabase.rpc('gm_assign_power',{p_character_id:selectedId,p_essence_id:powerEssence.value,p_power_id:powerSelect.value});
+  if(error)return show(error.message,true);await selectChar(selectedId);show('Power assigned.');
+};
+logout.onclick=signOut;
+init().catch(e=>show(e.message,true));
+</script>
+</body>
+</html>

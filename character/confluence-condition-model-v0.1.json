@@ -1,0 +1,534 @@
+{
+  "name": "Shared Confluence Condition Model",
+  "version": "0.1",
+  "principles": [
+    "Condition definitions are master rules data; active character conditions store only state.",
+    "Only deterministic numeric effects are fed into the character modifier engine.",
+    "Lifecycle changes occur only when explicitly defined by the condition.",
+    "Derived conditions are calculated rather than duplicated as independent active records.",
+    "Overrides suppress another condition without deleting its underlying active record.",
+    "Physical dice and recovery procedures remain table actions."
+  ],
+  "conditions": [
+    {
+      "id": "blinded",
+      "name": "Blinded",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [],
+      "overrides": [
+        "dazzled"
+      ],
+      "automation": "partial",
+      "summary": "Can't see; visual perception is impaired and normal terrain is difficult terrain.",
+      "reminder": "If vision is your only precise sense, Perception checks take \u20134; visual effects do not affect you."
+    },
+    {
+      "id": "clumsy",
+      "name": "Clumsy",
+      "valueType": "required",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "numeric",
+      "summary": "Penalty equal to value on Dexterity-based rolls and DCs.",
+      "reminder": "Applies to AC, Reflex, ranged attacks, Acrobatics, Stealth, Thievery, and other DEX-based rolls/DCs."
+    },
+    {
+      "id": "concealed",
+      "name": "Concealed",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "reference",
+      "summary": "Harder to target due to obscuring features.",
+      "reminder": "Creatures you're concealed from make a DC 5 flat check to target you; area effects are unaffected."
+    },
+    {
+      "id": "confused",
+      "name": "Confused",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "event"
+      },
+      "derived": [
+        {
+          "conditionId": "off_guard"
+        }
+      ],
+      "overrides": [],
+      "automation": "partial",
+      "summary": "You attack wildly and don't treat anyone as an ally.",
+      "reminder": "No Delay, Ready, or reactions. Damage from an attack/spell permits a DC 11 flat recovery check."
+    },
+    {
+      "id": "controlled",
+      "name": "Controlled",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "reference",
+      "summary": "A controller dictates how you act.",
+      "reminder": "The controller can direct your actions, attacks, reactions, and Delay."
+    },
+    {
+      "id": "dazzled",
+      "name": "Dazzled",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "reference",
+      "summary": "Vision is impaired.",
+      "reminder": "If vision is your only precise sense, creatures and objects are concealed from you."
+    },
+    {
+      "id": "doomed",
+      "name": "Doomed",
+      "valueType": "required",
+      "lifecycle": {
+        "type": "rest_decay",
+        "event": "full_rest",
+        "amount": 1
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "lifecycle",
+      "summary": "Your maximum dying threshold is reduced by the condition value.",
+      "reminder": "Decreases by 1 after a full night's rest."
+    },
+    {
+      "id": "drained",
+      "name": "Drained",
+      "valueType": "required",
+      "lifecycle": {
+        "type": "rest_decay",
+        "event": "full_rest",
+        "amount": 1
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "partial",
+      "summary": "Penalty equal to value on Constitution-based rolls and DCs.",
+      "reminder": "Fortitude is automated. HP reduction remains unresolved because the current rule references character level."
+    },
+    {
+      "id": "dying",
+      "name": "Dying",
+      "valueType": "required",
+      "lifecycle": {
+        "type": "procedure"
+      },
+      "derived": [
+        {
+          "conditionId": "unconscious"
+        }
+      ],
+      "overrides": [],
+      "automation": "partial",
+      "summary": "You are bleeding out and must make recovery checks.",
+      "reminder": "At dying 4 you die. Recovery and damage can increase/decrease the value; losing Dying grants/increases Wounded."
+    },
+    {
+      "id": "encumbered",
+      "name": "Encumbered",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [
+        {
+          "conditionId": "clumsy",
+          "value": 1
+        }
+      ],
+      "overrides": [],
+      "automation": "partial",
+      "summary": "You are carrying more than you can manage.",
+      "reminder": "Includes Clumsy 1 and a 10-foot Speed penalty."
+    },
+    {
+      "id": "enfeebled",
+      "name": "Enfeebled",
+      "valueType": "required",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "numeric",
+      "summary": "Penalty equal to value on Strength-based rolls and DCs.",
+      "reminder": "Applies to STR melee attacks, STR damage rolls, Athletics, and other STR-based rolls/DCs."
+    },
+    {
+      "id": "fascinated",
+      "name": "Fascinated",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "event"
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "numeric",
+      "summary": "Distracted by a subject of fascination.",
+      "reminder": "\u20132 Perception and skill checks; concentrate actions are restricted. Ends if hostile action targets you/allies."
+    },
+    {
+      "id": "fatigued",
+      "name": "Fatigued",
+      "valueType": "required",
+      "lifecycle": {
+        "type": "rest"
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "numeric",
+      "summary": "Penalty equal to value to AC and saving throws.",
+      "reminder": "Recovered after a full night's rest."
+    },
+    {
+      "id": "fleeing",
+      "name": "Fleeing",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "reference",
+      "summary": "You must flee the source as efficiently as possible.",
+      "reminder": "You can't Delay or Ready."
+    },
+    {
+      "id": "frightened",
+      "name": "Frightened",
+      "valueType": "required",
+      "lifecycle": {
+        "type": "round_decay",
+        "event": "round",
+        "amount": 1
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "numeric",
+      "summary": "Penalty equal to value to all checks and DCs.",
+      "reminder": "Decreases by 1 when the Round button advances, unless an effect says otherwise."
+    },
+    {
+      "id": "grabbed",
+      "name": "Grabbed",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [
+        {
+          "conditionId": "off_guard"
+        },
+        {
+          "conditionId": "immobilized"
+        }
+      ],
+      "overrides": [],
+      "automation": "partial",
+      "summary": "Held in place.",
+      "reminder": "Includes Off-Guard and Immobilized. Manipulate actions require a DC 5 flat check."
+    },
+    {
+      "id": "hidden",
+      "name": "Hidden",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "reference",
+      "summary": "A creature knows your space but not your precise position.",
+      "reminder": "You are Off-Guard to the hidden creature; targeting generally requires a DC 11 flat check."
+    },
+    {
+      "id": "immobilized",
+      "name": "Immobilized",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "reference",
+      "summary": "You can't use actions with the move trait.",
+      "reminder": "Forced movement may require a check against the holding effect or relevant defense."
+    },
+    {
+      "id": "invisible",
+      "name": "Invisible",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [
+        {
+          "conditionId": "undetected"
+        }
+      ],
+      "overrides": [],
+      "automation": "reference",
+      "summary": "You can't be seen.",
+      "reminder": "Typically Undetected; creatures can Seek and may make you Hidden."
+    },
+    {
+      "id": "observed",
+      "name": "Observed",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "reference",
+      "summary": "You are in plain view to the observer.",
+      "reminder": "Stealth can change this state to Hidden or Undetected."
+    },
+    {
+      "id": "off_guard",
+      "name": "Off-Guard",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "numeric",
+      "summary": "Your attention is compromised.",
+      "reminder": "\u20132 circumstance penalty to AC."
+    },
+    {
+      "id": "paralyzed",
+      "name": "Paralyzed",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [
+        {
+          "conditionId": "off_guard"
+        }
+      ],
+      "overrides": [],
+      "automation": "partial",
+      "summary": "Frozen in place and unable to act normally.",
+      "reminder": "Includes Off-Guard; only actions requiring the mind are available as GM determines."
+    },
+    {
+      "id": "persistent_damage",
+      "name": "Persistent Damage",
+      "valueType": "optional",
+      "lifecycle": {
+        "type": "procedure"
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "reference",
+      "summary": "Ongoing damage occurs at the end of your turn.",
+      "reminder": "Roll the persistent damage, then attempt the listed recovery flat check (normally DC 15). Damage expression/type entry is a future UI."
+    },
+    {
+      "id": "petrified",
+      "name": "Petrified",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "reference",
+      "summary": "Turned to stone and unable to act or sense.",
+      "reminder": "The current rule changes you into an object with special AC/Hardness/HP behavior; not automated yet."
+    },
+    {
+      "id": "prone",
+      "name": "Prone",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [
+        {
+          "conditionId": "off_guard"
+        }
+      ],
+      "overrides": [],
+      "automation": "numeric",
+      "summary": "Lying on the ground.",
+      "reminder": "Includes Off-Guard and \u20132 to attack rolls; movement is restricted until you Stand."
+    },
+    {
+      "id": "quickened",
+      "name": "Quickened",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "reference",
+      "summary": "Gain 1 additional action at the start of your turn.",
+      "reminder": "The source effect may restrict how the extra action can be used."
+    },
+    {
+      "id": "restrained",
+      "name": "Restrained",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [
+        {
+          "conditionId": "off_guard"
+        },
+        {
+          "conditionId": "immobilized"
+        }
+      ],
+      "overrides": [
+        "grabbed"
+      ],
+      "automation": "partial",
+      "summary": "Pinned or bound and barely able to move.",
+      "reminder": "Includes Off-Guard and Immobilized; attack/manipulate actions are heavily restricted. Overrides Grabbed."
+    },
+    {
+      "id": "sickened",
+      "name": "Sickened",
+      "valueType": "required",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "numeric",
+      "summary": "Penalty equal to value to all checks and DCs.",
+      "reminder": "Cannot willingly ingest things. A retch action can reduce the value after a Fortitude save."
+    },
+    {
+      "id": "slowed",
+      "name": "Slowed",
+      "valueType": "required",
+      "lifecycle": {
+        "type": "action_economy"
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "reference",
+      "summary": "Regain fewer actions at the start of your turn.",
+      "reminder": "Action-economy automation is deferred."
+    },
+    {
+      "id": "stunned",
+      "name": "Stunned",
+      "valueType": "required",
+      "lifecycle": {
+        "type": "action_economy"
+      },
+      "derived": [],
+      "overrides": [
+        "slowed"
+      ],
+      "automation": "reference",
+      "summary": "Lose actions as you regain them.",
+      "reminder": "Overrides Slowed while active; action-economy automation is deferred."
+    },
+    {
+      "id": "stupefied",
+      "name": "Stupefied",
+      "valueType": "required",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "numeric",
+      "summary": "Penalty equal to value on Intelligence-, Wisdom-, and Charisma-based rolls and DCs.",
+      "reminder": "Also affects spell attacks/DCs; spell disruption flat check remains a table procedure."
+    },
+    {
+      "id": "unconscious",
+      "name": "Unconscious",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "event"
+      },
+      "derived": [
+        {
+          "conditionId": "blinded"
+        },
+        {
+          "conditionId": "off_guard"
+        },
+        {
+          "conditionId": "prone"
+        }
+      ],
+      "overrides": [],
+      "automation": "partial",
+      "summary": "You can't act.",
+      "reminder": "\u20134 AC, Perception, and Reflex; includes Blinded, Off-Guard, and Prone. Wake-up procedures remain table adjudication."
+    },
+    {
+      "id": "undetected",
+      "name": "Undetected",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "reference",
+      "summary": "A creature doesn't know which space you occupy.",
+      "reminder": "Area effects can still affect you; guessed targeting uses hidden-target procedures."
+    },
+    {
+      "id": "unnoticed",
+      "name": "Unnoticed",
+      "valueType": "none",
+      "lifecycle": {
+        "type": "manual"
+      },
+      "derived": [
+        {
+          "conditionId": "undetected"
+        }
+      ],
+      "overrides": [],
+      "automation": "reference",
+      "summary": "A creature has no idea you're present.",
+      "reminder": "You are also Undetected."
+    },
+    {
+      "id": "wounded",
+      "name": "Wounded",
+      "valueType": "required",
+      "lifecycle": {
+        "type": "event"
+      },
+      "derived": [],
+      "overrides": [],
+      "automation": "reference",
+      "summary": "Serious injury increases future Dying severity.",
+      "reminder": "Ends after specified healing/rest procedures."
+    }
+  ]
+}
