@@ -56,15 +56,107 @@ const TRAINING = {
 const EQUIPMENT_DB = [{"id":"armor:cloth","name":"Cloth","kind":"armor","weight":4,"hardness":0,"maxHp":10,"trainingName":"Cloth Armor","category":"Light","ac":0,"checkPenalty":0,"speedPenalty":0},{"id":"armor:leather","name":"Leather","kind":"armor","weight":15,"hardness":1,"maxHp":20,"trainingName":"Leather Armor","category":"Light","ac":2,"checkPenalty":0,"speedPenalty":0},{"id":"armor:hide","name":"Hide","kind":"armor","weight":25,"hardness":2,"maxHp":24,"trainingName":"Hide Armor","category":"Light","ac":3,"checkPenalty":-1,"speedPenalty":0},{"id":"armor:chainmail","name":"Chainmail","kind":"armor","weight":40,"hardness":3,"maxHp":30,"trainingName":"Chainmail","category":"Heavy","ac":6,"checkPenalty":-1,"speedPenalty":-1},{"id":"armor:scale","name":"Scale","kind":"armor","weight":45,"hardness":4,"maxHp":36,"trainingName":"Scale Armor","category":"Heavy","ac":7,"checkPenalty":0,"speedPenalty":-1},{"id":"armor:plate","name":"Plate","kind":"armor","weight":50,"hardness":5,"maxHp":42,"trainingName":"Plate Armor","category":"Heavy","ac":8,"checkPenalty":-2,"speedPenalty":-1},{"id":"shield:light","name":"Light Shield","kind":"shield","weight":6,"hardness":3,"maxHp":10,"trainingName":"Light Shield","category":"Shield","ac":1,"checkPenalty":0,"speedPenalty":0},{"id":"shield:heavy","name":"Heavy Shield","kind":"shield","weight":15,"hardness":5,"maxHp":10,"trainingName":"Heavy Shield","category":"Shield","ac":2,"checkPenalty":-2,"speedPenalty":0},{"id":"weapon:club","name":"Club","kind":"weapon","weight":3,"category":"Simple Melee","mode":"melee","damage":"1d6","range":null,"groups":["Mace"]},{"id":"weapon:dagger","name":"Dagger","kind":"weapon","weight":1,"category":"Simple Melee","mode":"melee","damage":"1d4","range":"5/10","groups":["Light Blade"],"properties":[{"id":"off-hand","data":"{}"},{"id":"light-thrown","data":"{\"range\":\"5/10\"}"}]},{"id":"weapon:javelin","name":"Javelin","kind":"weapon","weight":2,"category":"Simple Melee","mode":"melee","damage":"1d6","range":"10/20","groups":["Spear"],"properties":[{"id":"heavy-thrown","data":"{\"range\":\"10/20\"}"}]},{"id":"weapon:mace","name":"Mace","kind":"weapon","weight":6,"category":"Simple Melee","mode":"melee","damage":"1d8","range":null,"groups":["Mace"],"properties":[{"id":"versatile","data":"{}"}]},{"id":"weapon:sickle","name":"Sickle","kind":"weapon","weight":2,"category":"Simple Melee","mode":"melee","damage":"1d6","range":null,"groups":["Light Blade"],"properties":[{"id":"off-hand","data":"{}"}]},{"id":"weapon:spear","name":"Spear","kind":"weapon","weight":6,"category":"Simple Melee","mode":"melee","damage":"1d8","range":null,"groups":["Spear"],"properties":[{"id":"versatile","data":"{}"}]},{"id":"weapon:greatclub","name":"Greatclub","kind":"weapon","weight":10,"category":"Simple Melee","mode":"melee","damage":"2d4","range":null,"groups":["Mace"]},{"id":"weapon:morningstar","name":"Morningstar","kind":"weapon","weight":8,"category":"Simple Melee","mode":"melee","damage":"1d10","range":null,"groups":["Mace"]},{"id":"weapon:quarterstaff","name":"Quarterstaff","kind":"weapon","weight":4,"category":"Simple Melee","mode":"melee","damage":"1d8","range":null,"groups":["Staff"]},{"id":"weapon:scythe","name":"Scythe","kind":"weapon","weight":10,"category":"Simple Melee","mode":"melee","damage":"2d4","range":null,"groups":["Heavy Blade"]},{"id":"weapon:battleaxe","name":"Battleaxe","kind":"weapon","weight":6,"category":"Martial Melee","mode":"melee","damage":"1d10","range":null,"groups":["Axe"],"properties":[{"id":"versatile","data":"{}"}]},{"id":"weapon:flail","name":"Flail","kind":"weapon","weight":5,"category":"Martial Melee","mode":"melee","damage":"1d10","range":null,"groups":["Flail"],"properties":[{"id":"versatile","data":"{}"}]},{"id":"weapon:handaxe","name":"Handaxe","kind":"weapon","weight":3,"category":"Martial Melee","mode":"melee","damage":"1d6","range":"5/10","groups":["Axe"],"properties":[{"id":"off-hand","data":"{}"},{"id":"thrown","data":"{\"range\":\"5/10\"}"}]},{"id":"weapon:longsword","name":"Longsword","kind":"weapon","weight":4,"category":"Martial Melee","mode":"melee","damage":"1d8","range":null,"groups":["Heavy Blade"],"properties":[{"id":"versatile","data":"{}"}]},{"id":"weapon:scimitar","name":"Scimitar","kind":"weapon","weight":4,"category":"Martial Melee","mode":"melee","damage":"1d8","range":null,"groups":["Heavy Blade"],"properties":[{"id":"high-crit","data":"{}"}]},{"id":"weapon:short-sword","name":"Short Sword","kind":"weapon","weight":2,"category":"Martial Melee","mode":"melee","damage":"1d6","range":null,"groups":["Light Blade"],"properties":[{"id":"off-hand","data":"{}"}]},{"id":"weapon:throwing-hammer","name":"Throwing Hammer","kind":"weapon","weight":2,"category":"Martial Melee","mode":"melee","damage":"1d6","range":"5/10","groups":["Hammer"],"properties":[{"id":"off-hand","data":"{}"},{"id":"heavy-thrown","data":"{\"range\":\"5/10\"}"}]},{"id":"weapon:warhammer","name":"Warhammer","kind":"weapon","weight":5,"category":"Martial Melee","mode":"melee","damage":"1d10","range":null,"groups":["Hammer"],"properties":[{"id":"versatile","data":"{}"}]},{"id":"weapon:war-pick","name":"War pick","kind":"weapon","weight":6,"category":"Martial Melee","mode":"melee","damage":"1d8","range":null,"groups":["Pick"],"properties":[{"id":"high-crit","data":"{}"},{"id":"versatile","data":"{}"}]},{"id":"weapon:falchion","name":"Falchion","kind":"weapon","weight":7,"category":"Martial Melee","mode":"melee","damage":"2d4","range":null,"groups":["Heavy Blade"],"properties":[{"id":"high-crit","data":"{}"}]},{"id":"weapon:glaive","name":"Glaive","kind":"weapon","weight":10,"category":"Martial Melee","mode":"melee","damage":"2d4","range":null,"groups":["Heavy Blade","Polearm"],"properties":[{"id":"reach","data":"{}"}]},{"id":"weapon:greataxe","name":"Greataxe","kind":"weapon","weight":12,"category":"Martial Melee","mode":"melee","damage":"1d12","range":null,"groups":["Axe"],"properties":[{"id":"high-crit","data":"{}"}]},{"id":"weapon:greatsword","name":"Greatsword","kind":"weapon","weight":8,"category":"Martial Melee","mode":"melee","damage":"1d10","range":null,"groups":["Heavy Blade"]},{"id":"weapon:halberd","name":"Halberd","kind":"weapon","weight":12,"category":"Martial Melee","mode":"melee","damage":"1d10","range":null,"groups":["Axe","Polearm"],"properties":[{"id":"reach","data":"{}"}]},{"id":"weapon:heavy-flail","name":"Heavy flail","kind":"weapon","weight":10,"category":"Martial Melee","mode":"melee","damage":"2d6","range":null,"groups":["Flail"]},{"id":"weapon:longspear","name":"Longspear","kind":"weapon","weight":9,"category":"Martial Melee","mode":"melee","damage":"1d10","range":null,"groups":["Polearm","Spear"],"properties":[{"id":"reach","data":"{}"}]},{"id":"weapon:maul","name":"Maul","kind":"weapon","weight":12,"category":"Martial Melee","mode":"melee","damage":"2d6","range":null,"groups":["Hammer"]},{"id":"weapon:bastard-sword","name":"Bastard Sword","kind":"weapon","weight":6,"category":"Advanced Melee","mode":"melee","damage":"1d10","range":null,"groups":["Heavy Blade"],"properties":[{"id":"versatile","data":"{}"}]},{"id":"weapon:katar","name":"Katar","kind":"weapon","weight":1,"category":"Advanced Melee","mode":"melee","damage":"1d6","range":null,"groups":["Light Blade"],"properties":[{"id":"off-hand","data":"{}"},{"id":"high-crit","data":"{}"}]},{"id":"weapon:rapier","name":"Rapier","kind":"weapon","weight":2,"category":"Advanced Melee","mode":"melee","damage":"1d8","range":null,"groups":["Light Blade"]},{"id":"weapon:spiked-chain","name":"Spiked Chain","kind":"weapon","weight":10,"category":"Advanced Melee","mode":"melee","damage":"2d4","range":null,"groups":["Flail"],"properties":[{"id":"reach","data":"{}"}]},{"id":"weapon:unarmed","name":"Unarmed","kind":"weapon","weight":null,"category":"Simple Melee","mode":"melee","damage":"1d4","range":null,"groups":["Unarmed"]},{"id":"weapon:hand-crossbow","name":"Hand Crossbow","kind":"weapon","weight":2,"category":"Simple Ranged","mode":"ranged","damage":"1d6","range":"10/20","groups":["Crossbow"],"properties":[{"id":"load-free","data":"{}"}]},{"id":"weapon:sling","name":"Sling","kind":"weapon","weight":null,"category":"Simple Ranged","mode":"ranged","damage":"1d6","range":"10/20","groups":["Sling"],"properties":[{"id":"load-free","data":"{}"}]},{"id":"weapon:crossbow","name":"Crossbow","kind":"weapon","weight":4,"category":"Simple Ranged","mode":"ranged","damage":"1d8","range":"15/30","groups":["Crossbow"],"properties":[{"id":"load-single","data":"{}"}]},{"id":"weapon:longbow","name":"Longbow","kind":"weapon","weight":3,"category":"Martial Ranged","mode":"ranged","damage":"1d10","range":"20/40","groups":["Bow"],"properties":[{"id":"load-free","data":"{}"}]},{"id":"weapon:short-bow","name":"Short Bow","kind":"weapon","weight":2,"category":"Martial Ranged","mode":"ranged","damage":"1d8","range":"15/30","groups":["Bow"],"properties":[{"id":"load-free","data":"{}"},{"id":"small","data":"{}"}]},{"id":"weapon:throwing-knife","name":"Throwing Knife","kind":"weapon","weight":0.5,"category":"Martial Ranged","mode":"ranged","damage":"1d4","range":"5/10","groups":["Light Blade"],"properties":[{"id":"light-thrown","data":"{\"range\":\"5/10\"}"}]},{"id":"weapon:heavy-crossbow","name":"Heavy Crossbow","kind":"weapon","weight":6,"category":"Martial Ranged","mode":"ranged","damage":"1d12","range":"20/40","groups":["Crossbow"],"properties":[{"id":"load-double","data":"{}"}]}];
 
 
-const CONNECTED_BACKEND={characterId:new URLSearchParams(location.search).get('character')||'',connected:false,syncing:false,timer:null};
+const CONNECTED_BACKEND={characterId:new URLSearchParams(location.search).get('character')||'',connected:false,syncing:false,timer:null,readOnly:false,isOwner:false};
 async function backendRequest(action,{body}={}){
  await requireSession();
- if(action==='snapshot'){const {data,error}=await confluenceSupabase.rpc('get_character_snapshot',{p_character_id:CONNECTED_BACKEND.characterId});if(error)throw error;return data}
- if(action==='runtime'){const {data,error}=await confluenceSupabase.rpc('player_update_runtime',{p_character_id:CONNECTED_BACKEND.characterId,p_state:body});if(error)throw error;return data}
- if(action==='profile'){const {data,error}=await confluenceSupabase.rpc('player_update_profile_state',{p_character_id:CONNECTED_BACKEND.characterId,p_training:body.training_json,p_equipment:body.equipment_json,p_loadout:body.loadout_json,p_essence_choices:body.essence_choices_json});if(error)throw error;return data}
- if(action==='rank'){const {data,error}=await confluenceSupabase.rpc('player_rank_power',{p_character_power_id:body.character_power_id});if(error)throw error;await backendRequest('snapshot');return data}
- throw new Error('Unknown backend action')
+ if(action==='snapshot'){
+   const {data,error}=await confluenceSupabase.rpc('get_character_snapshot',{p_character_id:CONNECTED_BACKEND.characterId});
+   if(error)throw error;return data;
+ }
+ if(CONNECTED_BACKEND.readOnly)throw new Error('GM character view is read-only');
+ if(action==='runtime'){
+   const {data,error}=await confluenceSupabase.rpc('player_update_runtime',{p_character_id:CONNECTED_BACKEND.characterId,p_state:body});
+   if(error)throw error;return data;
+ }
+ if(action==='profile'){
+   const {data,error}=await confluenceSupabase.rpc('player_update_profile_state',{
+     p_character_id:CONNECTED_BACKEND.characterId,
+     p_training:body.training_json,p_equipment:body.equipment_json,
+     p_loadout:body.loadout_json,p_essence_choices:body.essence_choices_json
+   });
+   if(error)throw error;return data;
+ }
+ if(action==='rank'){
+   const {data,error}=await confluenceSupabase.rpc('player_rank_power',{p_character_power_id:body.character_power_id});
+   if(error)throw error;return data;
+ }
+ throw new Error('Unknown backend action');
 }
+
+function stateFromBackend(data){
+ MASTER_POWER_MODELS.length=0;MASTER_ESSENCE_MODELS.length=0;
+ for(const e of data.essences||[])if(e.definition&&!MASTER_ESSENCE_MODELS.some(x=>x.id===e.definition.id))MASTER_ESSENCE_MODELS.push(e.definition);
+ for(const p of data.powers||[])if(p.definition&&!MASTER_POWER_MODELS.some(x=>x.id===p.definition.id))MASTER_POWER_MODELS.push(p.definition);
+
+ const d=clone(DEFAULTS);
+ d.profile={...d.profile,name:data.name||'Character',ancestry:data.ancestry||'Unknown',player:data.player_user_id||'',dungeon:'The Shattering'};
+ d.attributes={...d.attributes,...(data.attributes||{})};
+ d.resources={...d.resources,hp:data.runtime?.hp??10,mana:data.runtime?.mana??0,stamina:data.runtime?.stamina??0,
+   surges:data.runtime?.surges??0,tempHp:data.runtime?.tempHp??0,barrier:data.runtime?.barrier??0};
+ d.xp=Number(data.available_xp)||0;
+ d.xpLedger=(data.xp_ledger||[]).map(x=>({amount:x.amount,type:x.transaction_type,note:x.note||''}));
+ d.essences=(data.essences||[]).map(e=>e.name);
+ d.essenceChoices=data.essence_choices||{};
+ d.training=data.training||{};
+ d.equipment=data.equipment||[];
+ d.loadout=data.loadout||{};
+ d.powers={...d.powers};
+ const essenceNames=new Map((data.essences||[]).map(e=>[e.id,e.name]));
+ for(const p of data.powers||[]){
+   const ename=essenceNames.get(p.source_essence_id)||p.source_essence_id;
+   const key=ownedPowerKey(p.power_id,ename);
+   d.powers[key]={tier:p.tier,rank:p.rank,ancestry:false,sourceEssence:ename,definitionId:p.power_id,serverOwnedId:p.owned_id};
+ }
+ d.combat={...d.combat,active:!!data.runtime?.combat_active,round:data.runtime?.round||1,
+   shortRestRecoveryAvailable:data.runtime?.short_rest_recovery_available!==false,
+   loadoutUnlocked:!!data.runtime?.loadout_unlocked,conditions:data.runtime?.conditions||[],
+   modifiers:data.runtime?.modifiers||[],dailyExpended:data.runtime?.daily_expended||{},conditionReview:false};
+ return normalize(d);
+}
+async function refreshFromBackend(message=null){
+ const data=await backendRequest('snapshot');
+ state=stateFromBackend(data);CONNECTED_BACKEND.connected=true;render();
+ const e=document.getElementById('saveState');
+ if(e)e.textContent=CONNECTED_BACKEND.readOnly?'GM read-only view':(message||'Connected · saved to backend');
+}
+function scheduleBackendSync(){
+ if(!CONNECTED_BACKEND.connected||CONNECTED_BACKEND.readOnly)return;
+ clearTimeout(CONNECTED_BACKEND.timer);
+ const e=document.getElementById('saveState');if(e)e.textContent='Saving…';
+ CONNECTED_BACKEND.timer=setTimeout(syncStateToBackend,180);
+}
+async function syncStateToBackend(){
+ if(!CONNECTED_BACKEND.connected||CONNECTED_BACKEND.syncing||CONNECTED_BACKEND.readOnly)return;
+ CONNECTED_BACKEND.syncing=true;
+ try{
+   await backendRequest('runtime',{body:{
+     current_hp:state.resources.hp,current_mana:state.resources.mana,current_stamina:state.resources.stamina,
+     current_healing_surges:state.resources.surges,temporary_hp:state.resources.tempHp,barrier:state.resources.barrier,
+     combat_active:state.combat.active,round_number:state.combat.round,
+     short_rest_recovery_available:state.combat.shortRestRecoveryAvailable,loadout_unlocked:state.combat.loadoutUnlocked,
+     conditions_json:state.combat.conditions,modifiers_json:state.combat.modifiers,daily_expended_json:state.combat.dailyExpended
+   }});
+   await backendRequest('profile',{body:{
+     training_json:state.training,equipment_json:state.equipment,loadout_json:state.loadout,essence_choices_json:state.essenceChoices
+   }});
+   const e=document.getElementById('saveState');if(e)e.textContent='Saved to backend';
+ }catch(err){
+   const e=document.getElementById('saveState');if(e)e.textContent='Sync error';
+   toast(err.message);
+ }finally{CONNECTED_BACKEND.syncing=false}
+}
+function applyAccessMode(){
+ const banner=document.getElementById('gmReadOnlyBanner');
+ if(banner)banner.classList.toggle('hidden',!CONNECTED_BACKEND.readOnly);
+ document.body.classList.toggle('gm-readonly',CONNECTED_BACKEND.readOnly);
+ if(!CONNECTED_BACKEND.readOnly)return;
+ document.querySelectorAll('input,select,textarea,button').forEach(el=>{
+   const allowed=el.classList.contains('tab')||el.id==='gmToggle'||el.id==='resetBtn'||el.matches('[data-export-character]');
+   if(!allowed)el.disabled=true;
+ });
+ const combat=document.getElementById('combatToggle');if(combat)combat.classList.add('hidden');
+}
+
 const DEFAULTS = {
  profile:{name:'Skarr',player:'Jody',ancestry:'Leonid',dungeon:'Deep Wilds',party:''},
  attributes:{Str:18,Dex:10,Con:10,Int:10,Wis:10,Cha:10},
@@ -110,7 +202,7 @@ function normalize(raw){
  }):[];
  return s;
 }
-function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));scheduleBackendSync();const e=document.getElementById('saveState');if(e&&!CONNECTED_BACKEND.connected)e.textContent='Local cache · backend disconnected'}
+function save(){if(CONNECTED_BACKEND.readOnly)return;localStorage.setItem(STORAGE_KEY,JSON.stringify(state));scheduleBackendSync();const e=document.getElementById('saveState');if(e&&!CONNECTED_BACKEND.connected)e.textContent='Local cache · backend disconnected'}
 function toast(msg){const e=document.getElementById('toast');e.textContent=msg;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1800)}
 function signed(n){n=Number(n)||0;return `${n>=0?'+':''}${n}`}
 function tierIndex(t){return Math.max(0,TIERS.indexOf(t))}
@@ -706,6 +798,7 @@ function randomizePower(essence,slot){
  assignPowerToSlot(essence,Number(slot),pd.id);
 }
 async function advancePower(id){
+ if(CONNECTED_BACKEND.readOnly){toast('GM character view is read-only');return}
  const a=powerCanAdvance(id);if(!a.ok){toast(a.reason);return}
  const cp=state.powers[id],serverId=cp?.serverOwnedId;
  if(!serverId){toast('This Power is not connected to a backend ownership record');return}
@@ -842,7 +935,8 @@ function render(){
  document.getElementById('gmMode').classList.toggle('hidden',!gm);
  document.getElementById('combatToggle').classList.toggle('hidden',gm);
  document.getElementById('combatToggle').textContent=state.combat.active?'Exit Combat Mode':'Enter Combat Mode';
- document.getElementById('gmToggle').textContent=gm?'Exit GM Mode':'Enter GM Mode';
+ document.getElementById('gmToggle').textContent='GM Dashboard';
+ applyAccessMode();
 }
 
 function renderLifecycle(){
@@ -1228,10 +1322,14 @@ document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>
 document.getElementById('conditionSelect')?.addEventListener('change',renderConditionControls);
 document.getElementById('characterImportFile')?.addEventListener('change',e=>{const f=e.target.files?.[0];if(f)importCharacterFile(f);e.target.value=''});
 async function bootstrapConnectedCharacter(){
- if(!CONNECTED_BACKEND.characterId){
-   render();toast('Missing connected character link');return;
- }
- try{await refreshFromBackend('Connected · saved to backend')}
- catch(err){render();toast(`Backend connection failed: ${err.message}`)}
+ if(!CONNECTED_BACKEND.characterId){render();toast('Missing connected character link');return}
+ try{
+   await requireSession();
+   const {data:isOwner,error:ownerErr}=await confluenceSupabase.rpc('owns_character',{target_character:CONNECTED_BACKEND.characterId});
+   if(ownerErr)throw ownerErr;
+   CONNECTED_BACKEND.isOwner=!!isOwner;
+   CONNECTED_BACKEND.readOnly=!CONNECTED_BACKEND.isOwner;
+   await refreshFromBackend(CONNECTED_BACKEND.readOnly?'GM read-only view':'Connected · saved to backend');
+ }catch(err){render();toast(`Backend connection failed: ${err.message}`)}
 }
 bootstrapConnectedCharacter();

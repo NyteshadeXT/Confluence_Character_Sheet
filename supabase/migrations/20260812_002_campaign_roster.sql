@@ -1,0 +1,12 @@
+-- Hosted Connected Prototype v0.4.2 — Campaign Roster & GM Character Access
+-- Applied to live Supabase project.
+--
+-- Functions:
+-- gm_get_campaign_roster(uuid)
+-- gm_add_player_by_email(uuid,text)
+-- gm_create_character(uuid,text,text,jsonb)
+-- gm_assign_character_owner(uuid,uuid)
+-- gm_unassign_character_owner(uuid)
+--
+-- All functions are SECURITY DEFINER, execute only for authenticated users, and validate
+-- campaign GM authority internally before returning or changing campaign data.

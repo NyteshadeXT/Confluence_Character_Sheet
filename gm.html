@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Confluence GM Dashboard</title>
+<title>Confluence GM Dashboard v0.4.2</title>
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
@@ -12,156 +12,146 @@
 <body>
 <div class="app">
 <header class="hero">
-  <div>
-    <div class="eyebrow">CONFLUENCE · GM DASHBOARD v0.4.1</div>
-    <h1>Campaign Management</h1>
-    <div class="muted" id="identity">Checking authentication…</div>
-  </div>
+  <div><div class="eyebrow">CONFLUENCE · GM CAMPAIGN DASHBOARD v0.4.2</div><h1>Campaign Management</h1><div class="muted" id="identity">Checking authentication…</div></div>
   <div class="actions"><a href="index.html">Character Portal</a><a href="content-studio.html">System Data Studio</a><button id="logout">Sign Out</button></div>
 </header>
 
 <div id="notice" class="status">Loading GM access…</div>
 
 <section class="panel">
-  <div class="actions">
-    <label>Campaign <select id="campaignSelect"></select></label>
+  <div class="actions"><label>Campaign <select id="campaignSelect"></select></label></div>
+</section>
+
+<div class="two">
+<section class="panel">
+  <div class="panel-head"><div><div class="eyebrow">CAMPAIGN ROSTER</div><h2>Players</h2></div></div>
+  <div id="playerList"></div>
+  <div class="subpanel">
+    <h3>Add Existing Authenticated Player</h3>
+    <p class="muted">The player must sign into Confluence Character once before you can add their email.</p>
+    <div class="actions"><input id="playerEmail" type="email" placeholder="player@example.com"><button id="addPlayer" class="primary">Add Player</button></div>
   </div>
 </section>
 
 <section class="panel">
-  <h2>Characters</h2>
-  <div id="characters" class="grid"></div>
+  <div class="panel-head"><div><div class="eyebrow">CAMPAIGN ROSTER</div><h2>Characters</h2></div></div>
+  <div id="characterList"></div>
+  <div class="subpanel">
+    <h3>Create Character</h3>
+    <div class="form-grid compact">
+      <label>Name <input id="newCharacterName" placeholder="Character name"></label>
+      <label>Ancestry <input id="newCharacterAncestry" placeholder="Ancestry"></label>
+    </div>
+    <details>
+      <summary>Starting Attributes</summary>
+      <div class="attribute-entry">
+        <label>STR <input id="attrStr" type="number" value="10"></label><label>DEX <input id="attrDex" type="number" value="10"></label>
+        <label>CON <input id="attrCon" type="number" value="10"></label><label>INT <input id="attrInt" type="number" value="10"></label>
+        <label>WIS <input id="attrWis" type="number" value="10"></label><label>CHA <input id="attrCha" type="number" value="10"></label>
+      </div>
+    </details>
+    <button id="createCharacter" class="primary">Create Unclaimed Character</button>
+  </div>
 </section>
+</div>
 
 <div class="two">
 <section class="panel">
   <h2>Selected Character</h2>
   <div id="selected"><div class="muted">Select a character.</div></div>
 </section>
-
 <section class="panel">
-  <h2>GM Actions</h2>
-  <div class="card">
-    <h3>Grant / Adjust XP</h3>
-    <div class="actions">
-      <input id="xpAmount" type="number" value="20">
-      <input id="xpNote" placeholder="Reason">
-      <button class="primary" id="grantXp">Apply XP</button>
-    </div>
-  </div>
-  <div class="card">
-    <h3>Assign Essence</h3>
-    <div class="actions">
-      <select id="essenceSelect"></select>
-      <button id="assignEssence">Assign Essence</button>
-    </div>
-  </div>
-  <div class="card">
-    <h3>Assign Power</h3>
-    <div class="actions">
-      <select id="powerEssence"></select>
-      <select id="powerSelect"></select>
-      <button id="assignPower">Assign Power</button>
-    </div>
-  </div>
+  <h2>GM Character Actions</h2>
+  <div class="card"><h3>Grant / Adjust XP</h3><div class="actions"><input id="xpAmount" type="number" value="20"><input id="xpNote" placeholder="Reason"><button class="primary" id="grantXp">Apply XP</button></div></div>
+  <div class="card"><h3>Assign Essence</h3><div class="actions"><select id="essenceSelect"></select><button id="assignEssence">Assign Essence</button></div></div>
+  <div class="card"><h3>Assign Power</h3><div class="actions"><select id="powerEssence"></select><select id="powerSelect"></select><button id="assignPower">Assign Power</button></div></div>
 </section>
 </div>
 
-<section class="panel">
-  <h2>Character Powers</h2>
-  <div id="powers"></div>
-</section>
+<section class="panel"><h2>Character Powers</h2><div id="powers"></div></section>
 </div>
 
 <script>
-let selectedId=null,current=null,catalog={essences:[],powers:[],eligibility:[]},campaigns=[];
-
-function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+let campaigns=[],roster={players:[],characters:[]},selectedId=null,current=null,catalog={essences:[],powers:[],eligibility:[]};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function show(msg,bad=false){notice.textContent=msg;notice.className='status '+(bad?'bad':'good')}
 
 async function loadCatalog(){
-  const [{data:essences,error:e1},{data:powers,error:e2},{data:eligibility,error:e3}]=await Promise.all([
-    confluenceSupabase.from('essence_definitions').select('id,name').eq('is_active',true).order('name'),
-    confluenceSupabase.from('power_definitions').select('id,name,slot_index').eq('is_active',true).order('slot_index').order('name'),
-    confluenceSupabase.from('essence_power_eligibility').select('essence_id,power_id')
-  ]);
-  if(e1)throw e1;if(e2)throw e2;if(e3)throw e3;
-  catalog={essences:essences||[],powers:(powers||[]).map(p=>({...p,slot:p.slot_index})),eligibility:eligibility||[]};
-  essenceSelect.innerHTML=catalog.essences.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('');
+ const [{data:e,error:e1},{data:p,error:e2},{data:x,error:e3}]=await Promise.all([
+  confluenceSupabase.from('essence_definitions').select('id,name').eq('is_active',true).order('name'),
+  confluenceSupabase.from('power_definitions').select('id,name,slot_index').eq('is_active',true).order('slot_index').order('name'),
+  confluenceSupabase.from('essence_power_eligibility').select('essence_id,power_id')
+ ]);
+ if(e1)throw e1;if(e2)throw e2;if(e3)throw e3;
+ catalog={essences:e||[],powers:(p||[]).map(v=>({...v,slot:v.slot_index})),eligibility:x||[]};
+ essenceSelect.innerHTML=catalog.essences.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('');
 }
 
-async function loadCharacters(){
-  const campaignId=campaignSelect.value;
-  selectedId=null;current=null;
-  selected.innerHTML='<div class="muted">Select a character.</div>';
-  powers.innerHTML='';
-  if(!campaignId){characters.innerHTML='<div class="empty">No GM campaign found.</div>';return}
-  const {data,error}=await confluenceSupabase.from('characters')
-    .select('id,name,ancestry_definition_id,available_xp').eq('campaign_id',campaignId).order('name');
-  if(error)throw error;
-  characters.innerHTML=(data||[]).map(c=>`<button class="card" onclick="selectChar('${c.id}')">
-    <div class="eyebrow">${esc(c.ancestry_definition_id||'CHARACTER')}</div>
-    <h3>${esc(c.name)}</h3><div class="big">${c.available_xp} XP</div>
-  </button>`).join('')||'<div class="empty">No Characters have been created in this campaign yet.</div>';
+async function loadRoster(){
+ const cid=campaignSelect.value;if(!cid)return;
+ const {data,error}=await confluenceSupabase.rpc('gm_get_campaign_roster',{p_campaign_id:cid});if(error)throw error;
+ roster=data||{players:[],characters:[]};renderRoster();
+}
+
+function renderRoster(){
+ playerList.innerHTML=(roster.players||[]).map(p=>`<div class="row"><span><b>${esc(p.display_name||p.email)}</b><br><span class="muted">${esc(p.email||'')}</span></span><span class="pill">Player</span></div>`).join('')||'<div class="empty">No players added yet.</div>';
+ characterList.innerHTML=(roster.characters||[]).map(c=>`<button class="roster-character ${selectedId===c.id?'selected':''}" onclick="selectChar('${c.id}')">
+  <span><b>${esc(c.name)}</b><small>${esc(c.ancestry||'Ancestry not set')} · ${c.available_xp} XP</small></span>
+  <span><small>${c.owner_email?esc(c.owner_display_name||c.owner_email):'Unclaimed'}</small></span>
+ </button>`).join('')||'<div class="empty">No characters created yet.</div>';
 }
 
 async function selectChar(id){
-  selectedId=id;
-  const {data,error}=await confluenceSupabase.rpc('get_character_snapshot',{p_character_id:id});
-  if(error)throw error;
-  current=data;renderCurrent();show(`Selected ${current.name}`);
+ selectedId=id;const {data,error}=await confluenceSupabase.rpc('get_character_snapshot',{p_character_id:id});if(error)throw error;
+ current=data;renderCurrent();renderRoster();show(`Selected ${current.name}`);
 }
-
 function renderCurrent(){
-  selected.innerHTML=`<div class="eyebrow">${esc(current.ancestry)}</div>
-    <h2>${esc(current.name)}</h2><div class="big">${current.available_xp} XP</div>
-    <div class="actions"><a href="character/index.html?character=${encodeURIComponent(current.id)}" target="_blank">Open Character Sheet</a></div>
-    <h3>Essences</h3>${current.essences.map(e=>`<span class="pill">${esc(e.name)} · ${e.tier} ${e.rank}</span>`).join(' ')||'<span class="muted">None</span>'}`;
-  powerEssence.innerHTML=current.essences.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('');
-  refreshPowerOptions();
-  powers.innerHTML=current.powers.map(p=>`<div class="row"><span><b>${esc(p.name)}</b> · ${esc(p.source_essence_id)} · Slot ${p.slot}</span><span>${p.tier} ${p.rank}</span></div>`).join('')||'<div class="muted">No Powers assigned.</div>';
+ const rc=roster.characters.find(c=>c.id===current.id)||{};
+ const ownerOptions=(roster.players||[]).map(p=>`<option value="${p.user_id}" ${rc.owner_user_id===p.user_id?'selected':''}>${esc(p.display_name||p.email)}</option>`).join('');
+ selected.innerHTML=`<div class="eyebrow">${esc(current.ancestry)}</div><h2>${esc(current.name)}</h2><div class="big">${current.available_xp} XP</div>
+ <div class="actions"><a href="character/index.html?character=${encodeURIComponent(current.id)}" target="_blank">Open Character Sheet</a></div>
+ <div class="owner-editor"><label>Character Owner <select id="ownerSelect"><option value="">— Unclaimed —</option>${ownerOptions}</select></label><button id="saveOwner">Save Owner</button></div>
+ <h3>Essences</h3>${current.essences.map(e=>`<span class="pill">${esc(e.name)} · ${e.tier} ${e.rank}</span>`).join(' ')||'<span class="muted">None</span>'}`;
+ powerEssence.innerHTML=current.essences.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('');refreshPowerOptions();
+ powers.innerHTML=current.powers.map(p=>`<div class="row"><span><b>${esc(p.name)}</b> · ${esc(p.source_essence_id)} · Slot ${p.slot}</span><span>${p.tier} ${p.rank}</span></div>`).join('')||'<div class="muted">No Powers assigned.</div>';
+ document.getElementById('saveOwner').onclick=saveOwner;
 }
-
 function refreshPowerOptions(){
-  const eid=powerEssence.value;
-  const eligible=new Set(catalog.eligibility.filter(x=>x.essence_id===eid).map(x=>x.power_id));
-  powerSelect.innerHTML=catalog.powers.filter(p=>eligible.has(p.id)).map(p=>`<option value="${p.id}">Slot ${p.slot} · ${esc(p.name)}</option>`).join('');
+ const eid=powerEssence.value,eligible=new Set(catalog.eligibility.filter(x=>x.essence_id===eid).map(x=>x.power_id));
+ powerSelect.innerHTML=catalog.powers.filter(p=>eligible.has(p.id)).map(p=>`<option value="${p.id}">Slot ${p.slot} · ${esc(p.name)}</option>`).join('');
 }
-
-async function init(){
-  const session=await requireSession();
-  identity.textContent=session.user.email||'Signed in';
-  const {data,error}=await confluenceSupabase.from('campaign_members')
-    .select('campaign_id,role').eq('user_id',session.user.id).eq('role','GM');
-  if(error)throw error;
-  const ids=(data||[]).map(x=>x.campaign_id);
-  if(!ids.length)throw new Error('This account is not a GM in any Confluence campaign.');
-  const {data:campaignRows,error:cErr}=await confluenceSupabase.from('campaigns').select('id,name').in('id',ids).order('name');
-  if(cErr)throw cErr;
-  campaigns=campaignRows||[];
-  campaignSelect.innerHTML=campaigns.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
-  await loadCatalog();await loadCharacters();show('GM access verified.');
+async function saveOwner(){
+ const uid=document.getElementById('ownerSelect').value;
+ const rpc=uid?'gm_assign_character_owner':'gm_unassign_character_owner';
+ const args=uid?{p_character_id:selectedId,p_user_id:uid}:{p_character_id:selectedId};
+ const {error}=await confluenceSupabase.rpc(rpc,args);if(error)return show(error.message,true);
+ await loadRoster();await selectChar(selectedId);show(uid?'Character owner assigned.':'Character is now unclaimed.');
 }
+addPlayer.onclick=async()=>{
+ const email=playerEmail.value.trim();if(!email)return show('Enter a player email.',true);
+ const {error}=await confluenceSupabase.rpc('gm_add_player_by_email',{p_campaign_id:campaignSelect.value,p_email:email});
+ if(error)return show(error.message,true);playerEmail.value='';await loadRoster();show(`Added ${email} to the campaign.`);
+};
+createCharacter.onclick=async()=>{
+ const name=newCharacterName.value.trim();if(!name)return show('Character name is required.',true);
+ const attrs={Str:+attrStr.value||10,Dex:+attrDex.value||10,Con:+attrCon.value||10,Int:+attrInt.value||10,Wis:+attrWis.value||10,Cha:+attrCha.value||10};
+ const {data,error}=await confluenceSupabase.rpc('gm_create_character',{p_campaign_id:campaignSelect.value,p_name:name,p_ancestry:newCharacterAncestry.value.trim()||null,p_attributes:attrs});
+ if(error)return show(error.message,true);newCharacterName.value='';newCharacterAncestry.value='';await loadRoster();await selectChar(data);show(`Created ${name}.`);
+};
+grantXp.onclick=async()=>{if(!selectedId)return show('Select a character first.',true);const {error}=await confluenceSupabase.rpc('gm_grant_xp',{p_character_id:selectedId,p_amount:+xpAmount.value||0,p_note:xpNote.value||null});if(error)return show(error.message,true);await loadRoster();await selectChar(selectedId);show('XP updated.')};
+assignEssence.onclick=async()=>{if(!selectedId)return show('Select a character first.',true);const {error}=await confluenceSupabase.rpc('gm_assign_essence',{p_character_id:selectedId,p_essence_id:essenceSelect.value});if(error)return show(error.message,true);await selectChar(selectedId);show('Essence assigned.')};
+assignPower.onclick=async()=>{if(!selectedId)return show('Select a character first.',true);const {error}=await confluenceSupabase.rpc('gm_assign_power',{p_character_id:selectedId,p_essence_id:powerEssence.value,p_power_id:powerSelect.value});if(error)return show(error.message,true);await selectChar(selectedId);show('Power assigned.')};
+powerEssence.onchange=refreshPowerOptions;campaignSelect.onchange=()=>loadRoster().catch(e=>show(e.message,true));logout.onclick=signOut;
 
-campaignSelect.onchange=()=>loadCharacters().catch(e=>show(e.message,true));
-powerEssence.onchange=refreshPowerOptions;
-grantXp.onclick=async()=>{
-  if(!selectedId)return show('Select a character first.',true);
-  const {error}=await confluenceSupabase.rpc('gm_grant_xp',{p_character_id:selectedId,p_amount:Number(xpAmount.value),p_note:xpNote.value||null});
-  if(error)return show(error.message,true);await selectChar(selectedId);await loadCharacters();show('XP updated.');
-};
-assignEssence.onclick=async()=>{
-  if(!selectedId)return show('Select a character first.',true);
-  const {error}=await confluenceSupabase.rpc('gm_assign_essence',{p_character_id:selectedId,p_essence_id:essenceSelect.value});
-  if(error)return show(error.message,true);await selectChar(selectedId);show('Essence assigned.');
-};
-assignPower.onclick=async()=>{
-  if(!selectedId)return show('Select a character first.',true);
-  const {error}=await confluenceSupabase.rpc('gm_assign_power',{p_character_id:selectedId,p_essence_id:powerEssence.value,p_power_id:powerSelect.value});
-  if(error)return show(error.message,true);await selectChar(selectedId);show('Power assigned.');
-};
-logout.onclick=signOut;
-init().catch(e=>show(e.message,true));
+(async()=>{
+ try{
+  const session=await requireSession();identity.textContent=session.user.email||'Signed in';
+  const {data:members,error:mErr}=await confluenceSupabase.from('campaign_members').select('campaign_id,role').eq('user_id',session.user.id).eq('role','GM');if(mErr)throw mErr;
+  const ids=(members||[]).map(x=>x.campaign_id);if(!ids.length)throw new Error('This account is not a GM in any campaign.');
+  const {data:camps,error:cErr}=await confluenceSupabase.from('campaigns').select('id,name').in('id',ids).order('name');if(cErr)throw cErr;
+  campaigns=camps||[];campaignSelect.innerHTML=campaigns.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  await loadCatalog();await loadRoster();show('GM campaign access verified.');
+ }catch(e){show(e.message,true)}
+})();
 </script>
-</body>
-</html>
+</body></html>
