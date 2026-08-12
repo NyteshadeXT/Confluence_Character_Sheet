@@ -54,3 +54,5 @@ in this repository.
 
 A player's Auth user must exist before their Character can be linked to that account.
 Character creation/invitation administration is the next hosted workflow to finish.
+
+.
