@@ -1,0 +1,27 @@
+
+.studio-app{max-width:1500px}
+.studio-tabs{display:flex;gap:8px;margin-bottom:14px}
+.studio-tab{font-weight:800;padding:10px 14px}.studio-tab.active{background:#6d532b;border-color:#98733b}
+.studio-layout{display:grid;grid-template-columns:minmax(280px,360px) minmax(0,1fr);gap:14px}
+.library-pane{align-self:start;position:sticky;top:10px;max-height:calc(100vh - 30px);overflow:auto}
+.library-list{display:grid;gap:6px;margin-top:10px}
+.library-item{width:100%;display:flex;justify-content:space-between;gap:10px;text-align:left;padding:10px;background:#0b141d}
+.library-item span:first-child{display:flex;flex-direction:column}.library-item small,.eligibility-card small{display:block;color:var(--muted);font-size:11px}
+.library-item.selected{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.library-item.inactive,.eligibility-card.inactive{opacity:.55}
+.library-meta{font-size:11px;color:var(--muted);text-align:right;max-width:45%}
+.wide{width:100%}.filter-row{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:8px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.editor-pane label{display:flex;flex-direction:column;gap:5px;margin:10px 0}
+.editor-pane textarea,.editor-pane input,.editor-pane select{width:100%}
+.field-help{font-size:11px;color:var(--muted);font-weight:400}
+.code-field{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.45;tab-size:2}
+.checkline{flex-direction:row!important;align-items:center;gap:7px!important}.checkline input{width:auto!important}
+.checkbox-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:7px}
+.eligibility-card{display:flex!important;flex-direction:row!important;align-items:center!important;border:1px solid var(--line);border-radius:7px;padding:8px;margin:0!important;background:#0b141d}
+.eligibility-card input{width:auto!important}.eligibility-card span{display:block}
+.subpanel{border:1px solid var(--line);border-radius:9px;padding:12px;margin:12px 0;background:#0b141d}
+.advanced-json{border:1px solid var(--line);border-radius:8px;padding:9px;margin:12px 0}.advanced-json summary{cursor:pointer;font-weight:800}
+.editor-actions{margin-top:14px}
+.hidden{display:none!important}
+@media(max-width:900px){.studio-layout{grid-template-columns:1fr}.library-pane{position:static;max-height:none}.form-grid{grid-template-columns:1fr}}

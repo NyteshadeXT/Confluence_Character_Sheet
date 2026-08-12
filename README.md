@@ -6,7 +6,7 @@ This repository is intentionally separate from the `Confluence_System` Obsidian 
 
 ## Current milestone
 
-**Hosted Connected Prototype v0.4**
+**Hosted Connected Prototype v0.4.1 — GM Content Studio**
 
 The frontend is a static Vercel application backed by Supabase Auth, PostgreSQL, Row
 Level Security, and protected RPC functions.
@@ -18,7 +18,8 @@ Level Security, and protected RPC functions.
 ├── index.html                  Authenticated character portal
 ├── login.html                  Supabase magic-link login
 ├── auth-callback.html          Auth callback
-├── gm.html                     Authenticated GM dashboard
+├── gm.html                     Authenticated campaign GM dashboard
+├── content-studio.html         GM Essence & Power authoring
 ├── styles.css
 ├── supabase-config.js          Client-safe Supabase URL/publishable key
 ├── supabase-auth.js            Auth helpers
@@ -54,3 +55,11 @@ in this repository.
 
 A player's Auth user must exist before their Character can be linked to that account.
 Character creation/invitation administration is the next hosted workflow to finish.
+
+
+## v0.4.1 GM Content Studio
+
+Authenticated GMs can open `content-studio.html` to manage the hidden shared system
+library. The Studio creates/edits Essences, creates/edits Powers, manages multi-Essence
+Power eligibility, and controls active/inactive status. Campaign assignment remains in
+`gm.html`.

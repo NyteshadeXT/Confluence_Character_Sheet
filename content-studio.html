@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Confluence GM System Data Studio</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="content-studio.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="supabase-auth.js"></script>
+</head>
+<body>
+<div class="app studio-app">
+<header class="hero">
+  <div>
+    <div class="eyebrow">CONFLUENCE · GM SYSTEM DATA STUDIO v0.4.1</div>
+    <h1>Essence & Power Library</h1>
+    <div class="muted" id="identity">Checking GM access…</div>
+  </div>
+  <div class="actions">
+    <a href="index.html">Character Portal</a>
+    <a href="gm.html">Campaign Dashboard</a>
+    <button id="logout">Sign Out</button>
+  </div>
+</header>
+
+<div id="notice" class="status">Loading hidden system data…</div>
+
+<nav class="studio-tabs">
+  <button class="studio-tab active" data-tab="essences">Essence Library</button>
+  <button class="studio-tab" data-tab="powers">Power Library</button>
+</nav>
+
+<section id="essencesTab" class="studio-section">
+  <div class="studio-layout">
+    <aside class="panel library-pane">
+      <div class="panel-head">
+        <div><div class="eyebrow">MASTER DATA</div><h2>Essences</h2></div>
+        <button id="newEssence" class="primary">New Essence</button>
+      </div>
+      <input id="essenceSearch" class="wide" placeholder="Search Essences">
+      <label class="checkline"><input id="showInactiveEssences" type="checkbox" checked> Show inactive</label>
+      <div id="essenceList" class="library-list"></div>
+    </aside>
+
+    <main class="panel editor-pane">
+      <div class="panel-head">
+        <div><div class="eyebrow">ESSENCE DEFINITION</div><h2 id="essenceEditorTitle">New Essence</h2></div>
+        <span id="essenceStatus" class="pill">Unsaved</span>
+      </div>
+
+      <div class="form-grid">
+        <label>Essence ID
+          <input id="essenceId" placeholder="e.g. sound">
+          <span class="field-help">Stable lowercase identifier. Cannot be changed after creation.</span>
+        </label>
+        <label>Name
+          <input id="essenceName" placeholder="Sound">
+        </label>
+        <label>Associated Ability
+          <select id="essenceAbility">
+            <option>Strength</option><option>Dexterity</option><option>Constitution</option>
+            <option>Intelligence</option><option>Wisdom</option><option>Charisma</option>
+          </select>
+        </label>
+        <label>Starting Tier
+          <select id="essenceTier">
+            <option>Iron</option><option>Bronze</option><option>Silver</option><option>Gold</option><option>Platinum</option>
+          </select>
+        </label>
+      </div>
+
+      <label>Description
+        <textarea id="essenceDescription" rows="4" placeholder="What this Essence fundamentally represents."></textarea>
+      </label>
+
+      <label>Primary Traits
+        <input id="essenceTraits" placeholder="Sound, Resonance, Vibration, Voice">
+        <span class="field-help">Comma-separated.</span>
+      </label>
+
+      <label>Associated Scores / Thresholds (JSON)
+        <textarea id="essenceScores" rows="14" class="code-field" spellcheck="false">[]</textarea>
+        <span class="field-help">Array of threshold/tier objects. This preserves the flexible Shared Essence Model while we continue defining higher tiers.</span>
+      </label>
+
+      <details class="advanced-json">
+        <summary>Advanced Essence JSON</summary>
+        <p class="muted">Additional properties not represented above. Structured fields take precedence for id, name, tier, description, traits, scores, and associated ability.</p>
+        <textarea id="essenceExtraJson" rows="8" class="code-field" spellcheck="false">{}</textarea>
+      </details>
+
+      <label class="checkline"><input id="essenceActive" type="checkbox" checked> Active in master library</label>
+
+      <div class="actions editor-actions">
+        <button id="saveEssence" class="primary">Save Essence</button>
+        <button id="duplicateEssence">Duplicate as New</button>
+      </div>
+    </main>
+  </div>
+</section>
+
+<section id="powersTab" class="studio-section hidden">
+  <div class="studio-layout">
+    <aside class="panel library-pane">
+      <div class="panel-head">
+        <div><div class="eyebrow">MASTER DATA</div><h2>Powers</h2></div>
+        <button id="newPower" class="primary">New Power</button>
+      </div>
+      <input id="powerSearch" class="wide" placeholder="Search Powers">
+      <div class="filter-row">
+        <select id="powerSlotFilter">
+          <option value="">All Slots</option>
+          <option value="1">1 · Core</option><option value="2">2 · Utility / Passive</option>
+          <option value="3">3 · Signature Strike</option><option value="4">4 · Tactical Strike</option>
+          <option value="5">5 · Apex</option>
+        </select>
+        <label class="checkline"><input id="showInactivePowers" type="checkbox" checked> Show inactive</label>
+      </div>
+      <div id="powerList" class="library-list"></div>
+    </aside>
+
+    <main class="panel editor-pane">
+      <div class="panel-head">
+        <div><div class="eyebrow">POWER DEFINITION</div><h2 id="powerEditorTitle">New Power</h2></div>
+        <span id="powerStatus" class="pill">Unsaved</span>
+      </div>
+
+      <div class="form-grid">
+        <label>Power ID
+          <input id="powerId" placeholder="e.g. thunderwave">
+          <span class="field-help">Stable lowercase identifier.</span>
+        </label>
+        <label>Name
+          <input id="powerName" placeholder="Thunderwave">
+        </label>
+        <label>Slot
+          <select id="powerSlot">
+            <option value="1">1 · Core Concept</option>
+            <option value="2">2 · Utility / Passive</option>
+            <option value="3">3 · Signature Strike</option>
+            <option value="4">4 · Tactical Strike</option>
+            <option value="5">5 · Apex</option>
+          </select>
+        </label>
+        <label>Frequency
+          <select id="powerFrequency">
+            <option>At-Will</option><option>Passive</option><option>Resource</option><option>Daily</option><option>Special</option>
+          </select>
+        </label>
+      </div>
+
+      <section class="subpanel">
+        <div class="panel-head"><div><div class="eyebrow">ELIGIBILITY</div><h3>Eligible Essences</h3></div></div>
+        <p class="muted">A Power may belong to multiple Essences. A character still owns a Power through a specific source Essence.</p>
+        <div id="powerEligibility" class="checkbox-grid"></div>
+      </section>
+
+      <label>Power Definition JSON
+        <textarea id="powerDefinitionJson" rows="24" class="code-field" spellcheck="false">{}</textarea>
+        <span class="field-help">Full Shared Power Model data: actions, targeting, attack/hit/miss, costs, requirements, Iron rank expressions, tier expressions, and slot-specific fields. The Studio keeps id/name/slot/frequency/eligible Essences synchronized automatically.</span>
+      </label>
+
+      <label class="checkline"><input id="powerActive" type="checkbox" checked> Active in master library</label>
+
+      <div class="actions editor-actions">
+        <button id="savePower" class="primary">Save Power</button>
+        <button id="duplicatePower">Duplicate as New</button>
+      </div>
+    </main>
+  </div>
+</section>
+</div>
+
+<script src="content-studio.js"></script>
+</body>
+</html>
