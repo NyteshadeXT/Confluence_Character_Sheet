@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Confluence Character Hosted Connected Prototype v0.4.4.1</title>
+<title>Confluence Character Hosted Connected Prototype v0.4.5</title>
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../supabase-config.js"></script><script src="../supabase-auth.js"></script></head>
 <body>
 <div class="app">
 <header class="hero">
   <div>
-    <div class="eyebrow">CONFLUENCE SYSTEM · HOSTED PLAYER v0.4.4.1</div>
-    <h1 id="characterName">Skarr</h1>
+    <div class="eyebrow">CONFLUENCE SYSTEM · HOSTED PLAYER v0.4.5</div>
+    <h1 id="characterName">Loading Character…</h1>
     <div class="subtitle" id="profileLine"></div>
   </div>
   <div class="hero-actions">
@@ -25,7 +25,7 @@
 
 <div id="gmReadOnlyBanner" class="gm-readonly-banner hidden"><b>GM READ-ONLY VIEW</b><span>You can inspect this character exactly as the player sees it. Character changes remain under player control; XP, Essence, and Power assignment belong in the GM Dashboard.</span></div>
 <section id="characterLoadError" class="panel load-error hidden"><div class="eyebrow">CHARACTER LOAD ERROR</div><h2>Unable to Load Character</h2><p id="characterLoadErrorMessage"></p><a href="../index.html">Return to Character Portal</a></section>
-<main>
+<main class="hidden" id="characterMain">
 <section id="normalMode">
   <div id="resourceGrid" class="resource-grid"></div>
   <section id="restPanel" class="panel"></section>

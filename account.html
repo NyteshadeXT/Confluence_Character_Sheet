@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Confluence Account Security</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="supabase-auth.js"></script>
+</head>
+<body>
+<div class="app">
+<header class="hero">
+  <div>
+    <div class="eyebrow">CONFLUENCE CHARACTER · ACCOUNT SECURITY v0.4.5</div>
+    <h1>Account Security</h1>
+    <div class="muted" id="identity">Checking authentication…</div>
+  </div>
+  <div class="actions"><a href="index.html">Character Portal</a><button id="logout">Sign Out</button></div>
+</header>
+
+<section class="panel auth-card">
+  <div class="eyebrow">PASSWORD ACCESS</div>
+  <h2>Set or Change Password</h2>
+  <p>Setting a password lets you sign in without requesting a new email each time. Magic-link login remains available.</p>
+  <label>New Password
+    <input id="newPassword" type="password" autocomplete="new-password" placeholder="New password">
+  </label>
+  <label>Confirm Password
+    <input id="confirmPassword" type="password" autocomplete="new-password" placeholder="Confirm password">
+  </label>
+  <div class="actions"><button id="savePassword" class="primary">Save Password</button></div>
+  <div id="notice" class="status">Choose a password you do not reuse elsewhere.</div>
+</section>
+
+<section class="panel">
+  <div class="eyebrow">TESTING TIP</div>
+  <h2>Separate Browser Sessions</h2>
+  <p class="muted">For GM/player testing, keep the GM account signed in in one browser profile and a dedicated test-player account signed in in a second profile or private browser window.</p>
+</section>
+</div>
+<script>
+(async()=>{
+  try{
+    const session=await requireSession();
+    identity.textContent=session.user.email||'Signed in';
+  }catch(e){
+    notice.textContent=e.message;
+    notice.className='status bad';
+  }
+})();
+savePassword.onclick=async()=>{
+  const p=newPassword.value,c=confirmPassword.value;
+  if(p.length<8){notice.textContent='Use a password of at least 8 characters.';notice.className='status bad';return}
+  if(p!==c){notice.textContent='Passwords do not match.';notice.className='status bad';return}
+  savePassword.disabled=true;
+  notice.textContent='Saving password…';notice.className='status';
+  const {error}=await confluenceSupabase.auth.updateUser({password:p});
+  savePassword.disabled=false;
+  if(error){notice.textContent=error.message;notice.className='status bad';return}
+  newPassword.value='';confirmPassword.value='';
+  notice.textContent='Password saved. You can now use Password sign-in from this browser or another device.';
+  notice.className='status good';
+};
+logout.onclick=signOut;
+</script>
+</body>
+</html>

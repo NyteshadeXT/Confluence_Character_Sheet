@@ -1,1 +1,99 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Confluence Character Login</title><link rel="stylesheet" href="styles.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script></head><body><div class="app"><section class="panel" style="max-width:520px;margin:10vh auto"><div class="eyebrow">CONFLUENCE CHARACTER</div><h1>Sign in</h1><p class="muted">Enter your email and we'll send you a secure magic link.</p><div class="actions"><input id="email" type="email" placeholder="you@example.com" style="flex:1"><button id="send" class="primary">Send Magic Link</button></div><div id="notice" class="status">Authentication is handled by Supabase.</div></section></div><script>const client=supabase.createClient(window.CONFLUENCE_SUPABASE.url,window.CONFLUENCE_SUPABASE.publishableKey);const next=new URLSearchParams(location.search).get('next')||'/';send.onclick=async()=>{const {error}=await client.auth.signInWithOtp({email:email.value,options:{emailRedirectTo:location.origin+'/auth-callback.html?next='+encodeURIComponent(next)}});notice.textContent=error?error.message:'Magic link sent. Check your email.'}</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Confluence Character Login</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+</head>
+<body>
+<div class="app auth-shell">
+<section class="panel auth-card">
+  <div class="eyebrow">CONFLUENCE CHARACTER · v0.4.5</div>
+  <h1>Sign in</h1>
+  <p class="muted">Use a password for routine access or a magic link when you need passwordless sign-in.</p>
+
+  <div class="auth-tabs">
+    <button class="auth-tab active" data-auth-tab="password">Password</button>
+    <button class="auth-tab" data-auth-tab="magic">Magic Link</button>
+  </div>
+
+  <section id="passwordPanel" class="auth-panel">
+    <label>Email
+      <input id="passwordEmail" type="email" autocomplete="username" placeholder="you@example.com">
+    </label>
+    <label>Password
+      <input id="password" type="password" autocomplete="current-password" placeholder="Password">
+    </label>
+    <button id="passwordSignIn" class="primary wide">Sign In</button>
+    <p class="field-help">Already using magic links? Sign in once with a magic link, then use <b>Account Security</b> in the Character Portal to set a password.</p>
+  </section>
+
+  <section id="magicPanel" class="auth-panel hidden">
+    <label>Email
+      <input id="magicEmail" type="email" autocomplete="email" placeholder="you@example.com">
+    </label>
+    <button id="sendMagic" class="primary wide">Send Magic Link</button>
+    <p class="field-help">Magic links send email and are subject to Supabase email rate limits. They are best used for first-time setup or recovery.</p>
+  </section>
+
+  <div id="notice" class="status">Your browser keeps the Supabase session so you normally stay signed in.</div>
+</section>
+</div>
+
+<script>
+const client=supabase.createClient(
+  window.CONFLUENCE_SUPABASE.url,
+  window.CONFLUENCE_SUPABASE.publishableKey,
+  {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}
+);
+const next=new URLSearchParams(location.search).get('next')||'/';
+
+function show(message,bad=false){
+  notice.textContent=message;
+  notice.className='status '+(bad?'bad':'good');
+}
+function setTab(tab){
+  document.querySelectorAll('.auth-tab').forEach(b=>b.classList.toggle('active',b.dataset.authTab===tab));
+  passwordPanel.classList.toggle('hidden',tab!=='password');
+  magicPanel.classList.toggle('hidden',tab!=='magic');
+}
+document.querySelectorAll('.auth-tab').forEach(b=>b.onclick=()=>setTab(b.dataset.authTab));
+
+passwordSignIn.onclick=async()=>{
+  const email=passwordEmail.value.trim(),pwd=password.value;
+  if(!email||!pwd)return show('Enter both email and password.',true);
+  passwordSignIn.disabled=true;
+  show('Signing in…');
+  const {data,error}=await client.auth.signInWithPassword({email,password:pwd});
+  passwordSignIn.disabled=false;
+  if(error)return show(error.message,true);
+  if(!data.session)return show('Sign-in did not create a session.',true);
+  location.href=next;
+};
+
+sendMagic.onclick=async()=>{
+  const email=magicEmail.value.trim();
+  if(!email)return show('Enter your email address.',true);
+  sendMagic.disabled=true;
+  show('Requesting magic link…');
+  const {error}=await client.auth.signInWithOtp({
+    email,
+    options:{
+      emailRedirectTo:location.origin+'/auth-callback.html?next='+encodeURIComponent(next),
+      shouldCreateUser:true
+    }
+  });
+  sendMagic.disabled=false;
+  show(error?error.message:'Magic link sent. Check your email.',!!error);
+};
+
+(async()=>{
+  const {data:{session}}=await client.auth.getSession();
+  if(session)location.href=next;
+})();
+</script>
+</body>
+</html>

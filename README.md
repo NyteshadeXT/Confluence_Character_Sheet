@@ -6,7 +6,7 @@ This repository is intentionally separate from the `Confluence_System` Obsidian 
 
 ## Current milestone
 
-**Hosted Connected Prototype v0.4.4.1 — Player Character Creation**
+**Hosted Connected Prototype v0.4.5 — Authentication & Test Player Support**
 
 The frontend is a static Vercel application backed by Supabase Auth, PostgreSQL, Row
 Level Security, and protected RPC functions.
@@ -72,13 +72,21 @@ Character creation, Character ownership assignment, and read-only access to ever
 Character Sheet in the campaign.
 
 
-## v0.4.4.1 Player Character Creation
+## v0.4.4.2 Player Character Creation
 Campaign Players can now create their own Characters from the authenticated portal after GM campaign membership is established. The GM-created/unclaimed Character path remains available.
 
 
-## v0.4.4.1
+## v0.4.4.2
 Adds Ancestry master data, validated ancestry selection, reliable blank character loading, explicit character selection, and GM character deletion.
 
 
-## v0.4.4.1
+## v0.4.4.2
 Fixes literal `\\n` text appearing in the GM System Data Studio. No database migration is required.
+
+
+## v0.4.4.2
+Removes the last static Skarr pre-load label and makes stale/deleted character URLs fail cleanly without rendering a character sheet.
+
+
+## v0.4.5 Authentication & Test Player Support
+Adds persistent password sign-in alongside magic links and an authenticated Account Security page for setting/changing a password. No database schema migration is required.

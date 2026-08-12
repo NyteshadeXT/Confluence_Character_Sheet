@@ -25,3 +25,12 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;bord
 @media(max-width:750px){.campaign-card{grid-column:span 1}.form-grid.compact{grid-template-columns:1fr}.attribute-entry{grid-template-columns:repeat(3,1fr)}}
 
 button.danger{background:#4a1f24;border-color:#8b4545;color:#ffd9d9}.portal-character-list .row a{white-space:nowrap}
+
+.auth-shell{min-height:100vh;display:grid;place-items:center}
+.auth-card{width:min(520px,100%);margin:0 auto}
+.auth-card label{display:flex;flex-direction:column;gap:5px;margin:11px 0}
+.auth-card input{width:100%}
+.auth-tabs{display:flex;gap:7px;margin:16px 0}
+.auth-tab{flex:1;font-weight:800}.auth-tab.active{background:#6d532b;border-color:#98733b}
+.auth-panel .wide{width:100%;margin-top:6px}
+.field-help{font-size:12px;color:var(--muted)}

@@ -144,6 +144,7 @@ async function syncStateToBackend(){
  }finally{CONNECTED_BACKEND.syncing=false}
 }
 function applyAccessMode(){
+ if(!CONNECTED_BACKEND.connected)return;
  const banner=document.getElementById('gmReadOnlyBanner');
  if(banner)banner.classList.toggle('hidden',!CONNECTED_BACKEND.readOnly);
  document.body.classList.toggle('gm-readonly',CONNECTED_BACKEND.readOnly);
@@ -1305,19 +1306,65 @@ document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>
 document.getElementById('conditionSelect')?.addEventListener('change',renderConditionControls);
 document.getElementById('characterImportFile')?.addEventListener('change',e=>{const f=e.target.files?.[0];if(f)importCharacterFile(f);e.target.value=''});
 async function bootstrapConnectedCharacter(){
- const fail=(message)=>{CONNECTED_BACKEND.connected=false;document.getElementById('characterLoadError')?.classList.remove('hidden');document.getElementById('characterLoadErrorMessage').textContent=message;document.querySelector('main')?.classList.add('hidden');document.getElementById('saveState').textContent='Character failed to load';toast(message)};
- if(!CONNECTED_BACKEND.characterId){fail('No Character was selected. Return to the Character Portal and choose a Character.');return}
+ const main=document.getElementById('characterMain')||document.querySelector('main');
+ const errorPanel=document.getElementById('characterLoadError');
+ const errorMessage=document.getElementById('characterLoadErrorMessage');
+ const banner=document.getElementById('gmReadOnlyBanner');
+ const title=document.getElementById('characterName');
+ const saveState=document.getElementById('saveState');
+
+ const fail=(message)=>{
+   CONNECTED_BACKEND.connected=false;
+   CONNECTED_BACKEND.readOnly=false;
+   CONNECTED_BACKEND.isOwner=false;
+   CONNECTED_BACKEND.isGm=false;
+   if(title)title.textContent='Character Unavailable';
+   if(banner)banner.classList.add('hidden');
+   if(main)main.classList.add('hidden');
+   if(errorPanel)errorPanel.classList.remove('hidden');
+   if(errorMessage)errorMessage.textContent=message;
+   if(saveState)saveState.textContent='Character failed to load';
+ };
+
+ if(title)title.textContent='Loading Character…';
+ if(main)main.classList.add('hidden');
+ if(errorPanel)errorPanel.classList.add('hidden');
+ if(banner)banner.classList.add('hidden');
+
+ if(!CONNECTED_BACKEND.characterId){
+   fail('No Character was selected. Return to the Character Portal and choose a Character.');
+   return;
+ }
+
  try{
    const session=await requireSession();
    const data=await backendRequest('snapshot');
-   if(!data?.id)throw new Error('The backend returned no Character record.');
+   if(!data?.id)throw new Error('Character not found. It may have been deleted.');
+
    CONNECTED_BACKEND.isOwner=String(data.player_user_id||'')===String(session.user.id);
    const {data:isGm,error:gmErr}=await confluenceSupabase.rpc('is_campaign_gm',{target_campaign:data.campaign_id});
-   if(gmErr)throw gmErr;CONNECTED_BACKEND.isGm=!!isGm;
-   if(!CONNECTED_BACKEND.isOwner&&!CONNECTED_BACKEND.isGm)throw new Error('You do not have access to this Character.');
+   if(gmErr)throw gmErr;
+   CONNECTED_BACKEND.isGm=!!isGm;
+
+   if(!CONNECTED_BACKEND.isOwner&&!CONNECTED_BACKEND.isGm){
+     throw new Error('You do not have access to this Character.');
+   }
+
    CONNECTED_BACKEND.readOnly=!CONNECTED_BACKEND.isOwner;
-   state=stateFromBackend(data);CONNECTED_BACKEND.connected=true;document.getElementById('characterLoadError')?.classList.add('hidden');document.querySelector('main')?.classList.remove('hidden');render();
-   document.getElementById('saveState').textContent=CONNECTED_BACKEND.readOnly?'GM read-only view':'Connected · saved to backend';
- }catch(err){fail(`Character failed to load: ${err.message}`)}
+   state=stateFromBackend(data);
+   CONNECTED_BACKEND.connected=true;
+
+   if(errorPanel)errorPanel.classList.add('hidden');
+   if(main)main.classList.remove('hidden');
+   render();
+
+   if(saveState)saveState.textContent=CONNECTED_BACKEND.readOnly?'GM read-only view':'Connected · saved to backend';
+ }catch(err){
+   const raw=String(err?.message||err||'Unknown error');
+   const friendly=/Character not found/i.test(raw)
+     ? 'This Character no longer exists. Return to the Character Portal and choose one of your current Characters.'
+     : `Character failed to load: ${raw}`;
+   fail(friendly);
+ }
 }
 bootstrapConnectedCharacter();
