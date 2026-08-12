@@ -1,0 +1,4 @@
+-- Hosted Connected Prototype v0.4.3 — Player Character Creation
+-- Applied live to the Confluence Character Supabase project.
+-- Protected RPC: player_create_character(uuid,text,text,jsonb)
+-- Requires authenticated PLAYER membership in the target campaign and assigns auth.uid() as OWNER.

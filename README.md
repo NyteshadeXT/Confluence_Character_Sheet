@@ -6,7 +6,7 @@ This repository is intentionally separate from the `Confluence_System` Obsidian 
 
 ## Current milestone
 
-**Hosted Connected Prototype v0.4.2 — Campaign Roster & GM Character Access**
+**Hosted Connected Prototype v0.4.3 — Player Character Creation**
 
 The frontend is a static Vercel application backed by Supabase Auth, PostgreSQL, Row
 Level Security, and protected RPC functions.
@@ -70,3 +70,7 @@ Power eligibility, and controls active/inactive status. Campaign assignment rema
 The GM Dashboard now supports player onboarding after first authentication, unclaimed
 Character creation, Character ownership assignment, and read-only access to every
 Character Sheet in the campaign.
+
+
+## v0.4.3 Player Character Creation
+Campaign Players can now create their own Characters from the authenticated portal after GM campaign membership is established. The GM-created/unclaimed Character path remains available.

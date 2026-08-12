@@ -13,7 +13,7 @@
 <div class="app">
 <header class="hero">
   <div>
-    <div class="eyebrow">CONFLUENCE CHARACTER · HOSTED PROTOTYPE v0.4.2</div>
+    <div class="eyebrow">CONFLUENCE CHARACTER · HOSTED PROTOTYPE v0.4.3</div>
     <h1>Character Portal</h1>
     <div class="muted" id="identity">Checking authentication…</div>
   </div>
@@ -29,65 +29,45 @@
 </div>
 
 <script>
-(async()=>{
-  try{
-    const session=await requireSession();
-    identity.textContent=session.user.email||'Signed in';
-    const uid=session.user.id;
-
-    const {data:memberships,error:mErr}=await confluenceSupabase
-      .from('campaign_members').select('campaign_id,role').eq('user_id',uid);
-    if(mErr) throw mErr;
-
-    const {data:owned,error:oErr}=await confluenceSupabase
-      .from('character_users').select('character_id,access_role').eq('user_id',uid);
-    if(oErr) throw oErr;
-
-    const characterIds=(owned||[]).map(x=>x.character_id);
-    let characters=[];
-    if(characterIds.length){
-      const {data,error}=await confluenceSupabase.from('characters')
-        .select('id,campaign_id,name,ancestry_definition_id,available_xp')
-        .in('id',characterIds).order('name');
-      if(error) throw error;
-      characters=data||[];
-    }
-
-    const gmCampaigns=(memberships||[]).filter(x=>x.role==='GM').map(x=>x.campaign_id);
-    const cards=[];
-
-    if(gmCampaigns.length){
-      cards.push(`<article class="card">
-        <div class="eyebrow">GAME MASTER</div>
-        <h3>GM Dashboard</h3>
-        <p>Manage campaigns and author the hidden Confluence Essence/Power library.</p>
-        <div class="actions"><a href="gm.html">Campaign Dashboard</a><a href="content-studio.html">System Data Studio</a></div>
-      </article>`);
-    }
-
-    for(const c of characters){
-      cards.push(`<article class="card">
-        <div class="eyebrow">${esc(c.ancestry_definition_id||'CHARACTER')}</div>
-        <h3>${esc(c.name)}</h3>
-        <div class="big">${Number(c.available_xp)||0} XP</div>
-        <p class="muted">Your character record</p>
-        <a href="character/index.html?character=${encodeURIComponent(c.id)}">Open Character</a>
-      </article>`);
-    }
-
-    content.innerHTML=cards.join('')||`<div class="empty">
-      Your account is authenticated, but no Campaign or Character has been assigned yet.
-      A GM must link your account to a campaign/character.
-    </div>`;
-    notice.textContent='Connected to Confluence Character.';
-    notice.className='status good';
-  }catch(err){
-    notice.textContent=err.message||String(err);
-    notice.className='status bad';
-  }
-})();
-logout.onclick=signOut;
+let portalSession=null,portalMemberships=[],portalCampaigns=[],portalCharacters=[];
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function showPortal(msg,bad=false){notice.textContent=msg;notice.className='status '+(bad?'bad':'good')}
+async function loadPortal(){
+ portalSession=await requireSession(); identity.textContent=portalSession.user.email||'Signed in'; const uid=portalSession.user.id;
+ const {data:memberships,error:mErr}=await confluenceSupabase.from('campaign_members').select('campaign_id,role').eq('user_id',uid); if(mErr)throw mErr; portalMemberships=memberships||[];
+ const campaignIds=[...new Set(portalMemberships.map(x=>x.campaign_id))];
+ if(campaignIds.length){const {data,error}=await confluenceSupabase.from('campaigns').select('id,name').in('id',campaignIds).order('name');if(error)throw error;portalCampaigns=data||[]}else portalCampaigns=[];
+ const {data:owned,error:oErr}=await confluenceSupabase.from('character_users').select('character_id,access_role').eq('user_id',uid).eq('access_role','OWNER');if(oErr)throw oErr;
+ const ids=(owned||[]).map(x=>x.character_id);
+ if(ids.length){const {data,error}=await confluenceSupabase.from('characters').select('id,campaign_id,name,ancestry_definition_id,available_xp').in('id',ids).order('name');if(error)throw error;portalCharacters=data||[]}else portalCharacters=[];
+ renderPortal(); showPortal('Connected to Confluence Character.');
+}
+function renderPortal(){
+ const cards=[]; const gm=portalMemberships.filter(x=>x.role==='GM');
+ if(gm.length)cards.push(`<article class="card"><div class="eyebrow">GAME MASTER</div><h3>GM Tools</h3><p>Manage campaigns and hidden Confluence system data.</p><div class="actions"><a href="gm.html">Campaign Dashboard</a><a href="content-studio.html">System Data Studio</a></div></article>`);
+ for(const m of portalMemberships.filter(x=>x.role==='PLAYER')){
+  const c=portalCampaigns.find(x=>x.id===m.campaign_id), chars=portalCharacters.filter(x=>x.campaign_id===m.campaign_id);
+  cards.push(`<article class="card campaign-card"><div class="eyebrow">PLAYER · ${esc(c?.name||'Campaign')}</div><h3>Your Characters</h3>
+  <div>${chars.map(ch=>`<div class="row"><span><b>${esc(ch.name)}</b><br><span class="muted">${esc(ch.ancestry_definition_id||'Ancestry not set')} · ${ch.available_xp||0} XP</span></span><a href="character/index.html?character=${encodeURIComponent(ch.id)}">Open Character</a></div>`).join('')||'<div class="empty">You do not currently own a Character in this campaign.</div>'}</div>
+  <details class="create-character"><summary>Create Character</summary><p class="muted">Create a new character that automatically belongs to you. Your GM can also create and assign a Character from the Campaign Dashboard.</p>
+  <div class="form-grid compact"><label>Name <input data-new-name="${m.campaign_id}" placeholder="Character name"></label><label>Ancestry <input data-new-ancestry="${m.campaign_id}" placeholder="Ancestry"></label></div>
+  <details><summary>Starting Attributes</summary><div class="attribute-entry">${['Str','Dex','Con','Int','Wis','Cha'].map(k=>`<label>${k.toUpperCase()} <input data-new-attr="${m.campaign_id}|${k}" type="number" value="10"></label>`).join('')}</div></details>
+  <button class="primary" data-create-character="${m.campaign_id}">Create My Character</button></details></article>`);
+ }
+ content.innerHTML=cards.join('')||'<div class="empty">Your account is authenticated, but you do not currently belong to a Confluence campaign. A GM must add your authenticated email first.</div>';
+}
+async function createMyCharacter(campaignId){
+ const name=document.querySelector(`[data-new-name="${CSS.escape(campaignId)}"]`)?.value?.trim(), ancestry=document.querySelector(`[data-new-ancestry="${CSS.escape(campaignId)}"]`)?.value?.trim()||null;
+ if(!name)return showPortal('Character name is required.',true);
+ const attrs={}; for(const k of ['Str','Dex','Con','Int','Wis','Cha'])attrs[k]=Number(document.querySelector(`[data-new-attr="${CSS.escape(campaignId+'|'+k)}"]`)?.value)||10;
+ showPortal(`Creating ${name}…`);
+ const {data,error}=await confluenceSupabase.rpc('player_create_character',{p_campaign_id:campaignId,p_name:name,p_ancestry:ancestry,p_attributes:attrs});
+ if(error)return showPortal(error.message,true);
+ await loadPortal(); showPortal(`${name} created and assigned to your account.`);
+ location.href=`character/index.html?character=${encodeURIComponent(data)}`;
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-create-character]');if(b)createMyCharacter(b.dataset.createCharacter).catch(err=>showPortal(err.message,true))});
+logout.onclick=signOut; loadPortal().catch(err=>showPortal(err.message||String(err),true));
 </script>
 </body>
 </html>
