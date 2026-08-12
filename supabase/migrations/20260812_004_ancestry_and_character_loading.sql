@@ -1,0 +1,1 @@
+-- v0.4.4 applied live: ancestry_definitions master data; validated player/GM character creation; ancestry-aware snapshots; GM delete character RPC.

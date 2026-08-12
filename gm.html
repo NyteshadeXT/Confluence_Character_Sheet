@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Confluence GM Dashboard v0.4.3</title>
+<title>Confluence GM Dashboard v0.4.4</title>
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
@@ -12,7 +12,7 @@
 <body>
 <div class="app">
 <header class="hero">
-  <div><div class="eyebrow">CONFLUENCE · GM CAMPAIGN DASHBOARD v0.4.3</div><h1>Campaign Management</h1><div class="muted" id="identity">Checking authentication…</div></div>
+  <div><div class="eyebrow">CONFLUENCE · GM CAMPAIGN DASHBOARD v0.4.4</div><h1>Campaign Management</h1><div class="muted" id="identity">Checking authentication…</div></div>
   <div class="actions"><a href="index.html">Character Portal</a><a href="content-studio.html">System Data Studio</a><button id="logout">Sign Out</button></div>
 </header>
 
@@ -40,7 +40,7 @@
     <h3>Create Character</h3>
     <div class="form-grid compact">
       <label>Name <input id="newCharacterName" placeholder="Character name"></label>
-      <label>Ancestry <input id="newCharacterAncestry" placeholder="Ancestry"></label>
+      <label>Ancestry <select id="newCharacterAncestry"><option value="">— Select Ancestry —</option></select></label>
     </div>
     <details>
       <summary>Starting Attributes</summary>
@@ -72,19 +72,21 @@
 </div>
 
 <script>
-let campaigns=[],roster={players:[],characters:[]},selectedId=null,current=null,catalog={essences:[],powers:[],eligibility:[]};
+let campaigns=[],roster={players:[],characters:[]},selectedId=null,current=null,catalog={essences:[],powers:[],eligibility:[],ancestries:[]};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function show(msg,bad=false){notice.textContent=msg;notice.className='status '+(bad?'bad':'good')}
 
 async function loadCatalog(){
- const [{data:e,error:e1},{data:p,error:e2},{data:x,error:e3}]=await Promise.all([
+ const [{data:e,error:e1},{data:p,error:e2},{data:x,error:e3},{data:a,error:e4}]=await Promise.all([
   confluenceSupabase.from('essence_definitions').select('id,name').eq('is_active',true).order('name'),
   confluenceSupabase.from('power_definitions').select('id,name,slot_index').eq('is_active',true).order('slot_index').order('name'),
-  confluenceSupabase.from('essence_power_eligibility').select('essence_id,power_id')
+  confluenceSupabase.from('essence_power_eligibility').select('essence_id,power_id'),
+  confluenceSupabase.from('ancestry_definitions').select('id,name').eq('is_active',true).order('name')
  ]);
- if(e1)throw e1;if(e2)throw e2;if(e3)throw e3;
- catalog={essences:e||[],powers:(p||[]).map(v=>({...v,slot:v.slot_index})),eligibility:x||[]};
+ if(e1)throw e1;if(e2)throw e2;if(e3)throw e3;if(e4)throw e4;
+ catalog={essences:e||[],powers:(p||[]).map(v=>({...v,slot:v.slot_index})),eligibility:x||[],ancestries:a||[]};
  essenceSelect.innerHTML=catalog.essences.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('');
+ newCharacterAncestry.innerHTML='<option value="">— Select Ancestry —</option>'+catalog.ancestries.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
 }
 
 async function loadRoster(){
@@ -109,12 +111,12 @@ function renderCurrent(){
  const rc=roster.characters.find(c=>c.id===current.id)||{};
  const ownerOptions=(roster.players||[]).map(p=>`<option value="${p.user_id}" ${rc.owner_user_id===p.user_id?'selected':''}>${esc(p.display_name||p.email)}</option>`).join('');
  selected.innerHTML=`<div class="eyebrow">${esc(current.ancestry)}</div><h2>${esc(current.name)}</h2><div class="big">${current.available_xp} XP</div>
- <div class="actions"><a href="character/index.html?character=${encodeURIComponent(current.id)}" target="_blank">Open Character Sheet</a></div>
+ <div class="actions"><a href="character/index.html?character=${encodeURIComponent(current.id)}" target="_blank">Open Character Sheet</a><button id="deleteCharacter" class="danger">Delete Character</button></div>
  <div class="owner-editor"><label>Character Owner <select id="ownerSelect"><option value="">— Unclaimed —</option>${ownerOptions}</select></label><button id="saveOwner">Save Owner</button></div>
  <h3>Essences</h3>${current.essences.map(e=>`<span class="pill">${esc(e.name)} · ${e.tier} ${e.rank}</span>`).join(' ')||'<span class="muted">None</span>'}`;
  powerEssence.innerHTML=current.essences.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('');refreshPowerOptions();
  powers.innerHTML=current.powers.map(p=>`<div class="row"><span><b>${esc(p.name)}</b> · ${esc(p.source_essence_id)} · Slot ${p.slot}</span><span>${p.tier} ${p.rank}</span></div>`).join('')||'<div class="muted">No Powers assigned.</div>';
- document.getElementById('saveOwner').onclick=saveOwner;
+ document.getElementById('saveOwner').onclick=saveOwner;document.getElementById('deleteCharacter').onclick=deleteSelectedCharacter;
 }
 function refreshPowerOptions(){
  const eid=powerEssence.value,eligible=new Set(catalog.eligibility.filter(x=>x.essence_id===eid).map(x=>x.power_id));
@@ -127,6 +129,14 @@ async function saveOwner(){
  const {error}=await confluenceSupabase.rpc(rpc,args);if(error)return show(error.message,true);
  await loadRoster();await selectChar(selectedId);show(uid?'Character owner assigned.':'Character is now unclaimed.');
 }
+async function deleteSelectedCharacter(){
+ if(!selectedId||!current)return;
+ const typed=prompt(`Delete ${current.name}? This permanently removes the character and all of its owned Essences, Powers, XP history, runtime state, and ownership.\n\nType the character name exactly to confirm:`);
+ if(typed!==current.name)return show('Character deletion cancelled.',true);
+ const {error}=await confluenceSupabase.rpc('gm_delete_character',{p_character_id:selectedId});
+ if(error)return show(error.message,true);
+ const deleted=current.name;selectedId=null;current=null;selected.innerHTML='<div class="muted">Select a character.</div>';powers.innerHTML='';await loadRoster();show(`${deleted} deleted.`);
+}
 addPlayer.onclick=async()=>{
  const email=playerEmail.value.trim();if(!email)return show('Enter a player email.',true);
  const {error}=await confluenceSupabase.rpc('gm_add_player_by_email',{p_campaign_id:campaignSelect.value,p_email:email});
@@ -135,7 +145,7 @@ addPlayer.onclick=async()=>{
 createCharacter.onclick=async()=>{
  const name=newCharacterName.value.trim();if(!name)return show('Character name is required.',true);
  const attrs={Str:+attrStr.value||10,Dex:+attrDex.value||10,Con:+attrCon.value||10,Int:+attrInt.value||10,Wis:+attrWis.value||10,Cha:+attrCha.value||10};
- const {data,error}=await confluenceSupabase.rpc('gm_create_character',{p_campaign_id:campaignSelect.value,p_name:name,p_ancestry:newCharacterAncestry.value.trim()||null,p_attributes:attrs});
+ const {data,error}=await confluenceSupabase.rpc('gm_create_character',{p_campaign_id:campaignSelect.value,p_name:name,p_ancestry:newCharacterAncestry.value||null,p_attributes:attrs});
  if(error)return show(error.message,true);newCharacterName.value='';newCharacterAncestry.value='';await loadRoster();await selectChar(data);show(`Created ${name}.`);
 };
 grantXp.onclick=async()=>{if(!selectedId)return show('Select a character first.',true);const {error}=await confluenceSupabase.rpc('gm_grant_xp',{p_character_id:selectedId,p_amount:+xpAmount.value||0,p_note:xpNote.value||null});if(error)return show(error.message,true);await loadRoster();await selectChar(selectedId);show('XP updated.')};

@@ -14,8 +14,8 @@
 <div class="app studio-app">
 <header class="hero">
   <div>
-    <div class="eyebrow">CONFLUENCE · GM SYSTEM DATA STUDIO v0.4.1</div>
-    <h1>Essence & Power Library</h1>
+    <div class="eyebrow">CONFLUENCE · GM SYSTEM DATA STUDIO v0.4.4</div>
+    <h1>System Data Library</h1>
     <div class="muted" id="identity">Checking GM access…</div>
   </div>
   <div class="actions">
@@ -28,11 +28,12 @@
 <div id="notice" class="status">Loading hidden system data…</div>
 
 <nav class="studio-tabs">
-  <button class="studio-tab active" data-tab="essences">Essence Library</button>
+  <button class="studio-tab active" data-tab="ancestries">Ancestry Library</button>
+  <button class="studio-tab" data-tab="essences">Essence Library</button>
   <button class="studio-tab" data-tab="powers">Power Library</button>
 </nav>
 
-<section id="essencesTab" class="studio-section">
+\n<section id="ancestriesTab" class="studio-section">\n  <div class="studio-layout">\n    <aside class="panel library-pane">\n      <div class="panel-head"><div><div class="eyebrow">MASTER DATA</div><h2>Ancestries</h2></div><button id="newAncestry" class="primary">New Ancestry</button></div>\n      <input id="ancestrySearch" class="wide" placeholder="Search Ancestries">\n      <label class="checkline"><input id="showInactiveAncestries" type="checkbox" checked> Show inactive</label>\n      <div id="ancestryList" class="library-list"></div>\n    </aside>\n    <main class="panel editor-pane">\n      <div class="panel-head"><div><div class="eyebrow">ANCESTRY DEFINITION</div><h2 id="ancestryEditorTitle">New Ancestry</h2></div><span id="ancestryStatus" class="pill">Unsaved</span></div>\n      <div class="form-grid"><label>Ancestry ID <input id="ancestryId" placeholder="e.g. leonid"><span class="field-help">Stable lowercase identifier.</span></label><label>Name <input id="ancestryName" placeholder="Leonid"></label></div>\n      <label>Description <textarea id="ancestryDescription" rows="4"></textarea></label>\n      <section class="subpanel"><div class="eyebrow">ATTRIBUTE MODIFIERS</div><div class="attribute-entry">\n        <label>STR <input id="ancestryStr" type="number" value="0"></label><label>DEX <input id="ancestryDex" type="number" value="0"></label><label>CON <input id="ancestryCon" type="number" value="0"></label><label>INT <input id="ancestryInt" type="number" value="0"></label><label>WIS <input id="ancestryWis" type="number" value="0"></label><label>CHA <input id="ancestryCha" type="number" value="0"></label>\n      </div></section>\n      <section class="subpanel"><div class="eyebrow">BASE RESOURCE CONTRIBUTION</div><div class="attribute-entry four">\n        <label>HP <input id="ancestryHp" type="number" value="0"></label><label>Mana <input id="ancestryMana" type="number" value="0"></label><label>Stamina <input id="ancestryStamina" type="number" value="0"></label><label>Surges <input id="ancestrySurges" type="number" value="0"></label>\n      </div></section>\n      <details class="advanced-json"><summary>Advanced Ancestry JSON</summary><textarea id="ancestryExtraJson" rows="10" class="code-field" spellcheck="false">{}</textarea></details>\n      <label class="checkline"><input id="ancestryActive" type="checkbox" checked> Active in master library</label>\n      <div class="actions editor-actions"><button id="saveAncestry" class="primary">Save Ancestry</button><button id="duplicateAncestry">Duplicate as New</button></div>\n    </main>\n  </div>\n</section>\n<section id="essencesTab" class="studio-section hidden">
   <div class="studio-layout">
     <aside class="panel library-pane">
       <div class="panel-head">

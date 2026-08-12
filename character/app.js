@@ -4,7 +4,7 @@ const TIERS = ['Iron','Bronze','Silver','Gold','Platinum'];
 const XP_PER_POWER_RANK = 20;
 const PROFICIENCIES = ['Untrained','Trained','Expert','Master','Legendary','Mythic'];
 const ABILITY_BONUS = {1:-5,2:-4,3:-4,4:-3,5:-3,6:-2,7:-2,8:-1,9:-1,10:0,11:0,12:1,13:1,14:2,15:2,16:3,17:3,18:4,19:4,20:5,21:5,22:6,23:6,24:7,25:7,26:8,27:8,28:9,29:9,30:10,31:10,32:11,33:11,34:12,35:12,36:13,37:13,38:14,39:14,40:15};
-const ANCESTRY = {id:'leonid',name:'Leonid',mods:{Str:2,Dex:2,Con:0,Int:-2,Wis:0,Cha:0},resources:{hp:1,mana:3,stamina:6,surges:4}};
+let ANCESTRY = {id:null,name:'Unassigned',mods:{Str:0,Dex:0,Con:0,Int:0,Wis:0,Cha:0},resources:{hp:0,mana:0,stamina:0,surges:0}};
 const LOADOUT_SLOTS = [
  ['Core 1','core'],['Core 2','core'],
  ['Utility 1','utility'],['Utility 2','utility'],
@@ -25,10 +25,7 @@ let MASTER_ESSENCE_MODELS = [];
 
 
 
-const POWER_DB = [
- {id:'ANC001',name:"Hunter's Instinct",ancestry:true,passive:true,description:'Passive stamina bonus.',cooldown:'None'},
- {id:'ANC002',name:'Relentless Hunter',ancestry:true,passive:false,description:'Immediate stamina recharge.',cooldown:'Resource'}
-];
+const POWER_DB = [];
 POWER_DB.forEach(p=>{if(p.slot&&POWER_SLOT_ROLES[p.slot])p.category=POWER_SLOT_ROLES[p.slot].category});
 
 const ESSENCE_EFFECTS = [
@@ -56,7 +53,7 @@ const TRAINING = {
 const EQUIPMENT_DB = [{"id":"armor:cloth","name":"Cloth","kind":"armor","weight":4,"hardness":0,"maxHp":10,"trainingName":"Cloth Armor","category":"Light","ac":0,"checkPenalty":0,"speedPenalty":0},{"id":"armor:leather","name":"Leather","kind":"armor","weight":15,"hardness":1,"maxHp":20,"trainingName":"Leather Armor","category":"Light","ac":2,"checkPenalty":0,"speedPenalty":0},{"id":"armor:hide","name":"Hide","kind":"armor","weight":25,"hardness":2,"maxHp":24,"trainingName":"Hide Armor","category":"Light","ac":3,"checkPenalty":-1,"speedPenalty":0},{"id":"armor:chainmail","name":"Chainmail","kind":"armor","weight":40,"hardness":3,"maxHp":30,"trainingName":"Chainmail","category":"Heavy","ac":6,"checkPenalty":-1,"speedPenalty":-1},{"id":"armor:scale","name":"Scale","kind":"armor","weight":45,"hardness":4,"maxHp":36,"trainingName":"Scale Armor","category":"Heavy","ac":7,"checkPenalty":0,"speedPenalty":-1},{"id":"armor:plate","name":"Plate","kind":"armor","weight":50,"hardness":5,"maxHp":42,"trainingName":"Plate Armor","category":"Heavy","ac":8,"checkPenalty":-2,"speedPenalty":-1},{"id":"shield:light","name":"Light Shield","kind":"shield","weight":6,"hardness":3,"maxHp":10,"trainingName":"Light Shield","category":"Shield","ac":1,"checkPenalty":0,"speedPenalty":0},{"id":"shield:heavy","name":"Heavy Shield","kind":"shield","weight":15,"hardness":5,"maxHp":10,"trainingName":"Heavy Shield","category":"Shield","ac":2,"checkPenalty":-2,"speedPenalty":0},{"id":"weapon:club","name":"Club","kind":"weapon","weight":3,"category":"Simple Melee","mode":"melee","damage":"1d6","range":null,"groups":["Mace"]},{"id":"weapon:dagger","name":"Dagger","kind":"weapon","weight":1,"category":"Simple Melee","mode":"melee","damage":"1d4","range":"5/10","groups":["Light Blade"],"properties":[{"id":"off-hand","data":"{}"},{"id":"light-thrown","data":"{\"range\":\"5/10\"}"}]},{"id":"weapon:javelin","name":"Javelin","kind":"weapon","weight":2,"category":"Simple Melee","mode":"melee","damage":"1d6","range":"10/20","groups":["Spear"],"properties":[{"id":"heavy-thrown","data":"{\"range\":\"10/20\"}"}]},{"id":"weapon:mace","name":"Mace","kind":"weapon","weight":6,"category":"Simple Melee","mode":"melee","damage":"1d8","range":null,"groups":["Mace"],"properties":[{"id":"versatile","data":"{}"}]},{"id":"weapon:sickle","name":"Sickle","kind":"weapon","weight":2,"category":"Simple Melee","mode":"melee","damage":"1d6","range":null,"groups":["Light Blade"],"properties":[{"id":"off-hand","data":"{}"}]},{"id":"weapon:spear","name":"Spear","kind":"weapon","weight":6,"category":"Simple Melee","mode":"melee","damage":"1d8","range":null,"groups":["Spear"],"properties":[{"id":"versatile","data":"{}"}]},{"id":"weapon:greatclub","name":"Greatclub","kind":"weapon","weight":10,"category":"Simple Melee","mode":"melee","damage":"2d4","range":null,"groups":["Mace"]},{"id":"weapon:morningstar","name":"Morningstar","kind":"weapon","weight":8,"category":"Simple Melee","mode":"melee","damage":"1d10","range":null,"groups":["Mace"]},{"id":"weapon:quarterstaff","name":"Quarterstaff","kind":"weapon","weight":4,"category":"Simple Melee","mode":"melee","damage":"1d8","range":null,"groups":["Staff"]},{"id":"weapon:scythe","name":"Scythe","kind":"weapon","weight":10,"category":"Simple Melee","mode":"melee","damage":"2d4","range":null,"groups":["Heavy Blade"]},{"id":"weapon:battleaxe","name":"Battleaxe","kind":"weapon","weight":6,"category":"Martial Melee","mode":"melee","damage":"1d10","range":null,"groups":["Axe"],"properties":[{"id":"versatile","data":"{}"}]},{"id":"weapon:flail","name":"Flail","kind":"weapon","weight":5,"category":"Martial Melee","mode":"melee","damage":"1d10","range":null,"groups":["Flail"],"properties":[{"id":"versatile","data":"{}"}]},{"id":"weapon:handaxe","name":"Handaxe","kind":"weapon","weight":3,"category":"Martial Melee","mode":"melee","damage":"1d6","range":"5/10","groups":["Axe"],"properties":[{"id":"off-hand","data":"{}"},{"id":"thrown","data":"{\"range\":\"5/10\"}"}]},{"id":"weapon:longsword","name":"Longsword","kind":"weapon","weight":4,"category":"Martial Melee","mode":"melee","damage":"1d8","range":null,"groups":["Heavy Blade"],"properties":[{"id":"versatile","data":"{}"}]},{"id":"weapon:scimitar","name":"Scimitar","kind":"weapon","weight":4,"category":"Martial Melee","mode":"melee","damage":"1d8","range":null,"groups":["Heavy Blade"],"properties":[{"id":"high-crit","data":"{}"}]},{"id":"weapon:short-sword","name":"Short Sword","kind":"weapon","weight":2,"category":"Martial Melee","mode":"melee","damage":"1d6","range":null,"groups":["Light Blade"],"properties":[{"id":"off-hand","data":"{}"}]},{"id":"weapon:throwing-hammer","name":"Throwing Hammer","kind":"weapon","weight":2,"category":"Martial Melee","mode":"melee","damage":"1d6","range":"5/10","groups":["Hammer"],"properties":[{"id":"off-hand","data":"{}"},{"id":"heavy-thrown","data":"{\"range\":\"5/10\"}"}]},{"id":"weapon:warhammer","name":"Warhammer","kind":"weapon","weight":5,"category":"Martial Melee","mode":"melee","damage":"1d10","range":null,"groups":["Hammer"],"properties":[{"id":"versatile","data":"{}"}]},{"id":"weapon:war-pick","name":"War pick","kind":"weapon","weight":6,"category":"Martial Melee","mode":"melee","damage":"1d8","range":null,"groups":["Pick"],"properties":[{"id":"high-crit","data":"{}"},{"id":"versatile","data":"{}"}]},{"id":"weapon:falchion","name":"Falchion","kind":"weapon","weight":7,"category":"Martial Melee","mode":"melee","damage":"2d4","range":null,"groups":["Heavy Blade"],"properties":[{"id":"high-crit","data":"{}"}]},{"id":"weapon:glaive","name":"Glaive","kind":"weapon","weight":10,"category":"Martial Melee","mode":"melee","damage":"2d4","range":null,"groups":["Heavy Blade","Polearm"],"properties":[{"id":"reach","data":"{}"}]},{"id":"weapon:greataxe","name":"Greataxe","kind":"weapon","weight":12,"category":"Martial Melee","mode":"melee","damage":"1d12","range":null,"groups":["Axe"],"properties":[{"id":"high-crit","data":"{}"}]},{"id":"weapon:greatsword","name":"Greatsword","kind":"weapon","weight":8,"category":"Martial Melee","mode":"melee","damage":"1d10","range":null,"groups":["Heavy Blade"]},{"id":"weapon:halberd","name":"Halberd","kind":"weapon","weight":12,"category":"Martial Melee","mode":"melee","damage":"1d10","range":null,"groups":["Axe","Polearm"],"properties":[{"id":"reach","data":"{}"}]},{"id":"weapon:heavy-flail","name":"Heavy flail","kind":"weapon","weight":10,"category":"Martial Melee","mode":"melee","damage":"2d6","range":null,"groups":["Flail"]},{"id":"weapon:longspear","name":"Longspear","kind":"weapon","weight":9,"category":"Martial Melee","mode":"melee","damage":"1d10","range":null,"groups":["Polearm","Spear"],"properties":[{"id":"reach","data":"{}"}]},{"id":"weapon:maul","name":"Maul","kind":"weapon","weight":12,"category":"Martial Melee","mode":"melee","damage":"2d6","range":null,"groups":["Hammer"]},{"id":"weapon:bastard-sword","name":"Bastard Sword","kind":"weapon","weight":6,"category":"Advanced Melee","mode":"melee","damage":"1d10","range":null,"groups":["Heavy Blade"],"properties":[{"id":"versatile","data":"{}"}]},{"id":"weapon:katar","name":"Katar","kind":"weapon","weight":1,"category":"Advanced Melee","mode":"melee","damage":"1d6","range":null,"groups":["Light Blade"],"properties":[{"id":"off-hand","data":"{}"},{"id":"high-crit","data":"{}"}]},{"id":"weapon:rapier","name":"Rapier","kind":"weapon","weight":2,"category":"Advanced Melee","mode":"melee","damage":"1d8","range":null,"groups":["Light Blade"]},{"id":"weapon:spiked-chain","name":"Spiked Chain","kind":"weapon","weight":10,"category":"Advanced Melee","mode":"melee","damage":"2d4","range":null,"groups":["Flail"],"properties":[{"id":"reach","data":"{}"}]},{"id":"weapon:unarmed","name":"Unarmed","kind":"weapon","weight":null,"category":"Simple Melee","mode":"melee","damage":"1d4","range":null,"groups":["Unarmed"]},{"id":"weapon:hand-crossbow","name":"Hand Crossbow","kind":"weapon","weight":2,"category":"Simple Ranged","mode":"ranged","damage":"1d6","range":"10/20","groups":["Crossbow"],"properties":[{"id":"load-free","data":"{}"}]},{"id":"weapon:sling","name":"Sling","kind":"weapon","weight":null,"category":"Simple Ranged","mode":"ranged","damage":"1d6","range":"10/20","groups":["Sling"],"properties":[{"id":"load-free","data":"{}"}]},{"id":"weapon:crossbow","name":"Crossbow","kind":"weapon","weight":4,"category":"Simple Ranged","mode":"ranged","damage":"1d8","range":"15/30","groups":["Crossbow"],"properties":[{"id":"load-single","data":"{}"}]},{"id":"weapon:longbow","name":"Longbow","kind":"weapon","weight":3,"category":"Martial Ranged","mode":"ranged","damage":"1d10","range":"20/40","groups":["Bow"],"properties":[{"id":"load-free","data":"{}"}]},{"id":"weapon:short-bow","name":"Short Bow","kind":"weapon","weight":2,"category":"Martial Ranged","mode":"ranged","damage":"1d8","range":"15/30","groups":["Bow"],"properties":[{"id":"load-free","data":"{}"},{"id":"small","data":"{}"}]},{"id":"weapon:throwing-knife","name":"Throwing Knife","kind":"weapon","weight":0.5,"category":"Martial Ranged","mode":"ranged","damage":"1d4","range":"5/10","groups":["Light Blade"],"properties":[{"id":"light-thrown","data":"{\"range\":\"5/10\"}"}]},{"id":"weapon:heavy-crossbow","name":"Heavy Crossbow","kind":"weapon","weight":6,"category":"Martial Ranged","mode":"ranged","damage":"1d12","range":"20/40","groups":["Crossbow"],"properties":[{"id":"load-double","data":"{}"}]}];
 
 
-const CONNECTED_BACKEND={characterId:new URLSearchParams(location.search).get('character')||'',connected:false,syncing:false,timer:null,readOnly:false,isOwner:false};
+const CONNECTED_BACKEND={characterId:new URLSearchParams(location.search).get('character')||'',connected:false,syncing:false,timer:null,readOnly:false,isOwner:false,isGm:false};
 async function backendRequest(action,{body}={}){
  await requireSession();
  if(action==='snapshot'){
@@ -84,6 +81,7 @@ async function backendRequest(action,{body}={}){
 }
 
 function stateFromBackend(data){
+ ANCESTRY={id:data.ancestry_id||null,name:data.ancestry||'Unassigned',mods:{Str:0,Dex:0,Con:0,Int:0,Wis:0,Cha:0,...(data.ancestry_definition?.mods||{})},resources:{hp:0,mana:0,stamina:0,surges:0,...(data.ancestry_definition?.resources||{})}};
  MASTER_POWER_MODELS.length=0;MASTER_ESSENCE_MODELS.length=0;
  for(const e of data.essences||[])if(e.definition&&!MASTER_ESSENCE_MODELS.some(x=>x.id===e.definition.id))MASTER_ESSENCE_MODELS.push(e.definition);
  for(const p of data.powers||[])if(p.definition&&!MASTER_POWER_MODELS.some(x=>x.id===p.definition.id))MASTER_POWER_MODELS.push(p.definition);
@@ -100,7 +98,7 @@ function stateFromBackend(data){
  d.training=data.training||{};
  d.equipment=data.equipment||[];
  d.loadout=data.loadout||{};
- d.powers={...d.powers};
+ d.powers={};
  const essenceNames=new Map((data.essences||[]).map(e=>[e.id,e.name]));
  for(const p of data.powers||[]){
    const ename=essenceNames.get(p.source_essence_id)||p.source_essence_id;
@@ -156,30 +154,15 @@ function applyAccessMode(){
  });
  const combat=document.getElementById('combatToggle');if(combat)combat.classList.add('hidden');
 }
+function applyRoleNavigation(){const gm=document.getElementById('gmToggle');if(gm)gm.classList.toggle('hidden',!CONNECTED_BACKEND.isGm)}
 
 const DEFAULTS = {
- profile:{name:'Skarr',player:'Jody',ancestry:'Leonid',dungeon:'Deep Wilds',party:''},
- attributes:{Str:18,Dex:10,Con:10,Int:10,Wis:10,Cha:10},
- resources:{hp:8,mana:3,stamina:6,surges:4,tempHp:0,barrier:0,quintessence:0},
- xp:80,
- xpLedger:[{amount:80,type:'Starting Balance',note:'Imported from Skarr workbook'}],
- powers:{
-  ANC001:{tier:'Iron',rank:1,ancestry:true},
-  ANC002:{tier:'Iron',rank:1,ancestry:true}
- },
- essences:[],
- essenceChoices:{},
- loadout:{},
- training:{Axe:{status:'Trained',rating:1}},
- equipment:[
-  {uid:'eq-quarterstaff',definitionId:'weapon:quarterstaff',currentHp:null,focusGroup:'Staff',equipped:true,destroyed:false}
- ],
- combat:{active:false,round:1,conditions:[],modifiers:[],lastDamage:null,dailyExpended:{},
-  shortRestRecoveryAvailable:true,loadoutUnlocked:false,conditionReview:false,shortRestDraft:{mana:1,stamina:1}},
- ui:{gmMode:false},
- gmCustomPowers:[],
- customMasterPowers:[],
- customMasterEssences:[]
+ profile:{name:'Character',player:'',ancestry:'Unassigned',dungeon:'The Shattering',party:''},
+ attributes:{Str:10,Dex:10,Con:10,Int:10,Wis:10,Cha:10},
+ resources:{hp:10,mana:0,stamina:0,surges:0,tempHp:0,barrier:0,quintessence:0},
+ xp:0,xpLedger:[],powers:{},essences:[],essenceChoices:{},loadout:{},training:{},equipment:[],
+ combat:{active:false,round:1,conditions:[],modifiers:[],lastDamage:null,dailyExpended:{},shortRestRecoveryAvailable:true,loadoutUnlocked:false,conditionReview:false,shortRestDraft:{mana:1,stamina:1}},
+ ui:{gmMode:false},gmCustomPowers:[],customMasterPowers:[],customMasterEssences:[]
 };
 
 let state = load();
@@ -936,7 +919,7 @@ function render(){
  document.getElementById('combatToggle').classList.toggle('hidden',gm);
  document.getElementById('combatToggle').textContent=state.combat.active?'Exit Combat Mode':'Enter Combat Mode';
  document.getElementById('gmToggle').textContent='GM Dashboard';
- applyAccessMode();
+ applyAccessMode();applyRoleNavigation();
 }
 
 function renderLifecycle(){
@@ -1322,14 +1305,19 @@ document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>
 document.getElementById('conditionSelect')?.addEventListener('change',renderConditionControls);
 document.getElementById('characterImportFile')?.addEventListener('change',e=>{const f=e.target.files?.[0];if(f)importCharacterFile(f);e.target.value=''});
 async function bootstrapConnectedCharacter(){
- if(!CONNECTED_BACKEND.characterId){render();toast('Missing connected character link');return}
+ const fail=(message)=>{CONNECTED_BACKEND.connected=false;document.getElementById('characterLoadError')?.classList.remove('hidden');document.getElementById('characterLoadErrorMessage').textContent=message;document.querySelector('main')?.classList.add('hidden');document.getElementById('saveState').textContent='Character failed to load';toast(message)};
+ if(!CONNECTED_BACKEND.characterId){fail('No Character was selected. Return to the Character Portal and choose a Character.');return}
  try{
-   await requireSession();
-   const {data:isOwner,error:ownerErr}=await confluenceSupabase.rpc('owns_character',{target_character:CONNECTED_BACKEND.characterId});
-   if(ownerErr)throw ownerErr;
-   CONNECTED_BACKEND.isOwner=!!isOwner;
+   const session=await requireSession();
+   const data=await backendRequest('snapshot');
+   if(!data?.id)throw new Error('The backend returned no Character record.');
+   CONNECTED_BACKEND.isOwner=String(data.player_user_id||'')===String(session.user.id);
+   const {data:isGm,error:gmErr}=await confluenceSupabase.rpc('is_campaign_gm',{target_campaign:data.campaign_id});
+   if(gmErr)throw gmErr;CONNECTED_BACKEND.isGm=!!isGm;
+   if(!CONNECTED_BACKEND.isOwner&&!CONNECTED_BACKEND.isGm)throw new Error('You do not have access to this Character.');
    CONNECTED_BACKEND.readOnly=!CONNECTED_BACKEND.isOwner;
-   await refreshFromBackend(CONNECTED_BACKEND.readOnly?'GM read-only view':'Connected · saved to backend');
- }catch(err){render();toast(`Backend connection failed: ${err.message}`)}
+   state=stateFromBackend(data);CONNECTED_BACKEND.connected=true;document.getElementById('characterLoadError')?.classList.add('hidden');document.querySelector('main')?.classList.remove('hidden');render();
+   document.getElementById('saveState').textContent=CONNECTED_BACKEND.readOnly?'GM read-only view':'Connected · saved to backend';
+ }catch(err){fail(`Character failed to load: ${err.message}`)}
 }
 bootstrapConnectedCharacter();

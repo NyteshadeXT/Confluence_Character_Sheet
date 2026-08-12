@@ -149,3 +149,5 @@ details.owned-essence-group:not([open]) .collapse-chevron{display:inline-block;t
 .gm-readonly-banner b{color:#e5bd78;white-space:nowrap}.gm-readonly-banner span{font-size:12px}
 .gm-readonly select:disabled,.gm-readonly input:disabled,.gm-readonly textarea:disabled{opacity:.72}
 .gm-readonly button:disabled{opacity:.45;cursor:not-allowed}
+
+.button-link{display:inline-flex;align-items:center;text-decoration:none}.load-error{border-color:#8b4545}.load-error h2{color:#e08b8b}

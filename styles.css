@@ -23,3 +23,5 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;bord
 .form-grid.compact{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.form-grid.compact label{display:flex;flex-direction:column;gap:4px}
 .attribute-entry{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:10px 0}.attribute-entry label{display:flex;flex-direction:column;gap:4px}
 @media(max-width:750px){.campaign-card{grid-column:span 1}.form-grid.compact{grid-template-columns:1fr}.attribute-entry{grid-template-columns:repeat(3,1fr)}}
+
+button.danger{background:#4a1f24;border-color:#8b4545;color:#ffd9d9}.portal-character-list .row a{white-space:nowrap}

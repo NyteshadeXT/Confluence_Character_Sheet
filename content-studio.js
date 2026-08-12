@@ -1,5 +1,5 @@
-let essenceRows=[],powerRows=[],eligibilityRows=[];
-let editingEssenceId=null,editingPowerId=null;
+let ancestryRows=[],essenceRows=[],powerRows=[],eligibilityRows=[];
+let editingAncestryId=null,editingEssenceId=null,editingPowerId=null;
 
 const SLOT_META={
   1:{category:'Core Concept',frequency:'At-Will'},
@@ -22,6 +22,7 @@ function parseJsonField(el,label,expected){
 function show(msg,bad=false){notice.textContent=msg;notice.className='status '+(bad?'bad':'good')}
 function setTab(tab){
   document.querySelectorAll('.studio-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  ancestriesTab.classList.toggle('hidden',tab!=='ancestries');
   essencesTab.classList.toggle('hidden',tab!=='essences');
   powersTab.classList.toggle('hidden',tab!=='powers');
 }
@@ -37,21 +38,30 @@ async function requireGm(){
 }
 
 async function loadLibrary(preserve=true){
-  const [{data:e,error:eErr},{data:p,error:pErr},{data:x,error:xErr}]=await Promise.all([
+  const [{data:a,error:aErr},{data:e,error:eErr},{data:p,error:pErr},{data:x,error:xErr}]=await Promise.all([
+    confluenceSupabase.from('ancestry_definitions').select('id,name,definition,is_active').order('name'),
     confluenceSupabase.from('essence_definitions').select('id,name,associated_ability,definition,is_active').order('name'),
     confluenceSupabase.from('power_definitions').select('id,name,slot_index,definition,is_active').order('slot_index').order('name'),
     confluenceSupabase.from('essence_power_eligibility').select('essence_id,power_id')
   ]);
-  if(eErr)throw eErr;if(pErr)throw pErr;if(xErr)throw xErr;
-  essenceRows=e||[];powerRows=p||[];eligibilityRows=x||[];
-  renderEssenceList();renderPowerList();renderEligibility();
-  if(preserve&&editingEssenceId){
-    const row=essenceRows.find(x=>x.id===editingEssenceId);if(row)loadEssence(row.id);
-  }
-  if(preserve&&editingPowerId){
-    const row=powerRows.find(x=>x.id===editingPowerId);if(row)loadPower(row.id);
-  }
+  if(aErr)throw aErr;if(eErr)throw eErr;if(pErr)throw pErr;if(xErr)throw xErr;
+  ancestryRows=a||[];essenceRows=e||[];powerRows=p||[];eligibilityRows=x||[];
+  renderAncestryList();renderEssenceList();renderPowerList();renderEligibility();
+  if(preserve&&editingAncestryId){const row=ancestryRows.find(x=>x.id===editingAncestryId);if(row)loadAncestry(row.id)}
+  if(preserve&&editingEssenceId){const row=essenceRows.find(x=>x.id===editingEssenceId);if(row)loadEssence(row.id)}
+  if(preserve&&editingPowerId){const row=powerRows.find(x=>x.id===editingPowerId);if(row)loadPower(row.id)}
 }
+
+function renderAncestryList(){
+ const q=ancestrySearch.value.trim().toLowerCase(),showInactive=showInactiveAncestries.checked;
+ const rows=ancestryRows.filter(x=>(showInactive||x.is_active)&&(x.name.toLowerCase().includes(q)||x.id.toLowerCase().includes(q)));
+ ancestryList.innerHTML=rows.map(x=>`<button class="library-item ${editingAncestryId===x.id?'selected':''} ${x.is_active?'':'inactive'}" data-ancestry-id="${esc(x.id)}"><span><b>${esc(x.name)}</b><small>${esc(x.id)}</small></span><span class="library-meta">${x.is_active?'Active':'INACTIVE'}</span></button>`).join('')||'<div class="empty">No Ancestries match this filter.</div>';
+ ancestryList.querySelectorAll('[data-ancestry-id]').forEach(b=>b.onclick=()=>loadAncestry(b.dataset.ancestryId));
+}
+function newAncestryEditor(){editingAncestryId=null;ancestryEditorTitle.textContent='New Ancestry';ancestryStatus.textContent='Unsaved';ancestryId.disabled=false;ancestryId.value='';ancestryName.value='';ancestryDescription.value='';for(const id of ['ancestryStr','ancestryDex','ancestryCon','ancestryInt','ancestryWis','ancestryCha','ancestryHp','ancestryMana','ancestryStamina','ancestrySurges'])document.getElementById(id).value=0;ancestryExtraJson.value='{}';ancestryActive.checked=true;renderAncestryList();ancestryName.focus()}
+function loadAncestry(id){const row=ancestryRows.find(x=>x.id===id);if(!row)return;editingAncestryId=id;const d=row.definition||{},m=d.mods||{},r=d.resources||{};ancestryEditorTitle.textContent=row.name;ancestryStatus.textContent=row.is_active?'Active':'Inactive';ancestryId.value=row.id;ancestryId.disabled=true;ancestryName.value=row.name;ancestryDescription.value=d.description||'';ancestryStr.value=m.Str||0;ancestryDex.value=m.Dex||0;ancestryCon.value=m.Con||0;ancestryInt.value=m.Int||0;ancestryWis.value=m.Wis||0;ancestryCha.value=m.Cha||0;ancestryHp.value=r.hp||0;ancestryMana.value=r.mana||0;ancestryStamina.value=r.stamina||0;ancestrySurges.value=r.surges||0;const known=new Set(['id','name','description','mods','resources']);ancestryExtraJson.value=pretty(Object.fromEntries(Object.entries(d).filter(([k])=>!known.has(k))));ancestryActive.checked=!!row.is_active;renderAncestryList()}
+async function saveAncestryRecord(){const id=editingAncestryId||slugify(ancestryId.value||ancestryName.value),name=ancestryName.value.trim();if(!id)throw new Error('Ancestry ID is required.');if(!name)throw new Error('Ancestry name is required.');const extra=parseJsonField(ancestryExtraJson,'Advanced Ancestry JSON','object');const definition={...extra,id,name,description:ancestryDescription.value.trim(),mods:{Str:+ancestryStr.value||0,Dex:+ancestryDex.value||0,Con:+ancestryCon.value||0,Int:+ancestryInt.value||0,Wis:+ancestryWis.value||0,Cha:+ancestryCha.value||0},resources:{hp:+ancestryHp.value||0,mana:+ancestryMana.value||0,stamina:+ancestryStamina.value||0,surges:+ancestrySurges.value||0}};const {error}=await confluenceSupabase.rpc('gm_upsert_ancestry_definition',{p_id:id,p_name:name,p_definition:definition,p_is_active:ancestryActive.checked});if(error)throw error;editingAncestryId=id;await loadLibrary(false);loadAncestry(id);show(`Saved Ancestry: ${name}`)}
+function duplicateAncestryRecord(){if(!editingAncestryId)return;editingAncestryId=null;ancestryId.disabled=false;ancestryId.value='';ancestryName.value=`${ancestryName.value} Copy`;ancestryEditorTitle.textContent='New Ancestry from Copy';ancestryStatus.textContent='Unsaved';renderAncestryList()}
 
 function renderEssenceList(){
   const q=essenceSearch.value.trim().toLowerCase(),showInactive=showInactiveEssences.checked;
@@ -184,6 +194,7 @@ function duplicatePowerRecord(){
   powerEditorTitle.textContent='New Power from Copy';powerStatus.textContent='Unsaved';syncPowerJsonHeader();renderPowerList();
 }
 
+ancestrySearch.oninput=renderAncestryList;showInactiveAncestries.onchange=renderAncestryList;newAncestry.onclick=newAncestryEditor;saveAncestry.onclick=()=>saveAncestryRecord().catch(e=>show(e.message,true));duplicateAncestry.onclick=duplicateAncestryRecord;
 essenceSearch.oninput=renderEssenceList;showInactiveEssences.onchange=renderEssenceList;
 powerSearch.oninput=renderPowerList;powerSlotFilter.onchange=renderPowerList;showInactivePowers.onchange=renderPowerList;
 newEssence.onclick=newEssenceEditor;newPower.onclick=newPowerEditor;
@@ -196,6 +207,6 @@ powerEligibility.addEventListener('change',syncPowerJsonHeader);
 logout.onclick=signOut;
 
 (async()=>{
-  try{await requireGm();await loadLibrary(false);newEssenceEditor();newPowerEditor();show('GM content library loaded.')}
+  try{await requireGm();await loadLibrary(false);newAncestryEditor();newEssenceEditor();newPowerEditor();show('GM content library loaded.')}
   catch(e){show(e.message||String(e),true)}
 })();
