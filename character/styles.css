@@ -196,3 +196,6 @@ details.owned-essence-group:not([open]) .collapse-chevron{display:inline-block;t
 .power-text-section.attack{border-color:#b85b61;background:#3a2228}.power-text-section.hit{border-color:#66ad8b;background:#1e3a31}
 .power-text-section.miss{border-color:#b5a45a;background:#393522}.power-text-section.effect,.power-text-section.special{border-color:#668bb2;background:#1c2d3d}
 .power-footer{margin-top:10px;padding-top:8px;border-top:1px solid var(--line)}
+
+/* v0.4.9 */
+.earned-essence-benefits{margin-top:9px;padding-top:8px;border-top:1px solid var(--line)}
