@@ -13,11 +13,11 @@
 <div class="app">
 <header class="hero">
   <div>
-    <div class="eyebrow">CONFLUENCE CHARACTER · HOSTED PROTOTYPE v0.4.5</div>
+    <div class="eyebrow">CONFLUENCE CHARACTER · HOSTED PROTOTYPE v0.4.6</div>
     <h1>Character Portal</h1>
     <div class="muted" id="identity">Checking authentication…</div>
   </div>
-  <div class="actions"><a href="account.html">Account Security</a><button id="logout" class="ghost">Sign Out</button></div>
+  <div class="actions"><a class="nav-button" href="account.html">Account Security</a><button id="logout" class="ghost">Sign Out</button></div>
 </header>
 
 <div id="notice" class="status">Loading your campaigns and characters…</div>
@@ -37,7 +37,7 @@ async function loadPortal(){
  portalSession=await requireSession();identity.textContent=portalSession.user.email||'Signed in';const uid=portalSession.user.id;
  const [{data:memberships,error:mErr},{data:ancestries,error:aErr}]=await Promise.all([
   confluenceSupabase.from('campaign_members').select('campaign_id,role').eq('user_id',uid),
-  confluenceSupabase.from('ancestry_definitions').select('id,name').eq('is_active',true).order('name')
+  confluenceSupabase.from('ancestry_definitions').select('id,name,definition').eq('is_active',true).order('name')
  ]);
  if(mErr)throw mErr;if(aErr)throw aErr;portalMemberships=memberships||[];portalAncestries=ancestries||[];
  const campaignIds=[...new Set(portalMemberships.map(x=>x.campaign_id))];
@@ -50,30 +50,69 @@ async function loadPortal(){
 function ancestryOptions(selected=''){return `<option value="">— Select Ancestry —</option>`+portalAncestries.map(a=>`<option value="${esc(a.id)}" ${selected===a.id?'selected':''}>${esc(a.name)}</option>`).join('')}
 function renderPortal(){
  const cards=[];const gm=portalMemberships.filter(x=>x.role==='GM');
- if(gm.length)cards.push(`<article class="card"><div class="eyebrow">GAME MASTER</div><h3>GM Tools</h3><p>Manage campaigns and hidden Confluence system data.</p><div class="actions"><a href="gm.html">Campaign Dashboard</a><a href="content-studio.html">System Data Studio</a></div></article>`);
+ if(gm.length)cards.push(`<article class="card"><div class="eyebrow">GAME MASTER</div><h3>GM Tools</h3><p>Manage campaigns and hidden Confluence system data.</p><div class="actions"><a class="nav-button" href="gm.html">Campaign Dashboard</a><a class="nav-button" href="content-studio.html">System Data Studio</a></div></article>`);
  for(const m of portalMemberships.filter(x=>x.role==='PLAYER')){
   const c=portalCampaigns.find(x=>x.id===m.campaign_id),chars=portalCharacters.filter(x=>x.campaign_id===m.campaign_id);
   cards.push(`<article class="card campaign-card"><div class="eyebrow">PLAYER · ${esc(c?.name||'Campaign')}</div><h3>Your Characters</h3>
    <div class="portal-character-list">${chars.map(ch=>`<div class="row"><span><b>${esc(ch.name)}</b><br><span class="muted">${esc(ancestryName(ch.ancestry_definition_id))} · ${ch.available_xp||0} XP</span></span><a href="character/index.html?character=${encodeURIComponent(ch.id)}">Open Character</a></div>`).join('')||'<div class="empty">You do not currently own a Character in this campaign.</div>'}</div>
    <details class="create-character"><summary>${chars.length?'Create Another Character':'Create Character'}</summary><p class="muted">Create a new character from scratch. Only Ancestries currently active in the Confluence system library are available.</p>
     <div class="form-grid compact"><label>Name <input data-new-name="${m.campaign_id}" placeholder="Character name"></label><label>Ancestry <select data-new-ancestry="${m.campaign_id}">${ancestryOptions()}</select></label></div>
-    <details><summary>Starting Attributes</summary><div class="attribute-entry">${['Str','Dex','Con','Int','Wis','Cha'].map(k=>`<label>${k.toUpperCase()} <input data-new-attr="${m.campaign_id}|${k}" type="number" value="10"></label>`).join('')}</div></details>
+    <details><summary>Starting Attributes</summary>
+      <div class="creation-hint">Displayed scores include the selected Ancestry modifiers. Change the values if character creation allows a different base score.</div>
+      <div class="attribute-entry">${['Str','Dex','Con','Int','Wis','Cha'].map(k=>`<label>${k.toUpperCase()} <input data-new-attr="${m.campaign_id}|${k}" data-base-score="10" type="number" value="10"></label>`).join('')}</div>
+    </details>
     <button class="primary" data-create-character="${m.campaign_id}">Create My Character</button>
    </details></article>`);
  }
  content.innerHTML=cards.join('')||'<div class="empty">Your account is authenticated, but you do not currently belong to a Confluence campaign. A GM must add your authenticated email first.</div>';
 }
+
+function selectedAncestry(campaignId){
+ const id=document.querySelector(`[data-new-ancestry="${CSS.escape(campaignId)}"]`)?.value||'';
+ return portalAncestries.find(a=>a.id===id)||null;
+}
+function ancestryMods(campaignId){
+ return {Str:0,Dex:0,Con:0,Int:0,Wis:0,Cha:0,...(selectedAncestry(campaignId)?.definition?.mods||{})};
+}
+function refreshCreationAttributes(campaignId){
+ const mods=ancestryMods(campaignId);
+ for(const k of ['Str','Dex','Con','Int','Wis','Cha']){
+   const input=document.querySelector(`[data-new-attr="${CSS.escape(campaignId+'|'+k)}"]`);
+   if(!input)continue;
+   const base=Number(input.dataset.baseScore??10);
+   input.value=base+(Number(mods[k])||0);
+ }
+}
+
 async function createMyCharacter(campaignId){
  const name=document.querySelector(`[data-new-name="${CSS.escape(campaignId)}"]`)?.value?.trim();
  const ancestry=document.querySelector(`[data-new-ancestry="${CSS.escape(campaignId)}"]`)?.value||'';
  if(!name)return showPortal('Character name is required.',true);if(!ancestry)return showPortal('Select an Ancestry.',true);
- const attrs={};for(const k of ['Str','Dex','Con','Int','Wis','Cha'])attrs[k]=Number(document.querySelector(`[data-new-attr="${CSS.escape(campaignId+'|'+k)}"]`)?.value)||10;
+ const mods=ancestryMods(campaignId),attrs={};
+ for(const k of ['Str','Dex','Con','Int','Wis','Cha']){
+   const input=document.querySelector(`[data-new-attr="${CSS.escape(campaignId+'|'+k)}"]`);
+   const finalScore=Number(input?.value)||10;
+   attrs[k]=finalScore-(Number(mods[k])||0);
+ }
  showPortal(`Creating ${name}…`);
  const {error}=await confluenceSupabase.rpc('player_create_character',{p_campaign_id:campaignId,p_name:name,p_ancestry:ancestry,p_attributes:attrs});
  if(error)return showPortal(error.message,true);
  await loadPortal();showPortal(`${name} created. Select the character above to open the sheet.`);
 }
 document.addEventListener('click',e=>{const b=e.target.closest('[data-create-character]');if(b)createMyCharacter(b.dataset.createCharacter).catch(err=>showPortal(err.message,true))});
+
+document.addEventListener('change',e=>{
+ const ancestry=e.target.closest?.('[data-new-ancestry]');
+ if(ancestry)refreshCreationAttributes(ancestry.dataset.newAncestry);
+});
+document.addEventListener('input',e=>{
+ const attr=e.target.closest?.('[data-new-attr]');
+ if(!attr)return;
+ const [campaignId,k]=attr.dataset.newAttr.split('|');
+ const mods=ancestryMods(campaignId);
+ attr.dataset.baseScore=String((Number(attr.value)||0)-(Number(mods[k])||0));
+});
+
 logout.onclick=signOut;loadPortal().catch(err=>showPortal(err.message||String(err),true));
 </script>
 </body>

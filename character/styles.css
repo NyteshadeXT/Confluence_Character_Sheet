@@ -151,3 +151,6 @@ details.owned-essence-group:not([open]) .collapse-chevron{display:inline-block;t
 .gm-readonly button:disabled{opacity:.45;cursor:not-allowed}
 
 .button-link{display:inline-flex;align-items:center;text-decoration:none}.load-error{border-color:#8b4545}.load-error h2{color:#e08b8b}
+
+.nav-char-button{border:1px solid var(--line);background:#222d3a;color:var(--text);border-radius:9px;padding:8px 12px;text-decoration:none}
+.load-error-message{white-space:pre-wrap;color:var(--muted)}

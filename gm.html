@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Confluence GM Dashboard v0.4.5</title>
+<title>Confluence GM Dashboard v0.4.6</title>
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
@@ -12,8 +12,8 @@
 <body>
 <div class="app">
 <header class="hero">
-  <div><div class="eyebrow">CONFLUENCE · GM CAMPAIGN DASHBOARD v0.4.5</div><h1>Campaign Management</h1><div class="muted" id="identity">Checking authentication…</div></div>
-  <div class="actions"><a href="index.html">Character Portal</a><a href="content-studio.html">System Data Studio</a><a href="account.html">Account Security</a><button id="logout">Sign Out</button></div>
+  <div><div class="eyebrow">CONFLUENCE · GM CAMPAIGN DASHBOARD v0.4.6</div><h1>Campaign Management</h1><div class="muted" id="identity">Checking authentication…</div></div>
+  <div class="actions"><a class="nav-button" href="index.html">Character Portal</a><a class="nav-button" href="content-studio.html">System Data Studio</a><a class="nav-button" href="account.html">Account Security</a><button id="logout">Sign Out</button></div>
 </header>
 
 <div id="notice" class="status">Loading GM access…</div>
@@ -44,10 +44,11 @@
     </div>
     <details>
       <summary>Starting Attributes</summary>
+      <div class="creation-hint">Displayed scores include the selected Ancestry modifiers.</div>
       <div class="attribute-entry">
-        <label>STR <input id="attrStr" type="number" value="10"></label><label>DEX <input id="attrDex" type="number" value="10"></label>
-        <label>CON <input id="attrCon" type="number" value="10"></label><label>INT <input id="attrInt" type="number" value="10"></label>
-        <label>WIS <input id="attrWis" type="number" value="10"></label><label>CHA <input id="attrCha" type="number" value="10"></label>
+        <label>STR <input id="attrStr" data-base-score="10" type="number" value="10"></label><label>DEX <input id="attrDex" data-base-score="10" type="number" value="10"></label>
+        <label>CON <input id="attrCon" data-base-score="10" type="number" value="10"></label><label>INT <input id="attrInt" data-base-score="10" type="number" value="10"></label>
+        <label>WIS <input id="attrWis" data-base-score="10" type="number" value="10"></label><label>CHA <input id="attrCha" data-base-score="10" type="number" value="10"></label>
       </div>
     </details>
     <button id="createCharacter" class="primary">Create Unclaimed Character</button>
@@ -81,12 +82,27 @@ async function loadCatalog(){
   confluenceSupabase.from('essence_definitions').select('id,name').eq('is_active',true).order('name'),
   confluenceSupabase.from('power_definitions').select('id,name,slot_index').eq('is_active',true).order('slot_index').order('name'),
   confluenceSupabase.from('essence_power_eligibility').select('essence_id,power_id'),
-  confluenceSupabase.from('ancestry_definitions').select('id,name').eq('is_active',true).order('name')
+  confluenceSupabase.from('ancestry_definitions').select('id,name,definition').eq('is_active',true).order('name')
  ]);
  if(e1)throw e1;if(e2)throw e2;if(e3)throw e3;if(e4)throw e4;
  catalog={essences:e||[],powers:(p||[]).map(v=>({...v,slot:v.slot_index})),eligibility:x||[],ancestries:a||[]};
  essenceSelect.innerHTML=catalog.essences.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('');
  newCharacterAncestry.innerHTML='<option value="">— Select Ancestry —</option>'+catalog.ancestries.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
+}
+
+
+function gmSelectedAncestry(){
+ return catalog.ancestries.find(a=>a.id===newCharacterAncestry.value)||null;
+}
+function gmAncestryMods(){
+ return {Str:0,Dex:0,Con:0,Int:0,Wis:0,Cha:0,...(gmSelectedAncestry()?.definition?.mods||{})};
+}
+function refreshGmCreationAttributes(){
+ const mods=gmAncestryMods(),map={Str:attrStr,Dex:attrDex,Con:attrCon,Int:attrInt,Wis:attrWis,Cha:attrCha};
+ for(const [k,input] of Object.entries(map)){
+   const base=Number(input.dataset.baseScore??10);
+   input.value=base+(Number(mods[k])||0);
+ }
 }
 
 async function loadRoster(){
@@ -144,14 +160,20 @@ addPlayer.onclick=async()=>{
 };
 createCharacter.onclick=async()=>{
  const name=newCharacterName.value.trim();if(!name)return show('Character name is required.',true);
- const attrs={Str:+attrStr.value||10,Dex:+attrDex.value||10,Con:+attrCon.value||10,Int:+attrInt.value||10,Wis:+attrWis.value||10,Cha:+attrCha.value||10};
+ const mods=gmAncestryMods();
+ const attrs={Str:(+attrStr.value||10)-(mods.Str||0),Dex:(+attrDex.value||10)-(mods.Dex||0),Con:(+attrCon.value||10)-(mods.Con||0),Int:(+attrInt.value||10)-(mods.Int||0),Wis:(+attrWis.value||10)-(mods.Wis||0),Cha:(+attrCha.value||10)-(mods.Cha||0)};
  const {data,error}=await confluenceSupabase.rpc('gm_create_character',{p_campaign_id:campaignSelect.value,p_name:name,p_ancestry:newCharacterAncestry.value||null,p_attributes:attrs});
  if(error)return show(error.message,true);newCharacterName.value='';newCharacterAncestry.value='';await loadRoster();await selectChar(data);show(`Created ${name}.`);
 };
 grantXp.onclick=async()=>{if(!selectedId)return show('Select a character first.',true);const {error}=await confluenceSupabase.rpc('gm_grant_xp',{p_character_id:selectedId,p_amount:+xpAmount.value||0,p_note:xpNote.value||null});if(error)return show(error.message,true);await loadRoster();await selectChar(selectedId);show('XP updated.')};
 assignEssence.onclick=async()=>{if(!selectedId)return show('Select a character first.',true);const {error}=await confluenceSupabase.rpc('gm_assign_essence',{p_character_id:selectedId,p_essence_id:essenceSelect.value});if(error)return show(error.message,true);await selectChar(selectedId);show('Essence assigned.')};
 assignPower.onclick=async()=>{if(!selectedId)return show('Select a character first.',true);const {error}=await confluenceSupabase.rpc('gm_assign_power',{p_character_id:selectedId,p_essence_id:powerEssence.value,p_power_id:powerSelect.value});if(error)return show(error.message,true);await selectChar(selectedId);show('Power assigned.')};
-powerEssence.onchange=refreshPowerOptions;campaignSelect.onchange=()=>loadRoster().catch(e=>show(e.message,true));logout.onclick=signOut;
+powerEssence.onchange=refreshPowerOptions;
+newCharacterAncestry.onchange=refreshGmCreationAttributes;
+for(const [k,input] of Object.entries({Str:attrStr,Dex:attrDex,Con:attrCon,Int:attrInt,Wis:attrWis,Cha:attrCha})){
+ input.addEventListener('input',()=>{const mods=gmAncestryMods();input.dataset.baseScore=String((Number(input.value)||0)-(Number(mods[k])||0))});
+}
+campaignSelect.onchange=()=>loadRoster().catch(e=>show(e.message,true));logout.onclick=signOut;
 
 (async()=>{
  try{

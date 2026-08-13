@@ -1,0 +1,6 @@
+-- v0.4.6 stabilization
+-- Applied live to Supabase.
+-- get_character_snapshot(uuid) now includes:
+--   viewer_is_owner
+--   viewer_is_gm
+-- The frontend no longer makes a separate is_campaign_gm RPC while loading a sheet.

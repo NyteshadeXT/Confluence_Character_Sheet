@@ -6,7 +6,7 @@ This repository is intentionally separate from the `Confluence_System` Obsidian 
 
 ## Current milestone
 
-**Hosted Connected Prototype v0.4.5 — Authentication & Test Player Support**
+**Hosted Connected Prototype v0.4.6 — Authentication & Test Player Support**
 
 The frontend is a static Vercel application backed by Supabase Auth, PostgreSQL, Row
 Level Security, and protected RPC functions.
@@ -88,5 +88,9 @@ Fixes literal `\\n` text appearing in the GM System Data Studio. No database mig
 Removes the last static Skarr pre-load label and makes stale/deleted character URLs fail cleanly without rendering a character sheet.
 
 
-## v0.4.5 Authentication & Test Player Support
+## v0.4.6 Authentication & Test Player Support
 Adds persistent password sign-in alongside magic links and an authenticated Account Security page for setting/changing a password. No database schema migration is required.
+
+
+## v0.4.6 Player UI Stabilization
+Repairs hosted character hydration, restores deterministic full-sheet loading, adds ancestry-aware creation previews, responsive attribute creation, and consistent navigation buttons.
