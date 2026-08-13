@@ -1,0 +1,5 @@
+-- v0.4.8 System Rules Expansion
+-- Applied to the live Confluence Character Supabase project.
+-- Creates condition_definitions master data, RLS, gm_upsert_condition_definition(),
+-- and remove_owned_equipment().
+-- Existing runtime conditions_json remains character state; definitions are system data.
