@@ -1,0 +1,10 @@
+-- Hosted Connected Prototype v0.4.7
+-- Applied to live Supabase.
+--
+-- Adds:
+-- gm_remove_power(uuid)
+-- gm_remove_essence(uuid,text)
+--
+-- Both functions verify campaign GM permission.
+-- Removing an Essence cascades removal of Powers belonging to that Character Essence,
+-- then compacts remaining Essence slot indexes.

@@ -154,3 +154,35 @@ details.owned-essence-group:not([open]) .collapse-chevron{display:inline-block;t
 
 .nav-char-button{border:1px solid var(--line);background:#222d3a;color:var(--text);border-radius:9px;padding:8px 12px;text-decoration:none}
 .load-error-message{white-space:pre-wrap;color:var(--muted)}
+
+/* v0.4.7 training layout */
+.training-row.has-rating{grid-template-columns:minmax(190px,1fr) 64px minmax(160px,190px) 90px}
+.training-row.no-rating{grid-template-columns:minmax(190px,1fr) minmax(160px,190px)}
+.training-prof{width:100%;min-width:160px}
+.training-rating{width:90px;min-width:80px}
+.training-row.no-rating .training-prof{justify-self:end}
+@media(max-width:700px){
+ .training-row.has-rating{grid-template-columns:minmax(130px,1fr) 54px minmax(140px,1fr) 76px}
+ .training-row.no-rating{grid-template-columns:minmax(130px,1fr) minmax(140px,1fr)}
+ .training-prof{min-width:140px}
+ .training-rating{width:76px;min-width:70px}
+}
+
+/* v0.4.7 equipped item visibility */
+.equip-card.is-equipped{
+ border-color:#7bbf9c;
+ background:#172b26;
+ box-shadow:inset 4px 0 0 #7bbf9c,0 0 0 1px rgba(123,191,156,.12);
+}
+.equipped-badge{
+ display:inline-block;
+ padding:3px 8px;
+ border-radius:999px;
+ background:#214c3a;
+ border:1px solid #6cb58f;
+ color:#a9e2c3;
+ font-size:11px;
+ letter-spacing:.06em;
+}
+.equip-card.is-destroyed{opacity:.65}
+.ancestry-power-card{border-left:3px solid var(--blue)}

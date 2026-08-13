@@ -14,7 +14,7 @@
 <div class="app studio-app">
 <header class="hero">
   <div>
-    <div class="eyebrow">CONFLUENCE · GM SYSTEM DATA STUDIO v0.4.6.2</div>
+    <div class="eyebrow">CONFLUENCE · GM SYSTEM DATA STUDIO v0.4.7</div>
     <h1>System Data Library</h1>
     <div class="muted" id="identity">Checking GM access…</div>
   </div>
@@ -53,6 +53,10 @@
       <section class="subpanel"><div class="eyebrow">BASE RESOURCE CONTRIBUTION</div><div class="attribute-entry four">
         <label>HP <input id="ancestryHp" type="number" value="0"></label><label>Mana <input id="ancestryMana" type="number" value="0"></label><label>Stamina <input id="ancestryStamina" type="number" value="0"></label><label>Surges <input id="ancestrySurges" type="number" value="0"></label>
       </div></section>
+      <label>Ancestry Powers (JSON)
+        <textarea id="ancestryPowersJson" rows="8" class="code-field" spellcheck="false">[]</textarea>
+        <span class="field-help">Optional array of ancestry Power objects. These appear automatically in the character's Equipped Powers section.</span>
+      </label>
       <details class="advanced-json"><summary>Advanced Ancestry JSON</summary><textarea id="ancestryExtraJson" rows="10" class="code-field" spellcheck="false">{}</textarea></details>
       <label class="checkline"><input id="ancestryActive" type="checkbox" checked> Active in master library</label>
       <div class="actions editor-actions"><button id="saveAncestry" class="primary">Save Ancestry</button><button id="duplicateAncestry">Duplicate as New</button></div>

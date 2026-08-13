@@ -47,3 +47,7 @@ a.nav-button.primary{background:#6d532b;border-color:#98733b}
 .creation-hint{font-size:11px;color:var(--muted);margin:6px 0}
 @media(max-width:1050px){.attribute-entry{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:560px){.attribute-entry{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.assigned-list{display:grid;gap:7px;margin:8px 0 14px}
+.assigned-chip{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);background:#0b141d;border-radius:8px;padding:7px 9px}
+button.compact{padding:4px 7px;font-size:12px}

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Confluence GM Dashboard v0.4.6.2</title>
+<title>Confluence GM Dashboard v0.4.7</title>
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
@@ -12,7 +12,7 @@
 <body>
 <div class="app">
 <header class="hero">
-  <div><div class="eyebrow">CONFLUENCE · GM CAMPAIGN DASHBOARD v0.4.6.2</div><h1>Campaign Management</h1><div class="muted" id="identity">Checking authentication…</div></div>
+  <div><div class="eyebrow">CONFLUENCE · GM CAMPAIGN DASHBOARD v0.4.7</div><h1>Campaign Management</h1><div class="muted" id="identity">Checking authentication…</div></div>
   <div class="actions"><a class="nav-button" href="index.html">Character Portal</a><a class="nav-button" href="content-studio.html">System Data Studio</a><a class="nav-button" href="account.html">Account Security</a><button id="logout">Sign Out</button></div>
 </header>
 
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-let campaigns=[],roster={players:[],characters:[]},selectedId=null,current=null,catalog={essences:[],powers:[],eligibility:[],ancestries:[]};
+let campaigns=[],roster={players:[],characters:[]},selectedId=null,current=null,lastPowerEssence='',catalog={essences:[],powers:[],eligibility:[],ancestries:[]};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function show(msg,bad=false){notice.textContent=msg;notice.className='status '+(bad?'bad':'good')}
 
@@ -129,9 +129,14 @@ function renderCurrent(){
  selected.innerHTML=`<div class="eyebrow">${esc(current.ancestry)}</div><h2>${esc(current.name)}</h2><div class="big">${current.available_xp} XP</div>
  <div class="actions"><a href="character/index.html?character=${encodeURIComponent(current.id)}" target="_blank">Open Character Sheet</a><button id="deleteCharacter" class="danger">Delete Character</button></div>
  <div class="owner-editor"><label>Character Owner <select id="ownerSelect"><option value="">— Unclaimed —</option>${ownerOptions}</select></label><button id="saveOwner">Save Owner</button></div>
- <h3>Essences</h3>${current.essences.map(e=>`<span class="pill">${esc(e.name)} · ${e.tier} ${e.rank}</span>`).join(' ')||'<span class="muted">None</span>'}`;
- powerEssence.innerHTML=current.essences.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('');refreshPowerOptions();
- powers.innerHTML=current.powers.map(p=>`<div class="row"><span><b>${esc(p.name)}</b> · ${esc(p.source_essence_id)} · Slot ${p.slot}</span><span>${p.tier} ${p.rank}</span></div>`).join('')||'<div class="muted">No Powers assigned.</div>';
+ <h3>Essences</h3><div class="assigned-list">${current.essences.map(e=>`<div class="assigned-chip"><span><b>${esc(e.name)}</b> · ${e.tier} ${e.rank}</span><button class="danger compact" data-remove-essence="${esc(e.id)}">Remove</button></div>`).join('')||'<span class="muted">None</span>'}</div>`;
+ const availableEssences=current.essences.map(e=>e.id);
+ if(lastPowerEssence&&!availableEssences.includes(lastPowerEssence))lastPowerEssence='';
+ powerEssence.innerHTML=current.essences.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('');
+ if(lastPowerEssence&&availableEssences.includes(lastPowerEssence))powerEssence.value=lastPowerEssence;
+ else if(powerEssence.value)lastPowerEssence=powerEssence.value;
+ refreshPowerOptions();
+ powers.innerHTML=current.powers.map(p=>`<div class="row"><span><b>${esc(p.name)}</b> · ${esc(p.source_essence_id)} · Slot ${p.slot}</span><span class="actions"><span>${p.tier} ${p.rank}</span><button class="danger compact" data-remove-power="${p.owned_id}">Remove</button></span></div>`).join('')||'<div class="muted">No Powers assigned.</div>';
  document.getElementById('saveOwner').onclick=saveOwner;document.getElementById('deleteCharacter').onclick=deleteSelectedCharacter;
 }
 function refreshPowerOptions(){
@@ -153,6 +158,33 @@ async function deleteSelectedCharacter(){
  if(error)return show(error.message,true);
  const deleted=current.name;selectedId=null;current=null;selected.innerHTML='<div class="muted">Select a character.</div>';powers.innerHTML='';await loadRoster();show(`${deleted} deleted.`);
 }
+
+async function removeAssignedEssence(essenceId){
+ if(!selectedId||!current)return;
+ const essence=current.essences.find(e=>e.id===essenceId);
+ if(!essence)return;
+ if(!confirm(`Remove ${essence.name} Essence from ${current.name}? Any Powers assigned through that Essence will also be removed.`))return;
+ const {error}=await confluenceSupabase.rpc('gm_remove_essence',{p_character_id:selectedId,p_essence_id:essenceId});
+ if(error)return show(error.message,true);
+ if(lastPowerEssence===essenceId)lastPowerEssence='';
+ await loadRoster();await selectChar(selectedId);show(`${essence.name} Essence removed.`);
+}
+async function removeAssignedPower(ownedId){
+ if(!selectedId||!current)return;
+ const power=current.powers.find(p=>p.owned_id===ownedId);
+ if(!power)return;
+ if(!confirm(`Remove ${power.name} from ${current.name}?`))return;
+ const {error}=await confluenceSupabase.rpc('gm_remove_power',{p_character_power_id:ownedId});
+ if(error)return show(error.message,true);
+ await selectChar(selectedId);show(`${power.name} removed.`);
+}
+document.addEventListener('click',e=>{
+ const essenceBtn=e.target.closest('[data-remove-essence]');
+ if(essenceBtn){removeAssignedEssence(essenceBtn.dataset.removeEssence);return}
+ const powerBtn=e.target.closest('[data-remove-power]');
+ if(powerBtn)removeAssignedPower(powerBtn.dataset.removePower);
+});
+
 addPlayer.onclick=async()=>{
  const email=playerEmail.value.trim();if(!email)return show('Enter a player email.',true);
  const {error}=await confluenceSupabase.rpc('gm_add_player_by_email',{p_campaign_id:campaignSelect.value,p_email:email});
@@ -167,8 +199,8 @@ createCharacter.onclick=async()=>{
 };
 grantXp.onclick=async()=>{if(!selectedId)return show('Select a character first.',true);const {error}=await confluenceSupabase.rpc('gm_grant_xp',{p_character_id:selectedId,p_amount:+xpAmount.value||0,p_note:xpNote.value||null});if(error)return show(error.message,true);await loadRoster();await selectChar(selectedId);show('XP updated.')};
 assignEssence.onclick=async()=>{if(!selectedId)return show('Select a character first.',true);const {error}=await confluenceSupabase.rpc('gm_assign_essence',{p_character_id:selectedId,p_essence_id:essenceSelect.value});if(error)return show(error.message,true);await selectChar(selectedId);show('Essence assigned.')};
-assignPower.onclick=async()=>{if(!selectedId)return show('Select a character first.',true);const {error}=await confluenceSupabase.rpc('gm_assign_power',{p_character_id:selectedId,p_essence_id:powerEssence.value,p_power_id:powerSelect.value});if(error)return show(error.message,true);await selectChar(selectedId);show('Power assigned.')};
-powerEssence.onchange=refreshPowerOptions;
+assignPower.onclick=async()=>{if(!selectedId)return show('Select a character first.',true);lastPowerEssence=powerEssence.value;const {error}=await confluenceSupabase.rpc('gm_assign_power',{p_character_id:selectedId,p_essence_id:lastPowerEssence,p_power_id:powerSelect.value});if(error)return show(error.message,true);await selectChar(selectedId);show('Power assigned.')};
+powerEssence.onchange=()=>{lastPowerEssence=powerEssence.value;refreshPowerOptions()};
 newCharacterAncestry.onchange=refreshGmCreationAttributes;
 for(const [k,input] of Object.entries({Str:attrStr,Dex:attrDex,Con:attrCon,Int:attrInt,Wis:attrWis,Cha:attrCha})){
  input.addEventListener('input',()=>{const mods=gmAncestryMods();input.dataset.baseScore=String((Number(input.value)||0)-(Number(mods[k])||0))});
