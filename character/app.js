@@ -1298,7 +1298,7 @@ document.addEventListener('change',e=>{
  if(e.target.matches('.tab'))return;
  if(e.target.dataset.essenceChoice){
    state.essenceChoices[e.target.dataset.essenceChoice]=e.target.value;
-   applyEssenceChoiceTraining();save();render();toast(`${e.target.value} training granted`);
+   applyEssenceChoiceTraining();save();render();toast(`${e.target.value} selected as a permanent Essence benefit`);
  }
  if(e.target.dataset.gmPowerSelect){
    const [ess,slot]=e.target.dataset.gmPowerSelect.split('|');

@@ -199,3 +199,6 @@ details.owned-essence-group:not([open]) .collapse-chevron{display:inline-block;t
 
 /* v0.4.9 */
 .earned-essence-benefits{margin-top:9px;padding-top:8px;border-top:1px solid var(--line)}
+
+/* v0.4.9.1 */
+.choice-panel .selector-row{grid-template-columns:minmax(150px,1fr) minmax(220px,2fr)}
