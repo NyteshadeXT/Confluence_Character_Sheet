@@ -54,27 +54,33 @@ const EQUIPMENT_DB = [{"id":"armor:cloth","name":"Cloth","kind":"armor","weight"
 
 
 const CONNECTED_BACKEND={characterId:new URLSearchParams(location.search).get('character')||'',connected:false,syncing:false,timer:null,readOnly:false,isOwner:false,isGm:false};
+function withTimeout(promise,ms,label='Request'){
+ return Promise.race([
+   promise,
+   new Promise((_,reject)=>setTimeout(()=>reject(new Error(`${label} timed out after ${Math.round(ms/1000)} seconds`)),ms))
+ ]);
+}
+
 async function backendRequest(action,{body}={}){
- await requireSession();
  if(action==='snapshot'){
-   const {data,error}=await confluenceSupabase.rpc('get_character_snapshot',{p_character_id:CONNECTED_BACKEND.characterId});
+   const {data,error}=await withTimeout(confluenceSupabase.rpc('get_character_snapshot',{p_character_id:CONNECTED_BACKEND.characterId}),10000,'Character snapshot');
    if(error)throw error;return data;
  }
  if(CONNECTED_BACKEND.readOnly)throw new Error('GM character view is read-only');
  if(action==='runtime'){
-   const {data,error}=await confluenceSupabase.rpc('player_update_runtime',{p_character_id:CONNECTED_BACKEND.characterId,p_state:body});
+   const {data,error}=await withTimeout(confluenceSupabase.rpc('player_update_runtime',{p_character_id:CONNECTED_BACKEND.characterId,p_state:body}),10000,'Runtime save');
    if(error)throw error;return data;
  }
  if(action==='profile'){
-   const {data,error}=await confluenceSupabase.rpc('player_update_profile_state',{
+   const {data,error}=await withTimeout(confluenceSupabase.rpc('player_update_profile_state',{
      p_character_id:CONNECTED_BACKEND.characterId,
      p_training:body.training_json,p_equipment:body.equipment_json,
      p_loadout:body.loadout_json,p_essence_choices:body.essence_choices_json
-   });
+   }),10000,'Profile save');
    if(error)throw error;return data;
  }
  if(action==='rank'){
-   const {data,error}=await confluenceSupabase.rpc('player_rank_power',{p_character_power_id:body.character_power_id});
+   const {data,error}=await withTimeout(confluenceSupabase.rpc('player_rank_power',{p_character_power_id:body.character_power_id}),10000,'Power rank');
    if(error)throw error;return data;
  }
  throw new Error('Unknown backend action');
@@ -1332,7 +1338,7 @@ async function bootstrapConnectedCharacter(){
    return;
  }
  try{
-   await requireSession();
+   await withTimeout(requireSession(),5000,'Authentication check');
    const data=await backendRequest('snapshot');
    if(!data?.id)throw new Error('Character not found. It may have been deleted.');
 
