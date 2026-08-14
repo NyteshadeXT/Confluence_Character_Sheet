@@ -2,8 +2,12 @@
 /* Confluence Character v0.4.9.2 — Combat Cards, Rich Power Text, Attack Milestones */
 let COMBAT_EXPANDED_POWER=null;
 
+function v0492Esc(value){
+ return String(value??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
+}
+
 function v0492InlineMarkup(text){
- let s=esc(String(text??''));
+ let s=v0492Esc(String(text??''));
  s=s.replace(/`([^`]+)`/g,'<code>$1</code>');
  s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
  s=s.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g,'$1<em>$2</em>');
@@ -97,7 +101,7 @@ function combatPowerCardV0492(id){
     <div class="combat-collapsed-summary">${quick?`<span>${quick}</span>`:''}<strong>${attackSummary}</strong></div>
    </div>
    ${expanded?`<div class="combat-expanded-body">
-      ${keywords.length?`<div class="meta">${keywords.map(k=>`<span class="tag">${esc(k)}</span>`).join('')}</div>`:''}
+      ${keywords.length?`<div class="meta">${keywords.map(k=>`<span class="tag">${v0492Esc(k)}</span>`).join('')}</div>`:''}
       ${attack?`<div class="roll-callout"><span class="roll-label">TO HIT</span><strong>${signed(atk.total)}</strong><span>vs ${String(attack.defense||'Defense').toUpperCase()}</span><div class="roll-instruction">Roll 1d20 ${signed(atk.total)}</div></div>
        <details class="math-breakdown"><summary>Attack math</summary><div>Power Rank ${signed(cp.rank)} · Ability ${signed(atk.abilityBonus)} · Essence/Milestones ${signed(atk.mastery||0)} · Active ${signed(atk.manual||0)} · Conditions ${signed(atk.condition||0)}</div></details>`:''}
       <div class="combat-power-sections">${powerSections(p,id)}</div>
