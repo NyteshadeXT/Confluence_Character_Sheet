@@ -6,7 +6,7 @@ This repository is intentionally separate from the `Confluence_System` Obsidian 
 
 ## Current milestone
 
-**Hosted Connected Prototype v0.4.9.1 — Authentication & Test Player Support**
+**Hosted Connected Prototype v0.4.9.2 — Authentication & Test Player Support**
 
 The frontend is a static Vercel application backed by Supabase Auth, PostgreSQL, Row
 Level Security, and protected RPC functions.
@@ -88,37 +88,43 @@ Fixes literal `\\n` text appearing in the GM System Data Studio. No database mig
 Removes the last static Skarr pre-load label and makes stale/deleted character URLs fail cleanly without rendering a character sheet.
 
 
-## v0.4.9.1 Authentication & Test Player Support
+## v0.4.9.2 Authentication & Test Player Support
 Adds persistent password sign-in alongside magic links and an authenticated Account Security page for setting/changing a password. No database schema migration is required.
 
 
-## v0.4.9.1 Player UI Stabilization
+## v0.4.9.2 Player UI Stabilization
 Repairs hosted character hydration, restores deterministic full-sheet loading, adds ancestry-aware creation previews, responsive attribute creation, and consistent navigation buttons.
 
 
-## v0.4.9.1 Character Load Hotfix
+## v0.4.9.2 Character Load Hotfix
 Removes duplicate browser session checks and adds hard timeouts so character loading cannot hang indefinitely.
 
 
-## v0.4.9.1 Character Asset Routing Fix
+## v0.4.9.2 Character Asset Routing Fix
 Fixes Vercel clean-URL asset resolution so the Character page loads `/character/styles.css` and `/character/app.js` instead of root portal assets.
 
 
-## v0.4.9.1 Character Usability & GM Assignment Controls
+## v0.4.9.2 Character Usability & GM Assignment Controls
 Adds Saving Throws training organization, wider proficiency controls, ancestry-power definition support, stronger equipped-item highlighting, clearer durability repair wording, GM removal of assigned Essences/Powers, and sticky GM Power Essence selection.
 
 
-## v0.4.9.1 System Rules Expansion
+## v0.4.9.2 System Rules Expansion
 Promotes Conditions to master system data with structured modifier integration, expands
 Power authoring/rendering to the full Confluence Power presentation, adds owned-equipment
 removal, and hides redundant weapon focus controls for single-group weapons.
 
 
-## v0.4.9.1 Essence Progression
+## v0.4.9.2 Essence Progression
 Expands Essence authoring into tiered resource progression, training interactions, mastery milestones, and derived Power relationships. Character calculations consume these definitions directly.
 
 
-## v0.4.9.1 Essence Milestone Choices
+## v0.4.9.2 Essence Milestone Choices
 Adds first-class permanent milestone choices, Power Attack Ability milestone effects,
 and retires standalone Essence Training Interaction. Training is now authored only as
 a Rank Effect.
+
+
+## v0.4.9.2 Combat Cards & Power Formatting
+Adds collapsed/expanded/full Combat Power cards, formatted multiline Power text,
+Implement-keyword and Round-based attack milestone effects, and per-slot Essence Power
+coverage in System Data Studio.
