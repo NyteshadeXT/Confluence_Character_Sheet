@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Confluence Character Hosted Connected Prototype v0.4.9.4</title>
+<title>Confluence Character Hosted Connected Prototype v0.4.9.5</title>
 <link rel="stylesheet" href="/character/styles.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/supabase-config.js"></script><script src="/supabase-auth.js"></script></head>
 <body>
 <div class="app">
 <header class="hero">
   <div>
-    <div class="eyebrow">CONFLUENCE SYSTEM · HOSTED PLAYER v0.4.9.4</div>
+    <div class="eyebrow">CONFLUENCE SYSTEM · HOSTED PLAYER v0.4.9.5</div>
     <h1 id="characterName">Loading Character…</h1>
     <div class="subtitle" id="profileLine"></div>
   </div>
@@ -28,7 +28,10 @@
 <main class="hidden" id="characterMain" style="display:none">
 <section id="normalMode">
   <div id="resourceGrid" class="resource-grid"></div>
-  <section id="restPanel" class="panel"></section>
+  <details class="panel compact-rest-panel">
+    <summary><span><span class="eyebrow">RECOVERY</span><b>Rest & Recovery</b></span><span class="muted">Short Rest · Long Rest</span></summary>
+    <div id="restPanel"></div>
+  </details>
   <section id="conditionReviewPanel" class="panel hidden"></section>
 
   <section class="panel">
@@ -54,7 +57,7 @@
         <div id="ancestryPowers" class="card-list"></div>
       </section>
       <section class="panel">
-        <div class="panel-head"><div><div class="eyebrow">POWER LIBRARY</div><h2>Owned Powers</h2></div><span class="pill">20 XP / rank</span></div>
+        <div class="panel-head"><div><div class="eyebrow">POWER LIBRARY</div><h2>Owned Powers</h2></div><span class="pill">Scaled XP by Rank</span></div>
         <div id="powerLibrary"></div>
       </section>
     </div>
@@ -183,5 +186,6 @@
 <script src="/character/v0492.js"></script>
 <script src="/character/v0493.js"></script>
 <script src="/character/v0494.js"></script>
+<script src="/character/v0495.js"></script>
 </body>
 </html>

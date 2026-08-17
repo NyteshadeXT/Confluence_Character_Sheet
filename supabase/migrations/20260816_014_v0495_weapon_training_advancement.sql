@@ -1,0 +1,4 @@
+-- Applied live to Supabase.
+-- Generalizes player_rank_skill(uuid,text) messaging so the protected operation can
+-- advance any ranked Training entry, including Weapon Skills, using the Skill XP curve.
+-- XP transaction type remains SKILL_RANK_PURCHASE for backward ledger compatibility.

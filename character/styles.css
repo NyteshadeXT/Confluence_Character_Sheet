@@ -242,3 +242,82 @@ body.modal-open{overflow:hidden}
 .skill-rank-badge{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:7px;padding:7px 9px;background:#0d1720;font-weight:800;white-space:nowrap}
 .skill-rank-button{min-width:150px}
 @media(max-width:900px){.training-row.skill-rank-row{grid-template-columns:minmax(140px,1fr) 58px minmax(140px,1fr);}.skill-rank-badge,.skill-rank-button{justify-self:stretch}.training-row.skill-rank-row details{grid-column:1/-1}}
+
+/* v0.4.9.5 — Compact Desktop Layout */
+body{font-size:14px}
+.app{max-width:1500px}
+.hero{padding:14px 18px;border-radius:13px;margin-bottom:10px;align-items:center}
+h1{font-size:32px;margin:2px 0 4px}h2{font-size:20px}
+.hero-actions button,.hero-actions .button-link{padding:6px 9px}
+.panel{padding:12px;border-radius:11px;margin-bottom:10px}
+.panel-head{margin-bottom:9px}.panel-head h2{font-size:19px}
+.eyebrow{font-size:9px}.save,.muted{font-size:11px}
+button{padding:6px 9px;border-radius:7px}
+select,input{padding:5px 6px;border-radius:6px}
+
+.resource-grid{grid-template-columns:repeat(7,minmax(105px,1fr));gap:6px;margin-bottom:8px}
+.resource{padding:8px;border-radius:9px}.resource .value{font-size:21px;margin:2px 0}.resource .bar{margin:5px 0;height:5px}
+.resource .controls{gap:3px}.resource button{padding:3px 6px;font-size:11px}
+
+.compact-rest-panel{padding:8px 12px}
+.compact-rest-panel>summary{display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;list-style:none}
+.compact-rest-panel>summary::-webkit-details-marker{display:none}
+.compact-rest-panel>summary>span:first-child{display:flex;align-items:center;gap:8px}
+.compact-rest-panel[open]>summary{padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid var(--line)}
+.compact-rest-panel #restPanel{margin-top:0}.compact-rest-panel #restPanel>.rest-grid{margin-top:0}
+.compact-rest-panel #restPanel .rest-card{padding:9px}
+
+.attribute-grid{gap:5px;margin-bottom:7px}.attribute{padding:6px;border-radius:8px}
+.attribute .score{font-size:20px}.attribute .bonus{font-size:12px}
+.defense-grid{gap:5px;margin-bottom:7px}.defense{padding:7px;border-radius:8px}
+.defense .score{font-size:22px}.defense details{margin-top:2px}.defense .formula{font-size:10px}
+
+.tabs{margin:4px 0 8px;gap:3px;position:sticky;top:0;z-index:20;background:var(--bg);padding:4px 0}
+.tab{padding:6px 10px}
+.two-col{gap:10px}
+.subhead{margin:10px 0 5px}
+.power-card,.equip-card,.essence-card,.condition{padding:9px;margin:5px 0;border-radius:9px}
+.meta{margin:4px 0;font-size:11px}.tag{padding:1px 5px}
+.slot-row{grid-template-columns:105px 1fr;gap:5px;margin:4px 0}
+.essence-slots{gap:4px}.essence-slot{padding:6px;min-height:65px}
+.rank-big{font-size:18px}
+.detail-grid{gap:5px;margin:6px 0}.detail{padding:6px}
+table th,table td{padding:5px 6px}
+
+/* Training: Skills and Weapons side-by-side, compact rows. */
+.training-primary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+.training-secondary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;align-items:start}
+.training-compact-group{border:1px solid var(--line);border-radius:9px;background:#101720;overflow:hidden}
+.compact-group-head{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 8px;background:#182331;border-bottom:1px solid var(--line);font-weight:800}
+.compact-group-head small{font-size:9px;color:var(--muted);font-weight:500}
+.compact-training-row{display:grid;grid-template-columns:minmax(120px,1fr) minmax(112px,145px) 44px minmax(105px,125px);gap:5px;align-items:center;padding:4px 6px;border-bottom:1px solid #27313e;min-height:35px}
+.compact-training-row:last-child{border-bottom:0}
+.compact-training-row.is-trained{background:#111d1a}
+.training-name{display:flex;justify-content:space-between;gap:6px;align-items:center;min-width:0}
+.training-name b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.training-score{font-size:15px;font-weight:900;color:var(--blue);white-space:nowrap}
+.compact-training-row .training-prof{min-width:0;width:100%;font-size:11px}
+.compact-training-row .skill-rank-badge{padding:4px 5px;font-size:11px;min-width:40px}
+.compact-rank-button{padding:5px 6px;font-size:10px;white-space:nowrap;min-width:0}
+.compact-training-row .row-math{grid-column:1/-1;margin:0;font-size:10px}
+.compact-training-row.proficiency-only{grid-template-columns:minmax(130px,1fr) minmax(125px,160px)}
+.training-secondary-grid .compact-training-row{min-height:32px}
+
+/* Compact owned-Power groups. */
+.owned-essence-group{margin-bottom:5px}.owned-essence-head{padding:7px 9px}
+.owned-power-row{grid-template-columns:38px 1fr;gap:5px}.owned-slot{font-size:10px}
+.power-rank-actions{margin-top:5px}
+
+@media(max-width:1150px){
+ .resource-grid{grid-template-columns:repeat(4,1fr)}
+ .training-primary-grid{grid-template-columns:1fr}
+}
+@media(max-width:800px){
+ body{font-size:14px}.hero{align-items:flex-start}.resource-grid{grid-template-columns:repeat(2,1fr)}
+ .training-secondary-grid{grid-template-columns:1fr}.attribute-grid{grid-template-columns:repeat(3,1fr)}
+ .defense-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:560px){
+ .compact-training-row{grid-template-columns:minmax(100px,1fr) minmax(100px,1fr) 40px}
+ .compact-rank-button{grid-column:1/-1}.compact-training-row.proficiency-only{grid-template-columns:1fr 1fr}
+}
