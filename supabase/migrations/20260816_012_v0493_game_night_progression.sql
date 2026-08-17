@@ -1,0 +1,5 @@
+-- Applied live.
+-- character_essences.current_rank default 1; existing rank 0 -> 1
+-- character_powers.rank default 1; existing rank 0 -> 1
+-- ancestry definitions receive structured progression_passive data
+-- player_rank_power recalculates Essence Rank using a Rank 1 baseline

@@ -90,7 +90,7 @@ async function backendRequest(action,{body}={}){
 }
 
 function stateFromBackend(data){
- ANCESTRY={id:data.ancestry_id||null,name:data.ancestry||'Unassigned',mods:{Str:0,Dex:0,Con:0,Int:0,Wis:0,Cha:0,...(data.ancestry_definition?.mods||{})},resources:{hp:0,mana:0,stamina:0,surges:0,...(data.ancestry_definition?.resources||{})},powers:Array.isArray(data.ancestry_definition?.powers)?data.ancestry_definition.powers:[]};
+ ANCESTRY={id:data.ancestry_id||null,name:data.ancestry||'Unassigned',mods:{Str:0,Dex:0,Con:0,Int:0,Wis:0,Cha:0,...(data.ancestry_definition?.mods||{})},resources:{hp:0,mana:0,stamina:0,surges:0,...(data.ancestry_definition?.resources||{})},powers:Array.isArray(data.ancestry_definition?.powers)?data.ancestry_definition.powers:[],progression_passive:data.ancestry_definition?.progression_passive||null};
  MASTER_POWER_MODELS.length=0;MASTER_ESSENCE_MODELS.length=0;
  for(const e of data.essences||[])if(e.definition&&!MASTER_ESSENCE_MODELS.some(x=>x.id===e.definition.id))MASTER_ESSENCE_MODELS.push(e.definition);
  for(const p of data.powers||[])if(p.definition&&!MASTER_POWER_MODELS.some(x=>x.id===p.definition.id))MASTER_POWER_MODELS.push(p.definition);
