@@ -30,7 +30,7 @@ function compactRankableTrainingRow(name,type){
  return `<div class="compact-training-row ${t.status!=='Untrained'?'is-trained':''}">
    <div class="training-name"><b>${name}</b>${isSkill?`<span class="training-score">${signed(sv.total)}</span>`:''}</div>
    <select class="training-prof" data-training="${name}" aria-label="${name} proficiency">${PROFICIENCIES.map(x=>`<option ${x===t.status?'selected':''}>${x}</option>`).join('')}</select>
-   <span class="skill-rank-badge">R${rank}</span>
+   <span class="skill-rank-badge">${rank}</span>
    <button class="compact-rank-button ${rs.ok?'primary':''}" data-rank-training="${name}" ${rs.ok?'':'disabled'}>${rs.ok?`↑ ${rs.cost} XP`:rs.reason}</button>
    ${isSkill?`<details class="row-math"><summary>Math</summary><span>${sv.key} ${signed(sv.attr)} · Rank ${rank} · Active ${signed(sv.manual)} · Conditions ${signed(sv.condition)}${sv.essence!=null?` · Essence ${signed(sv.essence)}`:''}</span></details>`:''}
   </div>`;
