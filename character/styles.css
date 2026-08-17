@@ -236,3 +236,9 @@ body.modal-open{overflow:hidden}
 .ancestry-choice-panel{border-color:#6f6740;background:#242116}
 .ancestry-choice-row{display:grid;grid-template-columns:minmax(120px,1fr) minmax(220px,2fr);gap:10px;align-items:center;margin-top:8px}
 @media(max-width:650px){.ancestry-choice-row{grid-template-columns:1fr}}
+
+/* v0.4.9.4 */
+.training-row.skill-rank-row{grid-template-columns:minmax(170px,1fr) 64px minmax(150px,180px) 86px minmax(150px,190px)}
+.skill-rank-badge{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:7px;padding:7px 9px;background:#0d1720;font-weight:800;white-space:nowrap}
+.skill-rank-button{min-width:150px}
+@media(max-width:900px){.training-row.skill-rank-row{grid-template-columns:minmax(140px,1fr) 58px minmax(140px,1fr);}.skill-rank-badge,.skill-rank-button{justify-self:stretch}.training-row.skill-rank-row details{grid-column:1/-1}}

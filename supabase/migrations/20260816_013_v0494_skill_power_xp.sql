@@ -1,0 +1,4 @@
+-- Applied live to Supabase.
+-- Adds SKILL_RANK_PURCHASE XP transaction type.
+-- Adds player_rank_skill(uuid,text).
+-- Replaces flat 20 XP player_rank_power cost with the Rank 2-9 cost curve.
