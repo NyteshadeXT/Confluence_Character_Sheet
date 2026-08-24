@@ -14,7 +14,7 @@
 <div class="app studio-app">
 <header class="hero">
   <div>
-    <div class="eyebrow">CONFLUENCE · GM SYSTEM DATA STUDIO v0.4.9.9</div>
+    <div class="eyebrow">CONFLUENCE · GM SYSTEM DATA STUDIO v0.4.10.0</div>
     <h1>System Data Library</h1>
     <div class="muted" id="identity">Checking GM access…</div>
   </div>
@@ -183,6 +183,45 @@
       </div>
 
       <section class="subpanel">
+        <div class="panel-head"><div><div class="eyebrow">ATTACK RESOLUTION</div><h3>Power Attack Configuration</h3></div></div>
+        <div class="form-grid">
+          <label>Defense Targeted
+            <select id="powerDefense">
+              <option value="">No attack roll / custom</option>
+              <option>AC</option><option>Fortitude</option><option>Reflex</option><option>Will</option>
+            </select>
+          </label>
+          <label>Attack Ability Rule
+            <select id="powerAbilityMode">
+              <option value="essence">Source Essence Ability</option>
+              <option value="fixed">Fixed Ability</option>
+              <option value="choice">Permanent Player Choice</option>
+            </select>
+          </label>
+        </div>
+        <div id="powerFixedAbilityWrap" class="hidden">
+          <label>Fixed Ability
+            <select id="powerFixedAbility">
+              <option>Strength</option><option>Dexterity</option><option>Constitution</option>
+              <option>Intelligence</option><option>Wisdom</option><option>Charisma</option>
+            </select>
+          </label>
+        </div>
+        <div id="powerAbilityChoicesWrap" class="hidden">
+          <label>Allowed Ability Choices</label>
+          <div class="checkbox-grid" id="powerAbilityChoices">
+            <label class="checkline"><input type="checkbox" value="Strength"> Strength</label>
+            <label class="checkline"><input type="checkbox" value="Dexterity"> Dexterity</label>
+            <label class="checkline"><input type="checkbox" value="Constitution"> Constitution</label>
+            <label class="checkline"><input type="checkbox" value="Intelligence"> Intelligence</label>
+            <label class="checkline"><input type="checkbox" value="Wisdom"> Wisdom</label>
+            <label class="checkline"><input type="checkbox" value="Charisma"> Charisma</label>
+          </div>
+          <span class="field-help">The player chooses once when the Power is acquired. The choice is permanent.</span>
+        </div>
+      </section>
+
+      <section class="subpanel">
         <div class="panel-head"><div><div class="eyebrow">ELIGIBILITY</div><h3>Eligible Essences</h3></div></div>
         <p class="muted">A Power may belong to multiple Essences. A character still owns a Power through a specific source Essence.</p>
         <div id="powerEligibility" class="checkbox-grid"></div>
@@ -222,5 +261,6 @@
 <script src="content-studio-v0491.js"></script>
 <script src="content-studio-v0492.js"></script>
 <script src="content-studio-v0499.js"></script>
+<script src="content-studio-v04100.js"></script>
 </body>
 </html>

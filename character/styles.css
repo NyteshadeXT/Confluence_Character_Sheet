@@ -336,3 +336,9 @@ table th,table td{padding:5px 6px}
  .compact-training-row.v0498-training{grid-template-columns:minmax(110px,1fr) minmax(105px,1fr) 38px 42px}
  .compact-training-row.v0498-training .compact-rank-button{grid-column:1/-1}
 }
+
+/* v0.4.10.0 */
+.power-choice-panel{border:1px solid #8a6b2f;background:#211d13;border-radius:10px;padding:10px;margin-bottom:10px}
+.power-choice-row{display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,260px);gap:10px;align-items:center;margin-top:8px}
+.power-choice-row span{display:grid}.power-choice-row small{color:var(--muted)}
+@media(max-width:650px){.power-choice-row{grid-template-columns:1fr}}
