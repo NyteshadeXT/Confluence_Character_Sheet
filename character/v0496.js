@@ -78,7 +78,7 @@ resolvedPowerModel=function(id){
   const ops=ex.operations||[];
   if(ops.length){
    for(const op of ops){
-    if(['modify','add','replace','remove','unlock','replace_text','append_text','prepend_text'].includes(op.operation)&&!op.trigger){
+    if(['modify','add','replace','remove','unlock','replace_text','append_text','prepend_text','modify_named_effect','enhance_named_effect'].includes(op.operation)&&!op.trigger){
       applyExpressionOperation(model,op);
     }
    }
