@@ -103,7 +103,7 @@ function combatPowerCardV0492(id){
    ${expanded?`<div class="combat-expanded-body">
       ${keywords.length?`<div class="meta">${keywords.map(k=>`<span class="tag">${v0492Esc(k)}</span>`).join('')}</div>`:''}
       ${attack?`<div class="roll-callout"><span class="roll-label">TO HIT</span><strong>${signed(atk.total)}</strong><span>vs ${String(attack.defense||'Defense').toUpperCase()}</span><div class="roll-instruction">Roll 1d20 ${signed(atk.total)}</div></div>
-       <details class="math-breakdown"><summary>Attack math</summary><div>Power Rank ${signed(cp.rank)} · Ability ${signed(atk.abilityBonus)} · Essence/Milestones ${signed(atk.mastery||0)} · Active ${signed(atk.manual||0)} · Conditions ${signed(atk.condition||0)}</div></details>`:''}
+       <details class="math-breakdown"><summary>Attack math</summary><div>Rank Bonus ${signed(atk.rankBonus||0)} · Power Rank ${atk.powerRank||1} → ${signed(atk.powerRankBonus||0)} · Ability ${signed(atk.abilityBonus)} · Essence/Milestones ${signed(atk.mastery||0)}${atk.roundBonus?` · Round ${signed(atk.roundBonus)}`:''} · Active ${signed(atk.manual||0)} · Conditions ${signed(atk.condition||0)}</div></details>`:''}
       <div class="combat-power-sections">${powerSections(p,id)}</div>
       ${rankEffects.length?`<div class="current-rank-effects"><b>Current Rank Effects</b>${formatPowerRichText(rankEffects.map(effectText).join('\n- '),id)}</div>`:''}
       <div class="combat-card-actions">${cost?`<span class="cost-chip">${cost}</span>`:''}${powerUseButton(id)}<button type="button" data-open-full-power="${id}">View Full Power</button></div>

@@ -327,3 +327,12 @@ table th,table td{padding:5px 6px}
 .power-progression>summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:11px}
 .rank-effect-row{display:grid;gap:2px;padding:6px 0;border-bottom:1px solid #27313e}.rank-effect-row:last-child{border-bottom:0}
 .rank-effect-row>b{font-size:11px}.rank-effect-row .power-rich-text{font-size:11px;color:var(--muted)}
+
+/* v0.4.9.8 — Unified Training & Mastery Mathematics */
+.compact-training-row.v0498-training{grid-template-columns:minmax(118px,1fr) minmax(108px,140px) 38px 42px minmax(102px,122px)}
+.mastery-bonus,.mastery-bonus-spacer{display:inline-flex;align-items:center;justify-content:center;min-width:36px}
+.mastery-bonus{font-weight:900;color:var(--blue);font-size:12px;border-left:1px solid var(--line)}
+@media(max-width:900px){
+ .compact-training-row.v0498-training{grid-template-columns:minmax(110px,1fr) minmax(105px,1fr) 38px 42px}
+ .compact-training-row.v0498-training .compact-rank-button{grid-column:1/-1}
+}
