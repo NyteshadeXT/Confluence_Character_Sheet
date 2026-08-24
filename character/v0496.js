@@ -51,7 +51,13 @@ function v0496ApplyTextOperation(model,op){
  model.text=model.text||{};
  let current=String(model.text[section]??model[`${section}_text`]??'');
  if(op.operation==='replace_text'){
-  if(op.find!=null)current=current.split(String(op.find)).join(String(op.replace??''));
+  if(op.find==='__CURRENT_DAMAGE_DICE__'){
+   current=current.replace(/\b\d+d\d+\b/i,String(op.replace??''));
+  }else if(op.find==='__CURRENT_DAMAGE_FORMULA__'){
+   current=current.replace(/\b\d+d\d+(?:\s*[+\-]\s*[^.,;\n]+)?/i,String(op.replace??''));
+  }else if(op.find==='__CURRENT_RANGE__'){
+   current=current.replace(/\b(?:Melee|Ranged)\s+\d+\b/i,String(op.replace??''));
+  }else if(op.find!=null)current=current.split(String(op.find)).join(String(op.replace??''));
   else if(op.value!=null)current=String(op.value);
  }else if(op.operation==='append_text'){
   current=[current,String(op.value||op.text||'')].filter(Boolean).join(current?'\n\n':'');

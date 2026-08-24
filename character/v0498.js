@@ -16,6 +16,11 @@ function powerRankAttackBonus(id){
  const cp=state.powers[id];
  return trainingMasteryBonus(cp?.rank||1);
 }
+function rankExpressionAttackBonus(id){
+ return v0496PowerExpressionList(id).flatMap(ex=>ex.operations||[])
+  .filter(op=>op.operation==='modify'&&op.target==='power_attack'&&!op.trigger)
+  .reduce((sum,op)=>sum+(Number(op.amount)||0),0);
+}
 
 /* Trained Armor, Shields, and Saving Throws now possess Rank just like Skills and
    Weapon Skills. Legacy trained records with rating:null resolve as Rank 1. */
@@ -33,15 +38,16 @@ powerAttackBonus=function(id){
        rankBonus=characterRankBonus(),
        powerRank=cp?.rank||1,
        powerRankBonus=powerRankAttackBonus(id),
+       rankExpressionBonus=rankExpressionAttackBonus(id),
        essenceMastery=v0491PowerAttackAbilityBonus(id)+v0492KeywordAttackBonus(id),
        roundBonus=v0492RoundAttackBonus(),
        manual=attackManualModifier('power'),
        condition=conditionAttackModifier(abilityKey);
  return {
-   powerRank,powerRankBonus,rankBonus,essence,abilityKey,abilityBonus,
-   mastery:essenceMastery,keywordBonus:v0492KeywordAttackBonus(id),
+   powerRank,powerRankBonus,rankExpressionBonus,rankBonus,essence,abilityKey,abilityBonus,
+   mastery:essenceMastery+rankExpressionBonus,keywordBonus:v0492KeywordAttackBonus(id),
    roundBonus,manual,condition,
-   total:rankBonus+powerRankBonus+abilityBonus+essenceMastery+roundBonus+manual+condition
+   total:rankBonus+powerRankBonus+abilityBonus+essenceMastery+rankExpressionBonus+roundBonus+manual+condition
  };
 };
 

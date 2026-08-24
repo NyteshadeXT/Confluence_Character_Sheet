@@ -51,3 +51,10 @@ a.nav-button.primary{background:#6d532b;border-color:#98733b}
 .assigned-list{display:grid;gap:7px;margin:8px 0 14px}
 .assigned-chip{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);background:#0b141d;border-radius:8px;padding:7px 9px}
 button.compact{padding:4px 7px;font-size:12px}
+
+/* v0.4.9.9 Power Rank Progression Builder */
+.power-rank-builder{margin-top:16px}.rank-builder-card{border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0;background:#101722}
+.rank-builder-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.rank-builder-head>b{font-size:15px}.rank-builder-head span{font-size:11px;color:var(--muted)}
+.rank-builder-grid{display:grid;grid-template-columns:minmax(160px,1fr) 2fr;gap:10px}.rank-builder-grid .wide{min-width:0}
+.rank-operation{display:grid;grid-template-columns:minmax(180px,1fr) 2fr auto;gap:8px;align-items:center;margin:8px 0}
+.add-rank-effect{margin-top:6px}.danger-lite{white-space:nowrap}@media(max-width:800px){.rank-builder-grid,.rank-operation{grid-template-columns:1fr}}

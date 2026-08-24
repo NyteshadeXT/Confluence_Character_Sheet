@@ -14,7 +14,7 @@
 <div class="app studio-app">
 <header class="hero">
   <div>
-    <div class="eyebrow">CONFLUENCE · GM SYSTEM DATA STUDIO v0.4.9.8.1</div>
+    <div class="eyebrow">CONFLUENCE · GM SYSTEM DATA STUDIO v0.4.9.9</div>
     <h1>System Data Library</h1>
     <div class="muted" id="identity">Checking GM access…</div>
   </div>
@@ -188,10 +188,22 @@
         <div id="powerEligibility" class="checkbox-grid"></div>
       </section>
 
-      <label>Power Definition JSON
+      <section class="subpanel power-rank-builder">
+        <div class="panel-head">
+          <div><div class="eyebrow">IRON POWER PROGRESSION</div><h3>Rank-Up Effects</h3></div>
+        </div>
+        <p class="muted">Build Rank 3, 6, and 9 enhancements without editing JSON. Mechanical changes update the resolved Power itself whenever possible.</p>
+        <div id="powerRankProgression"></div>
+      </section>
+
+      <details class="advanced-json">
+        <summary>Advanced Power JSON</summary>
+        <p class="muted">Use this for unusual Power mechanics not yet supported by the Rank-Up Effect builder.</p>
+        <label>Power Definition JSON
         <textarea id="powerDefinitionJson" rows="24" class="code-field" spellcheck="false">{}</textarea>
         <span class="field-help">Full Shared Power Model data: actions, targeting, attack/hit/miss, costs, requirements, Iron rank expressions, tier expressions, and slot-specific fields. The Studio keeps id/name/slot/frequency/eligible Essences synchronized automatically.</span>
       </label>
+      </details>
 
       <label class="checkline"><input id="powerActive" type="checkbox" checked> Active in master library</label>
 
@@ -209,5 +221,6 @@
 <script src="content-studio-v049.js"></script>
 <script src="content-studio-v0491.js"></script>
 <script src="content-studio-v0492.js"></script>
+<script src="content-studio-v0499.js"></script>
 </body>
 </html>
