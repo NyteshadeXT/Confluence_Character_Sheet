@@ -7,13 +7,43 @@ function v0496PowerExpressionList(id){
  const tier=cp.tier||'Iron';
  const legacy=Array.isArray(p.rank_expressions?.[tier])?p.rank_expressions[tier]:[];
  const structured=p.tier_progression?.find?.(t=>t.tier===tier)?.rank_expressions||[];
- const seen=new Set();
- return [...structured,...legacy].filter(ex=>{
-  const key=`${ex.rank}|${ex.name||''}|${ex.effect||''}`;
-  if(seen.has(key))return false;seen.add(key);return Number(ex.rank)<=Number(cp.rank);
- });
+ const all=[...structured,...legacy]
+   .filter(ex=>Number(ex.rank)<=Number(cp.rank))
+   .sort((a,b)=>Number(a.rank)-Number(b.rank));
+ const seen=new Set(),out=[];
+ for(const ex of all){
+  const key=`${ex.rank}|${ex.name||''}|${ex.effect||ex.description||''}|${JSON.stringify(ex.operations||[])}`;
+  if(seen.has(key))continue;
+  seen.add(key);out.push(ex);
+ }
+ return out;
 }
 activeExpressions=function(id){return v0496PowerExpressionList(id)};
+
+function v049681ApplyLegacyExpression(model,ex){
+ const text=String(ex.effect||ex.description||'').trim();
+ if(!text)return;
+ model.text=model.text||{};
+ const hit=String(model.text.hit??model.hit_text??'');
+
+ const dmg=text.match(/damage\s+(?:increases|changes)\s+to\s+([0-9]+d[0-9]+(?:\s*[+\-]\s*[^.;]+)?)/i);
+ if(dmg&&hit){
+  const replacement=dmg[1].trim();
+  const current=hit.match(/[0-9]+d[0-9]+(?:\s*[+\-]\s*[^.,;]+)?/i);
+  if(current)model.text.hit=hit.replace(current[0],replacement);
+ }
+
+ const atk=text.match(/gain\s+([+-]?\d+)\s+(?:bonus\s+)?to\s+attack rolls?/i);
+ if(atk){
+  model.resolved_rank_effects=model.resolved_rank_effects||[];
+  model.resolved_rank_effects.push({type:'rank_attack_bonus',amount:Number(atk[1])||0,text});
+ }
+
+ if(!(dmg&&hit)){
+  model.resolved_rank_effects=model.resolved_rank_effects||[];
+  model.resolved_rank_effects.push({type:'rank_expression_text',rank:ex.rank,name:ex.name||`Rank ${ex.rank}`,text});
+ }
+}
 
 function v0496ApplyTextOperation(model,op){
  const section=op.section||op.target_section;
@@ -40,10 +70,21 @@ resolvedPowerModel=function(id){
  const model=clone(source);model.resolved_rank_effects=[];
  for(const ex of v0496PowerExpressionList(id)){
   const ops=ex.operations||[];
-  for(const op of ops){
-   if(['modify','add','replace','remove','unlock','replace_text','append_text','prepend_text'].includes(op.operation)&&!op.trigger)applyExpressionOperation(model,op);
+  if(ops.length){
+   for(const op of ops){
+    if(['modify','add','replace','remove','unlock','replace_text','append_text','prepend_text'].includes(op.operation)&&!op.trigger){
+      applyExpressionOperation(model,op);
+    }
+   }
+  }else{
+   v049681ApplyLegacyExpression(model,ex);
   }
-  model.resolved_rank_effects.push({type:'rank_expression',rank:ex.rank,name:ex.name||`Rank ${ex.rank}`,text:ex.effect||ex.description||''});
+  model.resolved_rank_effects.push({
+   type:'rank_expression',
+   rank:ex.rank,
+   name:ex.name||`Rank ${ex.rank}`,
+   text:ex.effect||ex.description||''
+  });
  }
  return model;
 };
