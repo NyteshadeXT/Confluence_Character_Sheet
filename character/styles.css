@@ -346,3 +346,12 @@ table th,table td{padding:5px 6px}
 /* v0.4.10.2 Essence-granted training */
 .training-source-badge{font-size:10px;padding:2px 6px;border:1px solid #7c6832;border-radius:999px;color:#e9bd58;white-space:nowrap}
 .essence-granted-training{box-shadow:inset 3px 0 0 #9b7a2d}
+
+/* v0.4.10.6 Essence training choice panel */
+.training-choice-panel{border:1px solid #8a6b2f;background:#211d13;border-radius:10px;padding:10px;margin-bottom:10px}
+.training-choice-panel h3{margin:2px 0 8px}
+.training-choice-card{border-top:1px solid #51472a;padding-top:8px;margin-top:8px}
+.training-choice-card:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.training-choice-card label{display:grid;grid-template-columns:minmax(220px,1fr) minmax(180px,280px);gap:10px;align-items:center}
+.training-choice-head{margin-bottom:4px}
+@media(max-width:700px){.training-choice-card label{grid-template-columns:1fr}}
