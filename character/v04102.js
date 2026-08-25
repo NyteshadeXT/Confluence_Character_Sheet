@@ -31,12 +31,13 @@ renderTraining=function(){
  for(const [target,g] of grants){
   const select=document.querySelector(`[data-training="${CSS.escape(target)}"]`);
   if(!select)continue;
-  const row=select.closest('.training-row');
+  const row=select.closest('.compact-training-row, .training-row');
   row?.classList.add('essence-granted-training');
   const badge=document.createElement('span');
   badge.className='training-source-badge';
   badge.textContent=`${g.essence} R${g.rank}`;
   badge.title=`Granted by ${g.essence} Essence — ${g.name}`;
+  if(!row)continue;
   const name=row.querySelector('b');
   if(name&&!row.querySelector('.training-source-badge'))name.insertAdjacentElement('afterend',badge);
  }
