@@ -1156,7 +1156,7 @@ function renderEssences(){
    return `<div class="essence-card"><div class="power-title"><span>${e.name} Essence</span><span class="rank-big">${e.tier} ${e.rank}</span></div>
     <div class="meta"><span class="tag">${ed?.associated_ability||'Unknown ability'}</span>${resources}</div>
     <div class="small">${(ed?.core_concept||[]).join(' · ')}</div>
-    <div class="essence-slots">${e.slots.map(s=>`<div class="essence-slot"><div class="eyebrow">${POWER_SLOT_ROLES[s.slot]?.name||`POWER ${s.slot}`}</div><b>${s.cp&&s.pd?s.pd.name:'Undiscovered'}</b><div class="small">${s.cp?`${s.cp.tier} ${s.cp.rank}`:'Rank 0'}</div></div>`).join('')}</div>
+    <div class="essence-slots">${e.slots.map(s=>`<div class="essence-slot"><div class="eyebrow">${POWER_SLOT_ROLES[s.slot]?.name||`POWER ${s.slot}`}</div><b>${s.cp&&s.pd?s.pd.name:'Undiscovered'}</b><div class="small">${s.cp?displayPowerTierRank(s.cp):'Rank 0'}</div></div>`).join('')}</div>
    </div>`;
  }).join('');
  const pending=pendingEssenceChoices();

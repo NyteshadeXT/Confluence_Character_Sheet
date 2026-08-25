@@ -6,7 +6,7 @@ This repository is intentionally separate from the `Confluence_System` Obsidian 
 
 ## Current milestone
 
-**Hosted Connected Prototype v0.4.10.3 — Authentication & Test Player Support**
+**Hosted Connected Prototype v0.4.10.4 — Authentication & Test Player Support**
 
 The frontend is a static Vercel application backed by Supabase Auth, PostgreSQL, Row
 Level Security, and protected RPC functions.
@@ -88,104 +88,110 @@ Fixes literal `\\n` text appearing in the GM System Data Studio. No database mig
 Removes the last static Skarr pre-load label and makes stale/deleted character URLs fail cleanly without rendering a character sheet.
 
 
-## v0.4.10.3 Authentication & Test Player Support
+## v0.4.10.4 Authentication & Test Player Support
 Adds persistent password sign-in alongside magic links and an authenticated Account Security page for setting/changing a password. No database schema migration is required.
 
 
-## v0.4.10.3 Player UI Stabilization
+## v0.4.10.4 Player UI Stabilization
 Repairs hosted character hydration, restores deterministic full-sheet loading, adds ancestry-aware creation previews, responsive attribute creation, and consistent navigation buttons.
 
 
-## v0.4.10.3 Character Load Hotfix
+## v0.4.10.4 Character Load Hotfix
 Removes duplicate browser session checks and adds hard timeouts so character loading cannot hang indefinitely.
 
 
-## v0.4.10.3 Character Asset Routing Fix
+## v0.4.10.4 Character Asset Routing Fix
 Fixes Vercel clean-URL asset resolution so the Character page loads `/character/styles.css` and `/character/app.js` instead of root portal assets.
 
 
-## v0.4.10.3 Character Usability & GM Assignment Controls
+## v0.4.10.4 Character Usability & GM Assignment Controls
 Adds Saving Throws training organization, wider proficiency controls, ancestry-power definition support, stronger equipped-item highlighting, clearer durability repair wording, GM removal of assigned Essences/Powers, and sticky GM Power Essence selection.
 
 
-## v0.4.10.3 System Rules Expansion
+## v0.4.10.4 System Rules Expansion
 Promotes Conditions to master system data with structured modifier integration, expands
 Power authoring/rendering to the full Confluence Power presentation, adds owned-equipment
 removal, and hides redundant weapon focus controls for single-group weapons.
 
 
-## v0.4.10.3 Essence Progression
+## v0.4.10.4 Essence Progression
 Expands Essence authoring into tiered resource progression, training interactions, mastery milestones, and derived Power relationships. Character calculations consume these definitions directly.
 
 
-## v0.4.10.3 Essence Milestone Choices
+## v0.4.10.4 Essence Milestone Choices
 Adds first-class permanent milestone choices, Power Attack Ability milestone effects,
 and retires standalone Essence Training Interaction. Training is now authored only as
 a Rank Effect.
 
 
-## v0.4.10.3 Combat Cards & Power Formatting
+## v0.4.10.4 Combat Cards & Power Formatting
 Adds collapsed/expanded/full Combat Power cards, formatted multiline Power text,
 Implement-keyword and Round-based attack milestone effects, and per-slot Essence Power
 coverage in System Data Studio.
 
 
-## v0.4.10.3 Rich Text Render Hotfix
+## v0.4.10.4 Rich Text Render Hotfix
 Fixes `esc is not defined` in player Power rendering introduced by v0.4.9.2.
 
 
-## v0.4.10.3 Game Night Progression Corrections
+## v0.4.10.4 Game Night Progression Corrections
 Corrects Skill, Essence, and Power starting ranks; surfaces final Skill modifiers in
 Training; and activates structured ancestry passive resource progression.
 
 
-## v0.4.10.3 Skill XP Advancement & Scaled Power Costs
+## v0.4.10.4 Skill XP Advancement & Scaled Power Costs
 Adds atomic player Skill Rank purchasing with tier caps and the agreed Rank 2–10 Skill
 cost curve. Replaces flat Power Rank cost with the escalating Rank 2–10 curve.
 
 
-## v0.4.10.3 Weapon Skill Advancement & Compact Player UI
+## v0.4.10.4 Weapon Skill Advancement & Compact Player UI
 Weapon Skills now spend XP on the same curve and tier caps as character Skills.
 The player sheet receives a compact desktop layout with two-column Training, denser
 resources/attributes/defenses, collapsible Rest, and collapsed Power groups.
 
 
-## v0.4.10.3 Resolved Power Display
+## v0.4.10.4 Resolved Power Display
 Power cards now show calculated Power Attack modifiers, source-Essence damage types, and
 Rank Expression changes directly in the displayed Power. Also removes the `R` prefix
 from Training Rank badges.
 
 
-## v0.4.10.3 Character Rank Mathematics
+## v0.4.10.4 Character Rank Mathematics
 Replaces automatic Power-Rank attack scaling with the universal Character Rank Bonus.
 Rank Bonus now applies exactly once to attacks, AC, Fortitude, Reflex, and Will, with
 explicit Math breakdowns. Power Rank remains Power-development progression only.
 
 
-## v0.4.10.3 Unified Training & Mastery Mathematics
+## v0.4.10.4 Unified Training & Mastery Mathematics
 Adds half-rate `ceil(Rank/2)` combat mastery for Power attacks, Weapon Skills,
 Armor/Shields, and Saving Throws; keeps full Skill Rank on Skill checks; gives
 Armor/Shield/Save training numeric rank advancement; and formalizes 10 base HP.
 
 
-## v0.4.10.3 Cumulative Rank Expression Fix
+## v0.4.10.4 Cumulative Rank Expression Fix
 Fixes Power resolution so every reached Rank Expression is applied in order, allowing
 later Rank abilities to build on earlier ones.
 
 
-## v0.4.10.3
+## v0.4.10.4
 Adds the form-based Rank 3/6/9 Power progression builder and structured Power mutations.
 
 
-## v0.4.10.3
+## v0.4.10.4
 Adds power-specific attack ability choices, structured defense targeting, and richer Rank rider mutations.
 
 
-## v0.4.10.3 Rank Mutation Resolver Fix
+## v0.4.10.4 Rank Mutation Resolver Fix
 Executes Modify Existing Effect and Enhance Existing Effect operations in the
 resolved Power. Existing owned Powers and definitions require no re-entry.
 
 
-## v0.4.10.3 Incremental Training Milestones
+## v0.4.10.4 Incremental Training Milestones
 Adds Essence milestone effects that increase a Training proficiency by one step with a
 configurable maximum, including use inside permanent milestone choices.
+
+
+## v0.4.10.4 Hierarchical Rank Progression
+Five Power slots determine each Essence and four Essences determine Character Rank.
+Empty Power slots count as Iron 1, and a tier transition requires every contributor to
+cross the threshold. Legacy Iron 10 Power records normalize to Bronze 0.
