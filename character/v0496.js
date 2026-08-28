@@ -50,7 +50,13 @@ function v0496ApplyTextOperation(model,op){
  if(!section)return;
  model.text=model.text||{};
  let current=String(model.text[section]??model[`${section}_text`]??'');
- if(op.operation==='replace_text'){
+ if(op.operation==='replace_text_once'){
+  const find=String(op.find??'');
+  if(find){
+   const idx=current.indexOf(find);
+   if(idx>=0)current=current.slice(0,idx)+String(op.replace??'')+current.slice(idx+find.length);
+  }
+ }else if(op.operation==='replace_text'){
   if(op.find==='__CURRENT_DAMAGE_DICE__'){
    current=current.replace(/\b\d+d\d+\b/i,String(op.replace??''));
   }else if(op.find==='__CURRENT_DAMAGE_FORMULA__'){
@@ -78,7 +84,7 @@ resolvedPowerModel=function(id){
   const ops=ex.operations||[];
   if(ops.length){
    for(const op of ops){
-    if(['modify','add','replace','remove','unlock','replace_text','append_text','prepend_text','modify_named_effect','enhance_named_effect'].includes(op.operation)&&!op.trigger){
+    if(['modify','add','replace','remove','unlock','replace_text','replace_text_once','append_text','prepend_text','modify_named_effect','enhance_named_effect'].includes(op.operation)&&!op.trigger){
       applyExpressionOperation(model,op);
     }
    }
