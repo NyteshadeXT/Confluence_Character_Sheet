@@ -12,19 +12,13 @@ function v04103IncreaseTraining(target,maxStatus='Expert'){
  }
 }
 const applyEssenceChoiceTrainingV04103Base=applyEssenceChoiceTraining;
-function v041061IncrementKey(effect){
- return `increment-training:${effect.essence||''}:${effect.tier||''}:${effect.rank||0}:${effect.name||''}:${effect.target||''}:${effect.choiceId||effect.choiceLabel||''}`;
-}
 applyEssenceChoiceTraining=function(){
  applyEssenceChoiceTrainingV04103Base();
- state.appliedMilestoneEffects=state.appliedMilestoneEffects||{};
  for(const essence of state.essences){
   for(const effect of reachedEssenceEffects(essence)){
-   if(effect.type!=='increase_training'||!effect.target)continue;
-   const key=v041061IncrementKey(effect);
-   if(state.appliedMilestoneEffects[key])continue;
-   v04103IncreaseTraining(effect.target,effect.max_status||'Expert');
-   state.appliedMilestoneEffects[key]=true;
+   if(effect.type==='increase_training'&&effect.target){
+    v04103IncreaseTraining(effect.target,effect.max_status||'Expert');
+   }
   }
  }
 };

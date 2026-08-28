@@ -3,22 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Confluence GM Dashboard v0.4.10.6.3.2</title>
+<title>Confluence GM Dashboard v0.4.10.7</title>
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script src="supabase-auth.js"></script>
-<style>
-.training-management-card{border:1px solid #7b3b3b;background:#221717}
-.training-remove-grid{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:10px;align-items:end}
-.training-remove-grid label{display:grid;gap:5px}
-@media(max-width:700px){.training-remove-grid{grid-template-columns:1fr}}
-</style>
 </head>
 <body>
 <div class="app">
 <header class="hero">
-  <div><div class="eyebrow">CONFLUENCE · GM CAMPAIGN DASHBOARD v0.4.10.6.3.2</div><h1>Campaign Management</h1><div class="muted" id="identity">Checking authentication…</div></div>
+  <div><div class="eyebrow">CONFLUENCE · GM CAMPAIGN DASHBOARD v0.4.10.7</div><h1>Campaign Management</h1><div class="muted" id="identity">Checking authentication…</div></div>
   <div class="actions"><a class="nav-button" href="index.html">Character Portal</a><a class="nav-button" href="content-studio.html">System Data Studio</a><a class="nav-button" href="account.html">Account Security</a><button id="logout">Sign Out</button></div>
 </header>
 
@@ -72,11 +66,6 @@
   <div class="card"><h3>Grant / Adjust XP</h3><div class="actions"><input id="xpAmount" type="number" value="20"><input id="xpNote" placeholder="Reason"><button class="primary" id="grantXp">Apply XP</button></div></div>
   <div class="card"><h3>Assign Essence</h3><div class="actions"><select id="essenceSelect"></select><button id="assignEssence">Assign Essence</button></div></div>
   <div class="card"><h3>Assign Power</h3><div class="actions"><select id="powerEssence"></select><select id="powerSelect"></select><button id="assignPower">Assign Power</button></div></div>
-  <div class="card training-management-card">
-    <div class="eyebrow">GM ONLY</div><h3>Remove Skill / Weapon Training</h3>
-    <p class="muted">Remove an incorrectly granted Skill or Weapon Skill proficiency. The entry returns to <b>Untrained · Rank 0</b>. XP is not refunded.</p>
-    <div class="training-remove-grid"><label>Training Entry<select id="resetTrainingSelect"></select></label><button class="danger" id="resetTraining">Remove Training</button></div>
-  </div>
 </section>
 </div>
 
@@ -147,16 +136,6 @@ function renderCurrent(){
  if(lastPowerEssence&&availableEssences.includes(lastPowerEssence))powerEssence.value=lastPowerEssence;
  else if(powerEssence.value)lastPowerEssence=powerEssence.value;
  refreshPowerOptions();
- const skillNames=new Set(['Acrobatics','Arcana','Athletics','Bluff','Diplomacy','Dungeoneering','Endurance','Heal','History','Insight','Intimidate','Nature','Perception','Religion','Stealth','Streetwise','Thievery']);
- const weaponNames=new Set(['Axe','Bow','Crossbow','Flail','Hammer','Heavy Blade','Light Blade','Mace','Pick','Polearm','Sling','Spear','Staff','Unarmed']);
- const trainingNames=Object.keys(current.training||{}).filter(n=>skillNames.has(n)||weaponNames.has(n)).sort((a,b)=>a.localeCompare(b));
- const trainedNames=trainingNames.filter(n=>(current.training?.[n]?.status||'Untrained')!=='Untrained');
- const selectable=trainedNames.length?trainedNames:trainingNames;
- resetTrainingSelect.innerHTML=selectable.length?selectable.map(n=>{
-   const entry=current.training[n]||{},rank=entry.status==='Untrained'?0:(entry.rating||1),group=skillNames.has(n)?'Skill':'Weapon Skill';
-   return `<option value="${esc(n)}">${group} · ${esc(n)} · ${esc(entry.status||'Untrained')} · Rank ${rank}</option>`;
- }).join(''):'<option value="">No Skill or Weapon Training to remove</option>';
- resetTraining.disabled=!selectable.length;
  powers.innerHTML=current.powers.map(p=>`<div class="row"><span><b>${esc(p.name)}</b> · ${esc(p.source_essence_id)} · Slot ${p.slot}</span><span class="actions"><span>${p.tier} ${p.rank}</span><button class="danger compact" data-remove-power="${p.owned_id}">Remove</button></span></div>`).join('')||'<div class="muted">No Powers assigned.</div>';
  document.getElementById('saveOwner').onclick=saveOwner;document.getElementById('deleteCharacter').onclick=deleteSelectedCharacter;
 }
@@ -221,14 +200,6 @@ createCharacter.onclick=async()=>{
 grantXp.onclick=async()=>{if(!selectedId)return show('Select a character first.',true);const {error}=await confluenceSupabase.rpc('gm_grant_xp',{p_character_id:selectedId,p_amount:+xpAmount.value||0,p_note:xpNote.value||null});if(error)return show(error.message,true);await loadRoster();await selectChar(selectedId);show('XP updated.')};
 assignEssence.onclick=async()=>{if(!selectedId)return show('Select a character first.',true);const {error}=await confluenceSupabase.rpc('gm_assign_essence',{p_character_id:selectedId,p_essence_id:essenceSelect.value});if(error)return show(error.message,true);await selectChar(selectedId);show('Essence assigned.')};
 assignPower.onclick=async()=>{if(!selectedId)return show('Select a character first.',true);lastPowerEssence=powerEssence.value;const {error}=await confluenceSupabase.rpc('gm_assign_power',{p_character_id:selectedId,p_essence_id:lastPowerEssence,p_power_id:powerSelect.value});if(error)return show(error.message,true);await selectChar(selectedId);show('Power assigned.')};
-resetTraining.onclick=async()=>{
- if(!selectedId)return show('Select a character first.',true);
- const name=resetTrainingSelect.value;if(!name)return show('Select a Training entry.',true);
- if(!confirm(`Remove ${name} training from ${current?.name||'this character'}?\n\nThis resets it to Untrained / Rank 0. XP spent on this Training entry will not be refunded.`))return;
- const {error}=await confluenceSupabase.rpc('gm_reset_character_training',{p_character_id:selectedId,p_training_name:name});
- if(error)return show(error.message,true);
- await selectChar(selectedId);show(`${name} training removed. It is now Untrained / Rank 0.`);
-};
 powerEssence.onchange=()=>{lastPowerEssence=powerEssence.value;refreshPowerOptions()};
 newCharacterAncestry.onchange=refreshGmCreationAttributes;
 for(const [k,input] of Object.entries({Str:attrStr,Dex:attrDex,Con:attrCon,Int:attrInt,Wis:attrWis,Cha:attrCha})){
