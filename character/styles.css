@@ -355,3 +355,8 @@ table th,table td{padding:5px 6px}
 .training-choice-card label{display:grid;grid-template-columns:minmax(220px,1fr) minmax(180px,280px);gap:10px;align-items:center}
 .training-choice-head{margin-bottom:4px}
 @media(max-width:700px){.training-choice-card label{grid-template-columns:1fr}}
+
+/* v0.4.11.0 */
+.breakthrough-banner{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:7px 9px;margin:6px 0 8px;border:1px solid #9a7930;border-radius:8px;background:#251f12}
+.breakthrough-banner b{color:#efc35f}.breakthrough-banner span{font-size:11px;color:var(--muted)}
+.breakthrough-banner.bronze{border-color:#8f6e4b;background:#261b14}.breakthrough-banner.bronze b{color:#d59b68}

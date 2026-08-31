@@ -14,7 +14,7 @@
 <div class="app studio-app">
 <header class="hero">
   <div>
-    <div class="eyebrow">CONFLUENCE · GM SYSTEM DATA STUDIO v0.4.10.8</div>
+    <div class="eyebrow">CONFLUENCE · GM SYSTEM DATA STUDIO v0.4.11.0</div>
     <h1>System Data Library</h1>
     <div class="muted" id="identity">Checking GM access…</div>
   </div>
@@ -191,34 +191,22 @@
               <option>AC</option><option>Fortitude</option><option>Reflex</option><option>Will</option>
             </select>
           </label>
-          <label>Attack Ability Rule
-            <select id="powerAbilityMode">
-              <option value="essence">Source Essence Ability</option>
-              <option value="fixed">Fixed Ability</option>
-              <option value="choice">Permanent Player Choice</option>
-            </select>
+          <label>Default Ability
+            <input value="Source Essence Ability" disabled>
+            <span class="field-help">The Power automatically uses the associated ability of the Essence that granted it.</span>
           </label>
         </div>
-        <div id="powerFixedAbilityWrap" class="hidden">
-          <label>Fixed Ability
-            <select id="powerFixedAbility">
+        <div class="form-grid">
+          <label>Optional Alternate Ability
+            <select id="powerAlternateAbility">
+              <option value="">None</option>
               <option>Strength</option><option>Dexterity</option><option>Constitution</option>
               <option>Intelligence</option><option>Wisdom</option><option>Charisma</option>
             </select>
+            <span class="field-help">If set, the player permanently chooses between the source Essence ability and this alternate ability when the Power is acquired.</span>
           </label>
         </div>
-        <div id="powerAbilityChoicesWrap" class="hidden">
-          <label>Allowed Ability Choices</label>
-          <div class="checkbox-grid" id="powerAbilityChoices">
-            <label class="checkline"><input type="checkbox" value="Strength"> Strength</label>
-            <label class="checkline"><input type="checkbox" value="Dexterity"> Dexterity</label>
-            <label class="checkline"><input type="checkbox" value="Constitution"> Constitution</label>
-            <label class="checkline"><input type="checkbox" value="Intelligence"> Intelligence</label>
-            <label class="checkline"><input type="checkbox" value="Wisdom"> Wisdom</label>
-            <label class="checkline"><input type="checkbox" value="Charisma"> Charisma</label>
-          </div>
-          <span class="field-help">The player chooses once when the Power is acquired. The choice is permanent.</span>
-        </div>
+        <div id="legacyPowerAbilityConfig" class="field-help hidden"></div>
       </section>
 
       <section class="subpanel">
@@ -269,5 +257,6 @@
 <script src="content-studio-v04105.js"></script>
 <script src="content-studio-v04107.js"></script>
 <script src="content-studio-v04108.js"></script>
+<script src="content-studio-v04110.js"></script>
 </body>
 </html>

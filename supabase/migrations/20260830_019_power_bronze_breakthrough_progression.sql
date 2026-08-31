@@ -1,0 +1,7 @@
+-- Applied live in v0.4.11.0.
+-- player_rank_power now supports:
+-- Iron 1-9 using the existing Iron XP curve.
+-- Bronze 0 breakthrough: 150 XP, only after all five Powers in the Essence are Iron 9.
+-- Bronze 1-9 XP: 25,30,40,50,65,80,100,125,150.
+-- Bronze 1+ locked until all five Powers have reached Bronze 0.
+-- Essence current_tier/current_rank is recalculated after every purchase.
