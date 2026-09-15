@@ -1,0 +1,28 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Confluence Neon Test Account</title>
+<style>body{font-family:system-ui,sans-serif;max-width:680px;margin:40px auto;padding:0 20px;background:#111;color:#eee}.card{background:#1b1b1b;border:1px solid #444;border-radius:10px;padding:20px}label{display:block;margin:14px 0 6px}input{width:100%;box-sizing:border-box;padding:10px;background:#101820;color:#eee;border:1px solid #456;border-radius:6px}button{margin-top:16px;padding:10px 16px}.ok{color:#7ee787}.bad{color:#ff7b72}.muted{color:#aaa}</style>
+<script>window.CONFLUENCE_BACKEND_PROVIDER='supabase';</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js"></script><script src="/supabase-auth.js"></script>
+<script src="/neon-config.js"></script><script src="/neon-bootstrap.js"></script><script src="/confluence-auth.js"></script></head>
+<body><h1>Neon Test Account</h1><p class="muted">Validation-only account creation for the neon-migration preview.</p>
+<div class="card"><div><b>Provider:</b> <span id="provider"></span></div>
+<label>Email</label><input id="email" type="email" autocomplete="username">
+<label>Password</label><input id="password" type="password" autocomplete="new-password">
+<button id="create">Create Test Account</button><p id="status"></p></div>
+<script>
+const status=document.getElementById('status'), provider=window.confluenceAuth.provider;
+document.getElementById('provider').textContent=provider;
+if(provider!=='neon'){status.textContent='Blocked: append ?backend=neon to use this validation page.';status.className='bad';document.getElementById('create').disabled=true;}
+document.getElementById('create').onclick=async()=>{
+ const email=document.getElementById('email').value.trim(), password=document.getElementById('password').value;
+ status.textContent='Creating account…';status.className='';
+ try{
+  const result=await Promise.race([window.confluenceAuth.signUp({email,password}),new Promise((_,reject)=>setTimeout(()=>reject(new Error('Authentication request timed out after 15 seconds.')),15000))]);
+  if(result&&result.error)throw result.error;
+  status.textContent='Account created. Continuing to Neon validation…';status.className='ok';
+  setTimeout(()=>location.href='/neon-validation.html?backend=neon',800);
+ }catch(e){status.textContent=e.message||String(e);status.className='bad';}
+};
+</script></body></html>

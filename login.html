@@ -48,6 +48,12 @@
 </div>
 
 <script>
+function withAuthTimeout(promise, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error((label || 'Authentication request') + ' timed out after 15 seconds.')), 15000))
+  ]);
+}
 const next=new URLSearchParams(location.search).get('next')||'/';
 
 function show(message,bad=false){
