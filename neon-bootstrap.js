@@ -1,6 +1,6 @@
-/* Neon browser SDK bootstrap (v0.4.11.5).
+/* Neon browser SDK bootstrap (v0.4.11.10).
  * Loads the official @neondatabase/neon-js client and exposes a single Promise.
- * The SupabaseAuthAdapter intentionally preserves the existing auth method/response shape
+ * The BetterAuthVanillaAdapter intentionally preserves the existing auth method/response shape
  * while the application is migrated page-by-page.
  */
 (function () {
@@ -16,11 +16,9 @@
 
     window.CONFLUENCE_NEON_CLIENT_READY = import('https://esm.sh/@neondatabase/neon-js@latest').then(function (sdk) {
       const client = sdk.createClient({
-        auth: { url: cfg.authBaseUrl },
-        dataApi: { url: cfg.dataApiUrl }
-      }, {
-        auth: { adapter: sdk.SupabaseAuthAdapter() }
-      });
+      auth: { url: cfg.authBaseUrl },
+      dataApi: { url: cfg.dataApiUrl }
+    });
       window.CONFLUENCE_NEON_CLIENT = client;
       window.CONFLUENCE_NEON_AUTH_CLIENT = client.auth;
       return client;

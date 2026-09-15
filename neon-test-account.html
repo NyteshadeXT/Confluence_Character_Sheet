@@ -13,7 +13,7 @@
 <button id="create">Create Test Account</button><p id="status"></p></div>
 <script>
 const status=document.getElementById('status'), provider=window.confluenceAuth.provider;
-document.getElementById('provider').textContent=provider;document.getElementById('capability').textContent=typeof window.confluenceAuth.signUp==='function'?'available':'MISSING';
+document.getElementById('provider').textContent=provider;document.getElementById('capability').textContent=typeof window.confluenceAuth.signUp==='function'?'available (Better Auth email/password)':'MISSING';
 if(provider!=='neon'){status.textContent='Blocked: append ?backend=neon to use this validation page.';status.className='bad';document.getElementById('create').disabled=true;}
 document.getElementById('create').onclick=async()=>{
  const email=document.getElementById('email').value.trim(), password=document.getElementById('password').value;
