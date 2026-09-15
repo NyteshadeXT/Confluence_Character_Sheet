@@ -96,7 +96,7 @@ function parseConditionModifiers(text){
 }
 function formatConditionModifiers(mods){return (mods||[]).map(m=>`${m.target} = ${m.valueFromCondition===-1?'-value':m.valueFromCondition===1?'value':m.value}`).join('\n')}
 async function loadConditions(){
- const {data,error}=await confluenceApi.from('condition_definitions').select('id,name,definition,is_active').order('name');if(error)throw error;conditionRows=data||[];renderConditionList();
+ const {data,error}=await confluenceApi.rpc('gm_get_system_catalog');if(error)throw error;conditionRows=(data&&data.conditions)||[];renderConditionList();
 }
 function renderConditionList(){
  const q=conditionSearch.value.trim().toLowerCase(),show=showInactiveConditions.checked;

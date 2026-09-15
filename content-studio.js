@@ -38,14 +38,10 @@ async function requireGm(){
 }
 
 async function loadLibrary(preserve=true){
-  const [{data:a,error:aErr},{data:e,error:eErr},{data:p,error:pErr},{data:x,error:xErr}]=await Promise.all([
-    confluenceApi.from('ancestry_definitions').select('id,name,definition,is_active').order('name'),
-    confluenceApi.from('essence_definitions').select('id,name,associated_ability,definition,is_active').order('name'),
-    confluenceApi.from('power_definitions').select('id,name,slot_index,definition,is_active').order('slot_index').order('name'),
-    confluenceApi.from('essence_power_eligibility').select('essence_id,power_id')
-  ]);
-  if(aErr)throw aErr;if(eErr)throw eErr;if(pErr)throw pErr;if(xErr)throw xErr;
-  ancestryRows=a||[];essenceRows=e||[];powerRows=p||[];eligibilityRows=x||[];
+  const {data,error}=await confluenceApi.rpc('gm_get_system_catalog');
+  if(error)throw error;
+  const catalog=data||{};
+  ancestryRows=catalog.ancestries||[];essenceRows=catalog.essences||[];powerRows=catalog.powers||[];eligibilityRows=catalog.eligibility||[];
   renderAncestryList();renderEssenceList();renderPowerList();renderEligibility();
   if(preserve&&editingAncestryId){const row=ancestryRows.find(x=>x.id===editingAncestryId);if(row)loadAncestry(row.id)}
   if(preserve&&editingEssenceId){const row=essenceRows.find(x=>x.id===editingEssenceId);if(row)loadEssence(row.id)}

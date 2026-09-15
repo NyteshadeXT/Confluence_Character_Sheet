@@ -19,6 +19,8 @@ revoke execute on function public.player_update_profile_state(uuid,jsonb,jsonb,j
 revoke execute on function public.player_update_runtime(uuid,jsonb) from public, anonymous;
 revoke execute on function public.player_rank_skill(uuid,text) from public, anonymous;
 revoke execute on function public.gm_get_catalog(uuid) from public, anonymous;
+revoke execute on function public.gm_get_system_catalog() from public, anonymous;
+revoke execute on function public.get_active_condition_definitions() from public, anonymous;
 revoke execute on function public.gm_get_campaign_roster(uuid) from public, anonymous;
 revoke execute on function public.get_character_snapshot(uuid) from public, anonymous;
 revoke execute on function public.gm_upsert_ancestry_definition(text,text,jsonb,boolean) from public, anonymous;
@@ -46,6 +48,8 @@ grant execute on function public.player_update_profile_state(uuid,jsonb,jsonb,js
 grant execute on function public.player_update_runtime(uuid,jsonb) to authenticated;
 grant execute on function public.player_rank_skill(uuid,text) to authenticated;
 grant execute on function public.gm_get_catalog(uuid) to authenticated;
+grant execute on function public.gm_get_system_catalog() to authenticated;
+grant execute on function public.get_active_condition_definitions() to authenticated;
 grant execute on function public.gm_get_campaign_roster(uuid) to authenticated;
 grant execute on function public.get_character_snapshot(uuid) to authenticated;
 grant execute on function public.gm_upsert_ancestry_definition(text,text,jsonb,boolean) to authenticated;

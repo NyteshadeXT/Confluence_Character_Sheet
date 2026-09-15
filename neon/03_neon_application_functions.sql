@@ -199,6 +199,26 @@ begin if not public.is_campaign_gm(p_campaign_id) then raise exception 'GM autho
  'eligibility',(select coalesce(jsonb_agg(jsonb_build_object('essence_id',essence_id,'power_id',power_id)),'[]') from public.essence_power_eligibility),
  'ancestries',(select coalesce(jsonb_agg(jsonb_build_object('id',id,'name',name,'definition',definition) order by name),'[]') from public.ancestry_definitions where is_active));end $$;
 
+create or replace function public.gm_get_system_catalog() returns jsonb
+language plpgsql security definer set search_path=public as $$
+begin
+ if not public.is_system_gm() then raise exception 'System GM authorization required';end if;
+ return jsonb_build_object(
+  'ancestries',(select coalesce(jsonb_agg(jsonb_build_object('id',id,'name',name,'definition',definition,'is_active',is_active) order by name),'[]') from public.ancestry_definitions),
+  'essences',(select coalesce(jsonb_agg(jsonb_build_object('id',id,'name',name,'associated_ability',associated_ability,'definition',definition,'is_active',is_active) order by name),'[]') from public.essence_definitions),
+  'powers',(select coalesce(jsonb_agg(jsonb_build_object('id',id,'name',name,'slot_index',slot_index,'definition',definition,'is_active',is_active) order by slot_index,name),'[]') from public.power_definitions),
+  'eligibility',(select coalesce(jsonb_agg(jsonb_build_object('essence_id',essence_id,'power_id',power_id)),'[]') from public.essence_power_eligibility),
+  'conditions',(select coalesce(jsonb_agg(jsonb_build_object('id',id,'name',name,'definition',definition,'is_active',is_active) order by name),'[]') from public.condition_definitions)
+ );
+end $$;
+
+create or replace function public.get_active_condition_definitions() returns jsonb
+language plpgsql security definer set search_path=public as $$
+begin
+ if public.current_user_id() is null then raise exception 'Authentication required';end if;
+ return coalesce((select jsonb_agg(jsonb_build_object('id',id,'name',name,'definition',definition,'is_active',is_active) order by name) from public.condition_definitions where is_active),'[]'::jsonb);
+end $$;
+
 create or replace function public.gm_get_campaign_roster(p_campaign_id uuid) returns jsonb
 language plpgsql security definer set search_path=public as $$
 declare result jsonb;begin if not public.is_campaign_gm(p_campaign_id) then raise exception 'GM access required';end if;

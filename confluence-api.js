@@ -59,7 +59,7 @@
   };
 
   const rpcNames = [
-    'get_my_home','gm_get_catalog','get_character_snapshot','gm_add_player_by_email','gm_assign_essence','gm_assign_power',
+    'get_my_home','gm_get_catalog','gm_get_system_catalog','get_active_condition_definitions','get_character_snapshot','gm_add_player_by_email','gm_assign_essence','gm_assign_power',
     'gm_create_character','gm_assign_character_owner','gm_unassign_character_owner','gm_delete_character','gm_delete_power_definition','gm_get_campaign_roster',
     'gm_grant_xp','gm_remove_essence','gm_remove_power','gm_upsert_ancestry_definition',
     'gm_upsert_condition_definition','gm_upsert_essence_definition','gm_upsert_power_definition',

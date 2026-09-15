@@ -19,6 +19,8 @@ with expected(proname,identity_args) as (values
  ('player_update_runtime','uuid, jsonb'),
  ('player_rank_skill','uuid, text'),
  ('gm_get_catalog','uuid'),
+ ('gm_get_system_catalog',''),
+ ('get_active_condition_definitions',''),
  ('gm_get_campaign_roster','uuid'),
  ('get_character_snapshot','uuid'),
  ('gm_upsert_ancestry_definition','text, text, jsonb, boolean'),
