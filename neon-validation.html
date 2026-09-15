@@ -20,34 +20,101 @@ button{padding:9px 14px;margin-right:8px}
 <p class="muted">Read-only browser validation for Auth → JWT → Data API → RLS/RPC.</p>
 <div class="card"><b>Provider:</b> <span id="provider"></span></div>
 <div class="card"><b>Session:</b><pre id="session">Checking…</pre></div>
-<div class="card"><b>JWT metadata:</b><pre id="jwt">Waiting…</pre></div>
+<div class="card"><b>Outgoing Data API JWT:</b><pre id="jwt">Waiting…</pre></div>
+<div class="card"><b>Auth JWKS comparison:</b><pre id="jwks">Waiting…</pre></div>
 <div class="card"><b>Identity/RLS RPC:</b><pre id="rpc">Waiting…</pre></div>
 <button id="login">Go to Login</button><button id="signout">Sign Out</button>
 <script>
 (async()=>{
  const out=(id,v,ok)=>{const e=document.getElementById(id);e.textContent=typeof v==='string'?v:JSON.stringify(v,null,2);e.className=ok?'ok':'bad'};
+ const b64json=(part)=>{
+   const normalized=part.replace(/-/g,'+').replace(/_/g,'/');
+   const padded=normalized.padEnd(Math.ceil(normalized.length/4)*4,'=');
+   return JSON.parse(decodeURIComponent(Array.prototype.map.call(atob(padded),c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+ };
+ const summarizeJwt=(token)=>{
+   if(!token || token.split('.').length!==3) return null;
+   const parts=token.split('.'), header=b64json(parts[0]), payload=b64json(parts[1]);
+   return {
+     header:{alg:header.alg||null,kid:header.kid||null,typ:header.typ||null},
+     claims:{
+       iss:payload.iss||null,
+       aud:payload.aud||null,
+       sub:payload.sub||null,
+       role:payload.role||null,
+       iat:payload.iat||null,
+       exp:payload.exp||null
+     }
+   };
+ };
+ const authorizationFrom=(input,init)=>{
+   let value=null;
+   try{
+     if(init && init.headers){
+       const hdr=new Headers(init.headers);
+       value=hdr.get('authorization');
+     }
+     if(!value && input instanceof Request) value=input.headers.get('authorization');
+   }catch(_){}
+   return value;
+ };
+
  document.getElementById('provider').textContent=window.confluenceAuth.provider;
  try{
    const session=await window.confluenceAuth.getSession();
    out('session',session?{authenticated:true,user:session.user?{id:session.user.id,email:session.user.email}:null}:{authenticated:false},!!session);
+
    if(session){
-     try {
-       const authClient=window.CONFLUENCE_NEON_AUTH_CLIENT;
-       const tokenResult=authClient && authClient.getAccessToken ? await authClient.getAccessToken() : null;
-       const token=typeof tokenResult==='string' ? tokenResult :
-         (tokenResult && tokenResult.data && (tokenResult.data.token || tokenResult.data.accessToken)) ||
-         (tokenResult && (tokenResult.token || tokenResult.accessToken)) || null;
-       if(token && token.split('.').length===3){
-         const dec=(part)=>JSON.parse(decodeURIComponent(escape(atob(part.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(part.length/4)*4,'=')))));
-         const parts=token.split('.'), header=dec(parts[0]), payload=dec(parts[1]);
-         out('jwt',{header:{alg:header.alg,kid:header.kid,typ:header.typ},claims:{iss:payload.iss,aud:payload.aud,sub:payload.sub,role:payload.role,iat:payload.iat,exp:payload.exp}},true);
-       } else {
-         out('jwt',{note:'No JWT exposed by auth.getAccessToken(); combined SDK should still forward its cached token automatically.'},true);
+     let captured=null;
+     const originalFetch=window.fetch.bind(window);
+     const dataApiUrl=(window.CONFLUENCE_NEON && window.CONFLUENCE_NEON.dataApiUrl)||'';
+
+     window.fetch=async function(input,init){
+       const url=typeof input==='string'?input:(input && input.url)||'';
+       if(dataApiUrl && url.startsWith(dataApiUrl)){
+         const auth=authorizationFrom(input,init);
+         if(auth && /^Bearer\s+/i.test(auth)){
+           try{ captured=summarizeJwt(auth.replace(/^Bearer\s+/i,'')); }
+           catch(e){ captured={decodeError:e.message||String(e)}; }
+         } else {
+           captured={note:'Data API request contained no Bearer Authorization header visible to window.fetch.'};
+         }
        }
-     } catch(e){ out('jwt',{diagnosticError:e.message||String(e)},false); }
-     const r=await window.confluenceApi.rpc('is_system_gm',{});
+       return originalFetch(input,init);
+     };
+
+     let r;
+     try{
+       r=await window.confluenceApi.rpc('is_system_gm',{});
+     } finally {
+       window.fetch=originalFetch;
+     }
+
+     out('jwt',captured||{note:'No Data API request was observed by the window.fetch interceptor.'},!!captured && !captured.decodeError);
+
+     try{
+       const jwksUrl=((window.CONFLUENCE_NEON && window.CONFLUENCE_NEON.authBaseUrl)||'').replace(/\/$/,'')+'/.well-known/jwks.json';
+       const response=await originalFetch(jwksUrl,{credentials:'omit'});
+       if(!response.ok) throw new Error('JWKS HTTP '+response.status);
+       const body=await response.json();
+       const kids=Array.isArray(body.keys)?body.keys.map(k=>k.kid).filter(Boolean):[];
+       const tokenKid=captured && captured.header ? captured.header.kid : null;
+       out('jwks',{
+         jwksUrl:jwksUrl,
+         publishedKids:kids,
+         tokenKid:tokenKid,
+         kidMatch:tokenKid ? kids.includes(tokenKid) : null
+       },response.ok && (!tokenKid || kids.includes(tokenKid)));
+     }catch(e){
+       out('jwks',{diagnosticError:e.message||String(e)},false);
+     }
+
      out('rpc',r,!r.error);
-   } else { out('jwt','Sign in first.',false); out('rpc','Sign in first.',false); }
+   } else {
+     out('jwt','Sign in first.',false);
+     out('jwks','Sign in first.',false);
+     out('rpc','Sign in first.',false);
+   }
  }catch(e){out('session',e.message||String(e),false)}
  document.getElementById('login').onclick=()=>location.href='/login.html?backend=neon&next='+encodeURIComponent('/neon-validation.html?backend=neon');
  document.getElementById('signout').onclick=async()=>{await window.confluenceAuth.signOut();location.reload()};

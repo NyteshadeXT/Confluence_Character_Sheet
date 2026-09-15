@@ -1,4 +1,4 @@
-/* Provider-neutral authentication facade (v0.4.11.11).
+/* Provider-neutral authentication facade (v0.4.11.12).
  * Supabase remains the default provider during staged migration.
  * Neon uses the documented BetterAuthVanillaAdapter API.
  */
