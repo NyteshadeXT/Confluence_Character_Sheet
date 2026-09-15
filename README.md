@@ -1,6 +1,6 @@
 # Confluence Character Sheet
 
-**Current hosted migration candidate: v0.4.12.4 — RPC-Centric Application Contract**
+**Current hosted migration candidate: v0.4.12.5 — RPC-Centric Application Contract**
 
 Hosted character-management application for the **Confluence System**.
 
@@ -8,9 +8,9 @@ This repository is intentionally separate from the `Confluence_System` Obsidian 
 
 ## Current milestone
 
-**Hosted Neon Integration Candidate v0.4.12.4 — RPC-Centric Application Contract**
+**Hosted Neon Integration Candidate v0.4.12.5 — RPC-Centric Application Contract**
 
-The frontend remains production-safe on Supabase by default while the validation path supports Neon Auth, Neon Data API, PostgreSQL Row Level Security, and protected RPC functions. v0.4.12.4 removes the remaining application-level direct table reads so browser data access now goes through the protected RPC contract. The existing Neon Auth/Data API JWK support case remains unchanged.
+The frontend remains production-safe on Supabase by default while the validation path supports Neon Auth, Neon Data API, PostgreSQL Row Level Security, and protected RPC functions. v0.4.12.5 removes the remaining application-level direct table reads so browser data access now goes through the protected RPC contract. The existing Neon Auth/Data API JWK support case remains unchanged.
 
 ## Repository structure
 

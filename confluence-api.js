@@ -1,6 +1,7 @@
-/* Confluence provider-neutral data API facade (v0.4.12.1).
- * Uses each provider's native PostgREST-compatible query client. Neon JWT forwarding is
- * handled by the official neon-js SDK rather than by application code.
+/* Confluence provider-neutral RPC facade (v0.4.12.5).
+ * The browser application is intentionally RPC-only: application table access is not
+ * exposed here. Neon JWT forwarding is handled by the official neon-js SDK rather than
+ * by application code.
  */
 (function () {
   'use strict';
@@ -22,39 +23,9 @@
     get provider() { return providerName(); },
     async client() { return providerName() === 'neon' ? neonClient() : supabaseClient(); },
     async rpc(name, params) {
+      if (!rpcNames.includes(name)) throw new Error('Unsupported Confluence RPC: ' + name);
       const client = await this.client();
       return client.rpc(name, params || {});
-    },
-    from(table) {
-      // Lazy thenable query builder: records the normal PostgREST chain synchronously,
-      // resolves the active provider client only when the query is awaited.
-      const calls = [];
-      const proxy = new Proxy({}, {
-        get: function (_target, prop) {
-          if (prop === 'then') {
-            return function (resolve, reject) {
-              api.client().then(function (client) {
-                let q = client.from(table);
-                for (const call of calls) q = q[call.name].apply(q, call.args);
-                return q;
-              }).then(resolve, reject);
-            };
-          }
-          return function () {
-            calls.push({ name: prop, args: Array.from(arguments) });
-            return proxy;
-          };
-        }
-      });
-      return proxy;
-    },
-    async query(run) {
-      const client = await this.client();
-      return run(client);
-    },
-    async select(table, columns, configure) {
-      let q = this.from(table).select(columns || '*');
-      return typeof configure === 'function' ? configure(q) : q;
     }
   };
 
