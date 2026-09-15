@@ -72,11 +72,19 @@ passwordSignIn.onclick=async()=>{
   if(!email||!pwd)return show('Enter both email and password.',true);
   passwordSignIn.disabled=true;
   show('Signing in…');
-  const {data,error}=await window.confluenceAuth.signInWithPassword({email,password:pwd});
-  passwordSignIn.disabled=false;
-  if(error)return show(error.message,true);
-  if(!data.session)return show('Sign-in did not create a session.',true);
-  location.href=next;
+  try{
+    const {data,error}=await withAuthTimeout(
+      window.confluenceAuth.signInWithPassword({email,password:pwd}),
+      'Sign-in'
+    );
+    passwordSignIn.disabled=false;
+    if(error)return show(error.message||String(error),true);
+    if(!data||!data.session)return show('Sign-in succeeded but no active session could be verified.',true);
+    location.href=next;
+  }catch(error){
+    passwordSignIn.disabled=false;
+    show(error.message||String(error),true);
+  }
 };
 
 sendMagic.onclick=async()=>{

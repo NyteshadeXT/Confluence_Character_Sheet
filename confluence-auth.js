@@ -1,4 +1,4 @@
-/* Provider-neutral authentication facade (v0.4.11.13).
+/* Provider-neutral authentication facade (v0.4.11.14).
  * Supabase remains the default provider during staged migration.
  * Neon uses the documented BetterAuthVanillaAdapter API.
  */
@@ -64,10 +64,31 @@
 
     async signInWithPassword(credentials) {
       if (providerName() === 'neon') {
-        return (await neonAuth()).signIn.email({
+        const client = await neonAuth();
+        const result = await client.signIn.email({
           email: credentials.email,
           password: credentials.password
         });
+        if (result && result.error) return result;
+
+        // Better Auth signIn.email() returns its own success payload rather than
+        // Supabase's { data: { session } } shape. Resolve the authoritative
+        // cookie-backed session and normalize it for the existing application.
+        const sessionResult = await client.getSession();
+        if (sessionResult && sessionResult.error) {
+          return { data: { session: null, user: result && result.data ? result.data.user || null : null }, error: sessionResult.error };
+        }
+        const neonSession = sessionResult && sessionResult.data && sessionResult.data.session
+          ? Object.assign({}, sessionResult.data.session, { user: sessionResult.data.user || null })
+          : null;
+        return {
+          data: {
+            session: neonSession,
+            user: sessionResult && sessionResult.data ? sessionResult.data.user || null : null,
+            providerData: result && result.data ? result.data : null
+          },
+          error: null
+        };
       }
       return supabaseAuth().signInWithPassword(credentials);
     },
@@ -92,9 +113,20 @@
     },
 
     async signOut(options) {
-      const result = providerName() === 'neon'
-        ? await (await neonAuth()).signOut()
-        : await supabaseAuth().signOut(options);
+      if (providerName() === 'neon') {
+        const client = await neonAuth();
+        const result = await client.signOut();
+        if (result && result.error) throw result.error;
+
+        // Confirm the cookie-backed session is actually gone before redirecting.
+        const after = await client.getSession();
+        if (after && after.error) throw after.error;
+        if (after && after.data && after.data.session) {
+          throw new Error('Neon sign-out completed but the session is still active.');
+        }
+        return result;
+      }
+      const result = await supabaseAuth().signOut(options);
       if (result && result.error) throw result.error;
       return result;
     },

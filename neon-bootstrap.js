@@ -1,7 +1,7 @@
-/* Neon browser SDK bootstrap (v0.4.11.13).
+/* Neon browser SDK bootstrap (v0.4.11.14).
  * Loads the official @neondatabase/neon-js client and exposes a single Promise.
- * The BetterAuthVanillaAdapter intentionally preserves the existing auth method/response shape
- * while the application is migrated page-by-page.
+ * Uses NeonJS's native Better Auth client. Provider response-shape normalization
+ * belongs in confluence-auth.js, not in the SDK bootstrap.
  */
 (function () {
   'use strict';
