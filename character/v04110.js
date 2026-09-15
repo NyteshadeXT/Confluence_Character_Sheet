@@ -1,5 +1,5 @@
 
-/* v0.4.11.0 — Power Ability Association + Bronze Breakthrough Progression */
+/* v0.4.11.1 — Power Ability Association + Bronze Breakthrough Progression */
 
 const IRON_POWER_XP={2:10,3:15,4:20,5:25,6:30,7:35,8:40,9:50};
 const BRONZE_BREAKTHROUGH_XP=150;

@@ -1,5 +1,5 @@
 
-/* v0.4.11.0 — Source Essence ability default + optional alternate ability */
+/* v0.4.11.1 — Source Essence ability default + optional alternate ability */
 const powerAlternateAbility=document.getElementById('powerAlternateAbility');
 const legacyPowerAbilityConfig=document.getElementById('legacyPowerAbilityConfig');
 
