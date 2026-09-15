@@ -20,6 +20,7 @@ button{padding:9px 14px;margin-right:8px}
 <p class="muted">Read-only browser validation for Auth → JWT → Data API → RLS/RPC.</p>
 <div class="card"><b>Provider:</b> <span id="provider"></span></div>
 <div class="card"><b>Session:</b><pre id="session">Checking…</pre></div>
+<div class="card"><b>JWT metadata:</b><pre id="jwt">Waiting…</pre></div>
 <div class="card"><b>Identity/RLS RPC:</b><pre id="rpc">Waiting…</pre></div>
 <button id="login">Go to Login</button><button id="signout">Sign Out</button>
 <script>
@@ -30,9 +31,23 @@ button{padding:9px 14px;margin-right:8px}
    const session=await window.confluenceAuth.getSession();
    out('session',session?{authenticated:true,user:session.user?{id:session.user.id,email:session.user.email}:null}:{authenticated:false},!!session);
    if(session){
+     try {
+       const authClient=window.CONFLUENCE_NEON_AUTH_CLIENT;
+       const tokenResult=authClient && authClient.getAccessToken ? await authClient.getAccessToken() : null;
+       const token=typeof tokenResult==='string' ? tokenResult :
+         (tokenResult && tokenResult.data && (tokenResult.data.token || tokenResult.data.accessToken)) ||
+         (tokenResult && (tokenResult.token || tokenResult.accessToken)) || null;
+       if(token && token.split('.').length===3){
+         const dec=(part)=>JSON.parse(decodeURIComponent(escape(atob(part.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(part.length/4)*4,'=')))));
+         const parts=token.split('.'), header=dec(parts[0]), payload=dec(parts[1]);
+         out('jwt',{header:{alg:header.alg,kid:header.kid,typ:header.typ},claims:{iss:payload.iss,aud:payload.aud,sub:payload.sub,role:payload.role,iat:payload.iat,exp:payload.exp}},true);
+       } else {
+         out('jwt',{note:'No JWT exposed by auth.getAccessToken(); combined SDK should still forward its cached token automatically.'},true);
+       }
+     } catch(e){ out('jwt',{diagnosticError:e.message||String(e)},false); }
      const r=await window.confluenceApi.rpc('is_system_gm',{});
      out('rpc',r,!r.error);
-   } else out('rpc','Sign in first.',false);
+   } else { out('jwt','Sign in first.',false); out('rpc','Sign in first.',false); }
  }catch(e){out('session',e.message||String(e),false)}
  document.getElementById('login').onclick=()=>location.href='/login.html?backend=neon&next='+encodeURIComponent('/neon-validation.html?backend=neon');
  document.getElementById('signout').onclick=async()=>{await window.confluenceAuth.signOut();location.reload()};

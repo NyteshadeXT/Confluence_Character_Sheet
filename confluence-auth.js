@@ -1,4 +1,4 @@
-/* Provider-neutral authentication facade (v0.4.11.10).
+/* Provider-neutral authentication facade (v0.4.11.11).
  * Supabase remains the default provider during staged migration.
  * Neon uses the documented BetterAuthVanillaAdapter API.
  */
@@ -32,7 +32,11 @@
     async getSession() {
       const result = await this.getSessionResult();
       if (result && result.error) throw result.error;
-      return result && result.data ? result.data.session : null;
+      if (!result || !result.data || !result.data.session) return null;
+      if (providerName() === 'neon') {
+        return Object.assign({}, result.data.session, { user: result.data.user || null });
+      }
+      return result.data.session;
     },
 
     async getUser() {
