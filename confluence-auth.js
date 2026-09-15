@@ -1,4 +1,4 @@
-/* Provider-neutral authentication facade (v0.4.11.14).
+/* Provider-neutral authentication facade (v0.4.11.15).
  * Supabase remains the default provider during staged migration.
  * Neon uses the documented BetterAuthVanillaAdapter API.
  */
@@ -7,6 +7,12 @@
 
   function providerName() {
     return (window.CONFLUENCE_BACKEND_PROVIDER || 'supabase').toLowerCase();
+  }
+
+  function withProvider(url) {
+    const target = new URL(url, location.origin);
+    if (providerName() === 'neon') target.searchParams.set('backend', 'neon');
+    return target.pathname + target.search + target.hash;
   }
 
   function supabaseAuth() {
@@ -55,8 +61,7 @@
       if (!session) {
         const login = new URL('/login.html', location.origin);
         login.searchParams.set('next', location.pathname + location.search);
-        if (providerName() === 'neon') login.searchParams.set('backend', 'neon');
-        location.href = login.pathname + login.search;
+        location.href = withProvider(login.pathname + login.search);
         throw new Error('Authentication required');
       }
       return session;
@@ -133,7 +138,7 @@
 
     async signOutAndRedirect() {
       await this.signOut();
-      location.href = '/login.html';
+      location.href = withProvider('/login.html');
     },
 
     async updateUser(attributes) {

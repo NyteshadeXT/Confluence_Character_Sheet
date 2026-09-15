@@ -54,7 +54,15 @@ function withAuthTimeout(promise, label) {
     new Promise((_, reject) => setTimeout(() => reject(new Error((label || 'Authentication request') + ' timed out after 15 seconds.')), 15000))
   ]);
 }
-const next=new URLSearchParams(location.search).get('next')||'/';
+const params=new URLSearchParams(location.search);
+const next=params.get('next')||'/';
+const activeBackend=params.get('backend');
+
+function withActiveBackend(url){
+  const target=new URL(url,location.origin);
+  if(activeBackend==='neon')target.searchParams.set('backend','neon');
+  return target.pathname+target.search+target.hash;
+}
 
 function show(message,bad=false){
   notice.textContent=message;
@@ -80,7 +88,7 @@ passwordSignIn.onclick=async()=>{
     passwordSignIn.disabled=false;
     if(error)return show(error.message||String(error),true);
     if(!data||!data.session)return show('Sign-in succeeded but no active session could be verified.',true);
-    location.href=next;
+    location.href=withActiveBackend(next);
   }catch(error){
     passwordSignIn.disabled=false;
     show(error.message||String(error),true);
@@ -104,8 +112,12 @@ sendMagic.onclick=async()=>{
 };
 
 (async()=>{
-  const session=await window.confluenceAuth.getSession();
-  if(session)location.href=next;
+  try{
+    const session=await window.confluenceAuth.getSession();
+    if(session)location.href=withActiveBackend(next);
+  }catch(error){
+    show(error.message||String(error),true);
+  }
 })();
 </script>
 </body>
