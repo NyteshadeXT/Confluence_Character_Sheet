@@ -13,14 +13,27 @@ end $$;
 
 create or replace function public.get_my_home() returns jsonb
 language plpgsql security definer set search_path=public as $$
-declare result jsonb; uid uuid:=public.current_user_id();
+declare uid uuid:=public.current_user_id(); v_campaigns jsonb; v_ancestries jsonb;
 begin
  if uid is null then raise exception 'Authentication required'; end if;
- select coalesce(jsonb_agg(jsonb_build_object('id',c.id,'name',c.name,'role',cm.role,
- 'characters',(select coalesce(jsonb_agg(jsonb_build_object('id',ch.id,'name',ch.name,'ancestry',ch.ancestry_definition_id,'available_xp',ch.available_xp) order by ch.name),'[]'::jsonb)
- from public.characters ch where ch.campaign_id=c.id and (cm.role='GM' or exists(select 1 from public.character_users cu where cu.character_id=ch.id and cu.user_id=uid)))) order by c.name),'[]'::jsonb)
- into result from public.campaigns c join public.campaign_members cm on cm.campaign_id=c.id where cm.user_id=uid;
- return coalesce(result,'[]'::jsonb);
+ select coalesce(jsonb_agg(jsonb_build_object(
+   'id',c.id,'name',c.name,'role',cm.role,
+   'characters',(select coalesce(jsonb_agg(jsonb_build_object(
+      'id',ch.id,'name',ch.name,'ancestry_definition_id',ch.ancestry_definition_id,
+      'available_xp',ch.available_xp) order by ch.name),'[]'::jsonb)
+     from public.characters ch
+     where ch.campaign_id=c.id
+       and (cm.role='GM' or exists(select 1 from public.character_users cu where cu.character_id=ch.id and cu.user_id=uid))
+   )
+ ) order by c.name),'[]'::jsonb)
+ into v_campaigns
+ from public.campaigns c join public.campaign_members cm on cm.campaign_id=c.id
+ where cm.user_id=uid;
+
+ select coalesce(jsonb_agg(jsonb_build_object('id',id,'name',name,'definition',definition) order by name),'[]'::jsonb)
+ into v_ancestries from public.ancestry_definitions where is_active;
+
+ return jsonb_build_object('campaigns',coalesce(v_campaigns,'[]'::jsonb),'ancestries',coalesce(v_ancestries,'[]'::jsonb));
 end $$;
 
 create or replace function public.gm_add_player_by_email(p_campaign_id uuid,p_email text) returns uuid
@@ -183,7 +196,8 @@ language plpgsql security definer set search_path=public as $$
 begin if not public.is_campaign_gm(p_campaign_id) then raise exception 'GM authorization required';end if;
  return jsonb_build_object('essences',(select coalesce(jsonb_agg(jsonb_build_object('id',id,'name',name,'associated_ability',associated_ability) order by name),'[]') from public.essence_definitions where is_active),
  'powers',(select coalesce(jsonb_agg(jsonb_build_object('id',id,'name',name,'slot',slot_index) order by slot_index,name),'[]') from public.power_definitions where is_active),
- 'eligibility',(select coalesce(jsonb_agg(jsonb_build_object('essence_id',essence_id,'power_id',power_id)),'[]') from public.essence_power_eligibility));end $$;
+ 'eligibility',(select coalesce(jsonb_agg(jsonb_build_object('essence_id',essence_id,'power_id',power_id)),'[]') from public.essence_power_eligibility),
+ 'ancestries',(select coalesce(jsonb_agg(jsonb_build_object('id',id,'name',name,'definition',definition) order by name),'[]') from public.ancestry_definitions where is_active));end $$;
 
 create or replace function public.gm_get_campaign_roster(p_campaign_id uuid) returns jsonb
 language plpgsql security definer set search_path=public as $$

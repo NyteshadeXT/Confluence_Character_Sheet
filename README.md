@@ -1,15 +1,16 @@
 # Confluence Character Sheet
 
+**Current hosted migration candidate: v0.4.12.3 — Data Cutover Readiness**
+
 Hosted character-management application for the **Confluence System**.
 
 This repository is intentionally separate from the `Confluence_System` Obsidian vault.
 
 ## Current milestone
 
-**Hosted Connected Prototype v0.4.11.3 — Authentication & Test Player Support**
+**Hosted Neon Integration Candidate v0.4.12.1 — Application Contract Consolidation**
 
-The frontend is a static Vercel application backed by Supabase Auth, PostgreSQL, Row
-Level Security, and protected RPC functions.
+The frontend remains production-safe on Supabase by default while the validation path supports Neon Auth, Neon Data API, PostgreSQL Row Level Security, and protected RPC functions. v0.4.12.1 consolidates the application around the canonical RPC contract so the Neon cutover can be tested as an application rather than as isolated diagnostics.
 
 ## Repository structure
 
@@ -218,3 +219,7 @@ Power section, allowing precise progression changes such as Cleave's secondary d
 
 ## v0.4.11.3 Power Ability & Bronze Breakthrough Progression
 Powers now default to their source Essence ability and may optionally permit one permanent alternate ability. Iron ends at Rank 9; Bronze 0 is a 150 XP per-Power breakthrough unlocked only when all five Powers in an Essence are Iron 9. Bronze 1+ remains locked until the whole Essence reaches Bronze 0.
+
+### v0.4.12.1 deployment-readiness addition
+
+The Neon package now includes explicit authenticated-only RPC execution grants and a read-only canonical RPC signature check. No database change is performed merely by deploying these static files; database SQL remains an explicit migration step.

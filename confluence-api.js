@@ -1,4 +1,4 @@
-/* Confluence provider-neutral data API facade (v0.4.11.6).
+/* Confluence provider-neutral data API facade (v0.4.12.1).
  * Uses each provider's native PostgREST-compatible query client. Neon JWT forwarding is
  * handled by the official neon-js SDK rather than by application code.
  */
@@ -59,8 +59,8 @@
   };
 
   const rpcNames = [
-    'get_character_snapshot','gm_add_player_by_email','gm_assign_essence','gm_assign_power',
-    'gm_create_character','gm_delete_character','gm_delete_power_definition','gm_get_campaign_roster',
+    'get_my_home','gm_get_catalog','get_character_snapshot','gm_add_player_by_email','gm_assign_essence','gm_assign_power',
+    'gm_create_character','gm_assign_character_owner','gm_unassign_character_owner','gm_delete_character','gm_delete_power_definition','gm_get_campaign_roster',
     'gm_grant_xp','gm_remove_essence','gm_remove_power','gm_upsert_ancestry_definition',
     'gm_upsert_condition_definition','gm_upsert_essence_definition','gm_upsert_power_definition',
     'is_system_gm','player_create_character','player_rank_power','player_rank_skill',

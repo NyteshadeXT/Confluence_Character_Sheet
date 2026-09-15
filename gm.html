@@ -82,17 +82,14 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 function show(msg,bad=false){notice.textContent=msg;notice.className='status '+(bad?'bad':'good')}
 
 async function loadCatalog(){
- const [{data:e,error:e1},{data:p,error:e2},{data:x,error:e3},{data:a,error:e4}]=await Promise.all([
-  confluenceApi.from('essence_definitions').select('id,name').eq('is_active',true).order('name'),
-  confluenceApi.from('power_definitions').select('id,name,slot_index').eq('is_active',true).order('slot_index').order('name'),
-  confluenceApi.from('essence_power_eligibility').select('essence_id,power_id'),
-  confluenceApi.from('ancestry_definitions').select('id,name,definition').eq('is_active',true).order('name')
- ]);
- if(e1)throw e1;if(e2)throw e2;if(e3)throw e3;if(e4)throw e4;
- catalog={essences:e||[],powers:(p||[]).map(v=>({...v,slot:v.slot_index})),eligibility:x||[],ancestries:a||[]};
+ const cid=campaignSelect.value;if(!cid)return;
+ const {data,error}=await confluenceApi.rpc('gm_get_catalog',{p_campaign_id:cid});if(error)throw error;
+ catalog=data||{essences:[],powers:[],eligibility:[],ancestries:[]};
  essenceSelect.innerHTML=catalog.essences.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('');
  newCharacterAncestry.innerHTML='<option value="">— Select Ancestry —</option>'+catalog.ancestries.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
 }
+function navUrl(url){return window.confluenceAuth?.withProvider?window.confluenceAuth.withProvider(url):url}
+
 
 
 function gmSelectedAncestry(){
@@ -131,7 +128,7 @@ function renderCurrent(){
  const rc=roster.characters.find(c=>c.id===current.id)||{};
  const ownerOptions=(roster.players||[]).map(p=>`<option value="${p.user_id}" ${rc.owner_user_id===p.user_id?'selected':''}>${esc(p.display_name||p.email)}</option>`).join('');
  selected.innerHTML=`<div class="eyebrow">${esc(current.ancestry)}</div><h2>${esc(current.name)}</h2><div class="big">${current.available_xp} XP</div>
- <div class="actions"><a href="character/index.html?character=${encodeURIComponent(current.id)}" target="_blank">Open Character Sheet</a><button id="deleteCharacter" class="danger">Delete Character</button></div>
+ <div class="actions"><a href="${esc(navUrl(`character/index.html?character=${encodeURIComponent(current.id)}`))}" target="_blank">Open Character Sheet</a><button id="deleteCharacter" class="danger">Delete Character</button></div>
  <div class="owner-editor"><label>Character Owner <select id="ownerSelect"><option value="">— Unclaimed —</option>${ownerOptions}</select></label><button id="saveOwner">Save Owner</button></div>
  <h3>Essences</h3><div class="assigned-list">${current.essences.map(e=>`<div class="assigned-chip"><span><b>${esc(e.name)}</b> · ${e.tier} ${e.rank}</span><button class="danger compact" data-remove-essence="${esc(e.id)}">Remove</button></div>`).join('')||'<span class="muted">None</span>'}</div>`;
  const availableEssences=current.essences.map(e=>e.id);
@@ -209,15 +206,15 @@ newCharacterAncestry.onchange=refreshGmCreationAttributes;
 for(const [k,input] of Object.entries({Str:attrStr,Dex:attrDex,Con:attrCon,Int:attrInt,Wis:attrWis,Cha:attrCha})){
  input.addEventListener('input',()=>{const mods=gmAncestryMods();input.dataset.baseScore=String((Number(input.value)||0)-(Number(mods[k])||0))});
 }
-campaignSelect.onchange=()=>loadRoster().catch(e=>show(e.message,true));logout.onclick=signOut;
+campaignSelect.onchange=()=>Promise.all([loadCatalog(),loadRoster()]).catch(e=>show(e.message,true));logout.onclick=signOut;
 
 (async()=>{
  try{
   const session=await requireSession();identity.textContent=session.user.email||'Signed in';
-  const {data:members,error:mErr}=await confluenceApi.from('campaign_members').select('campaign_id,role').eq('user_id',session.user.id).eq('role','GM');if(mErr)throw mErr;
-  const ids=(members||[]).map(x=>x.campaign_id);if(!ids.length)throw new Error('This account is not a GM in any campaign.');
-  const {data:camps,error:cErr}=await confluenceApi.from('campaigns').select('id,name').in('id',ids).order('name');if(cErr)throw cErr;
-  campaigns=camps||[];campaignSelect.innerHTML=campaigns.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  const {data:home,error:hErr}=await confluenceApi.rpc('get_my_home',{});if(hErr)throw hErr;
+  campaigns=(home?.campaigns||[]).filter(c=>c.role==='GM').map(c=>({id:c.id,name:c.name}));
+  if(!campaigns.length)throw new Error('This account is not a GM in any campaign.');
+  campaignSelect.innerHTML=campaigns.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
   await loadCatalog();await loadRoster();show('GM campaign access verified.');
  }catch(e){show(e.message,true)}
 })();

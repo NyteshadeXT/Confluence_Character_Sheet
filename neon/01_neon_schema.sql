@@ -1,7 +1,7 @@
 -- 01_neon_schema.sql
--- Confluence Character Sheet v0.4.11.2
+-- Confluence Character Sheet v0.4.12.2
 -- Neon-compatible clean schema built from the canonical live Supabase snapshot.
--- Neon Auth user IDs are TEXT, matching neon_auth.user.id.
+-- Neon Auth user IDs are UUID, matching neon_auth."user".id.
 
 create extension if not exists pgcrypto;
 
