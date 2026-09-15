@@ -1,4 +1,4 @@
-/* Provider-neutral authentication facade (v0.4.11.5).
+/* Provider-neutral authentication facade (v0.4.11.9).
  * Supabase remains the active production implementation during staged migration.
  * Neon uses the official neon-js SDK with SupabaseAuthAdapter so existing auth semantics
  * can be retained while pages move to the provider-neutral facade.
@@ -61,6 +61,13 @@
     async signInWithPassword(credentials) {
       const client = await activeAuth();
       return client.signInWithPassword(credentials);
+    },
+    async signUp(credentials) {
+      const client = await activeAuth();
+      if (typeof client.signUp !== 'function') {
+        throw new Error('Account creation is not available for this authentication provider.');
+      }
+      return client.signUp(credentials);
     },
     async signInWithOtp(options) {
       const client = await activeAuth();

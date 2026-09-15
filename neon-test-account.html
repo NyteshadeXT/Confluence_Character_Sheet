@@ -7,13 +7,13 @@
 <script src="/supabase-config.js"></script><script src="/supabase-auth.js"></script>
 <script src="/neon-config.js"></script><script src="/neon-bootstrap.js"></script><script src="/confluence-auth.js"></script></head>
 <body><h1>Neon Test Account</h1><p class="muted">Validation-only account creation for the neon-migration preview.</p>
-<div class="card"><div><b>Provider:</b> <span id="provider"></span></div>
+<div class="card"><div><b>Provider:</b> <span id="provider"></span></div><div><b>signUp facade:</b> <span id="capability"></span></div>
 <label>Email</label><input id="email" type="email" autocomplete="username">
 <label>Password</label><input id="password" type="password" autocomplete="new-password">
 <button id="create">Create Test Account</button><p id="status"></p></div>
 <script>
 const status=document.getElementById('status'), provider=window.confluenceAuth.provider;
-document.getElementById('provider').textContent=provider;
+document.getElementById('provider').textContent=provider;document.getElementById('capability').textContent=typeof window.confluenceAuth.signUp==='function'?'available':'MISSING';
 if(provider!=='neon'){status.textContent='Blocked: append ?backend=neon to use this validation page.';status.className='bad';document.getElementById('create').disabled=true;}
 document.getElementById('create').onclick=async()=>{
  const email=document.getElementById('email').value.trim(), password=document.getElementById('password').value;
