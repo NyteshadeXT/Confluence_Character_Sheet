@@ -3,16 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Confluence GM Dashboard v0.4.11.1</title>
+<title>Confluence GM Dashboard v0.4.11.3</title>
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script src="supabase-auth.js"></script>
+<script src="neon-config.js"></script>
+<script src="neon-bootstrap.js"></script>
+<script src="confluence-auth.js"></script>
+<script src="confluence-api.js"></script>
 </head>
 <body>
 <div class="app">
 <header class="hero">
-  <div><div class="eyebrow">CONFLUENCE · GM CAMPAIGN DASHBOARD v0.4.11.1</div><h1>Campaign Management</h1><div class="muted" id="identity">Checking authentication…</div></div>
+  <div><div class="eyebrow">CONFLUENCE · GM CAMPAIGN DASHBOARD v0.4.11.3</div><h1>Campaign Management</h1><div class="muted" id="identity">Checking authentication…</div></div>
   <div class="actions"><a class="nav-button" href="index.html">Character Portal</a><a class="nav-button" href="content-studio.html">System Data Studio</a><a class="nav-button" href="account.html">Account Security</a><button id="logout">Sign Out</button></div>
 </header>
 
@@ -79,10 +83,10 @@ function show(msg,bad=false){notice.textContent=msg;notice.className='status '+(
 
 async function loadCatalog(){
  const [{data:e,error:e1},{data:p,error:e2},{data:x,error:e3},{data:a,error:e4}]=await Promise.all([
-  confluenceSupabase.from('essence_definitions').select('id,name').eq('is_active',true).order('name'),
-  confluenceSupabase.from('power_definitions').select('id,name,slot_index').eq('is_active',true).order('slot_index').order('name'),
-  confluenceSupabase.from('essence_power_eligibility').select('essence_id,power_id'),
-  confluenceSupabase.from('ancestry_definitions').select('id,name,definition').eq('is_active',true).order('name')
+  confluenceApi.from('essence_definitions').select('id,name').eq('is_active',true).order('name'),
+  confluenceApi.from('power_definitions').select('id,name,slot_index').eq('is_active',true).order('slot_index').order('name'),
+  confluenceApi.from('essence_power_eligibility').select('essence_id,power_id'),
+  confluenceApi.from('ancestry_definitions').select('id,name,definition').eq('is_active',true).order('name')
  ]);
  if(e1)throw e1;if(e2)throw e2;if(e3)throw e3;if(e4)throw e4;
  catalog={essences:e||[],powers:(p||[]).map(v=>({...v,slot:v.slot_index})),eligibility:x||[],ancestries:a||[]};
@@ -107,7 +111,7 @@ function refreshGmCreationAttributes(){
 
 async function loadRoster(){
  const cid=campaignSelect.value;if(!cid)return;
- const {data,error}=await confluenceSupabase.rpc('gm_get_campaign_roster',{p_campaign_id:cid});if(error)throw error;
+ const {data,error}=await confluenceApi.rpc('gm_get_campaign_roster',{p_campaign_id:cid});if(error)throw error;
  roster=data||{players:[],characters:[]};renderRoster();
 }
 
@@ -120,7 +124,7 @@ function renderRoster(){
 }
 
 async function selectChar(id){
- selectedId=id;const {data,error}=await confluenceSupabase.rpc('get_character_snapshot',{p_character_id:id});if(error)throw error;
+ selectedId=id;const {data,error}=await confluenceApi.rpc('get_character_snapshot',{p_character_id:id});if(error)throw error;
  current=data;renderCurrent();renderRoster();show(`Selected ${current.name}`);
 }
 function renderCurrent(){
@@ -147,14 +151,14 @@ async function saveOwner(){
  const uid=document.getElementById('ownerSelect').value;
  const rpc=uid?'gm_assign_character_owner':'gm_unassign_character_owner';
  const args=uid?{p_character_id:selectedId,p_user_id:uid}:{p_character_id:selectedId};
- const {error}=await confluenceSupabase.rpc(rpc,args);if(error)return show(error.message,true);
+ const {error}=await confluenceApi.rpc(rpc,args);if(error)return show(error.message,true);
  await loadRoster();await selectChar(selectedId);show(uid?'Character owner assigned.':'Character is now unclaimed.');
 }
 async function deleteSelectedCharacter(){
  if(!selectedId||!current)return;
  const typed=prompt(`Delete ${current.name}? This permanently removes the character and all of its owned Essences, Powers, XP history, runtime state, and ownership.\n\nType the character name exactly to confirm:`);
  if(typed!==current.name)return show('Character deletion cancelled.',true);
- const {error}=await confluenceSupabase.rpc('gm_delete_character',{p_character_id:selectedId});
+ const {error}=await confluenceApi.rpc('gm_delete_character',{p_character_id:selectedId});
  if(error)return show(error.message,true);
  const deleted=current.name;selectedId=null;current=null;selected.innerHTML='<div class="muted">Select a character.</div>';powers.innerHTML='';await loadRoster();show(`${deleted} deleted.`);
 }
@@ -164,7 +168,7 @@ async function removeAssignedEssence(essenceId){
  const essence=current.essences.find(e=>e.id===essenceId);
  if(!essence)return;
  if(!confirm(`Remove ${essence.name} Essence from ${current.name}? Any Powers assigned through that Essence will also be removed.`))return;
- const {error}=await confluenceSupabase.rpc('gm_remove_essence',{p_character_id:selectedId,p_essence_id:essenceId});
+ const {error}=await confluenceApi.rpc('gm_remove_essence',{p_character_id:selectedId,p_essence_id:essenceId});
  if(error)return show(error.message,true);
  if(lastPowerEssence===essenceId)lastPowerEssence='';
  await loadRoster();await selectChar(selectedId);show(`${essence.name} Essence removed.`);
@@ -174,7 +178,7 @@ async function removeAssignedPower(ownedId){
  const power=current.powers.find(p=>p.owned_id===ownedId);
  if(!power)return;
  if(!confirm(`Remove ${power.name} from ${current.name}?`))return;
- const {error}=await confluenceSupabase.rpc('gm_remove_power',{p_character_power_id:ownedId});
+ const {error}=await confluenceApi.rpc('gm_remove_power',{p_character_power_id:ownedId});
  if(error)return show(error.message,true);
  await selectChar(selectedId);show(`${power.name} removed.`);
 }
@@ -187,19 +191,19 @@ document.addEventListener('click',e=>{
 
 addPlayer.onclick=async()=>{
  const email=playerEmail.value.trim();if(!email)return show('Enter a player email.',true);
- const {error}=await confluenceSupabase.rpc('gm_add_player_by_email',{p_campaign_id:campaignSelect.value,p_email:email});
+ const {error}=await confluenceApi.rpc('gm_add_player_by_email',{p_campaign_id:campaignSelect.value,p_email:email});
  if(error)return show(error.message,true);playerEmail.value='';await loadRoster();show(`Added ${email} to the campaign.`);
 };
 createCharacter.onclick=async()=>{
  const name=newCharacterName.value.trim();if(!name)return show('Character name is required.',true);
  const mods=gmAncestryMods();
  const attrs={Str:(+attrStr.value||10)-(mods.Str||0),Dex:(+attrDex.value||10)-(mods.Dex||0),Con:(+attrCon.value||10)-(mods.Con||0),Int:(+attrInt.value||10)-(mods.Int||0),Wis:(+attrWis.value||10)-(mods.Wis||0),Cha:(+attrCha.value||10)-(mods.Cha||0)};
- const {data,error}=await confluenceSupabase.rpc('gm_create_character',{p_campaign_id:campaignSelect.value,p_name:name,p_ancestry:newCharacterAncestry.value||null,p_attributes:attrs});
+ const {data,error}=await confluenceApi.rpc('gm_create_character',{p_campaign_id:campaignSelect.value,p_name:name,p_ancestry:newCharacterAncestry.value||null,p_attributes:attrs});
  if(error)return show(error.message,true);newCharacterName.value='';newCharacterAncestry.value='';await loadRoster();await selectChar(data);show(`Created ${name}.`);
 };
-grantXp.onclick=async()=>{if(!selectedId)return show('Select a character first.',true);const {error}=await confluenceSupabase.rpc('gm_grant_xp',{p_character_id:selectedId,p_amount:+xpAmount.value||0,p_note:xpNote.value||null});if(error)return show(error.message,true);await loadRoster();await selectChar(selectedId);show('XP updated.')};
-assignEssence.onclick=async()=>{if(!selectedId)return show('Select a character first.',true);const {error}=await confluenceSupabase.rpc('gm_assign_essence',{p_character_id:selectedId,p_essence_id:essenceSelect.value});if(error)return show(error.message,true);await selectChar(selectedId);show('Essence assigned.')};
-assignPower.onclick=async()=>{if(!selectedId)return show('Select a character first.',true);lastPowerEssence=powerEssence.value;const {error}=await confluenceSupabase.rpc('gm_assign_power',{p_character_id:selectedId,p_essence_id:lastPowerEssence,p_power_id:powerSelect.value});if(error)return show(error.message,true);await selectChar(selectedId);show('Power assigned.')};
+grantXp.onclick=async()=>{if(!selectedId)return show('Select a character first.',true);const {error}=await confluenceApi.rpc('gm_grant_xp',{p_character_id:selectedId,p_amount:+xpAmount.value||0,p_note:xpNote.value||null});if(error)return show(error.message,true);await loadRoster();await selectChar(selectedId);show('XP updated.')};
+assignEssence.onclick=async()=>{if(!selectedId)return show('Select a character first.',true);const {error}=await confluenceApi.rpc('gm_assign_essence',{p_character_id:selectedId,p_essence_id:essenceSelect.value});if(error)return show(error.message,true);await selectChar(selectedId);show('Essence assigned.')};
+assignPower.onclick=async()=>{if(!selectedId)return show('Select a character first.',true);lastPowerEssence=powerEssence.value;const {error}=await confluenceApi.rpc('gm_assign_power',{p_character_id:selectedId,p_essence_id:lastPowerEssence,p_power_id:powerSelect.value});if(error)return show(error.message,true);await selectChar(selectedId);show('Power assigned.')};
 powerEssence.onchange=()=>{lastPowerEssence=powerEssence.value;refreshPowerOptions()};
 newCharacterAncestry.onchange=refreshGmCreationAttributes;
 for(const [k,input] of Object.entries({Str:attrStr,Dex:attrDex,Con:attrCon,Int:attrInt,Wis:attrWis,Cha:attrCha})){
@@ -210,9 +214,9 @@ campaignSelect.onchange=()=>loadRoster().catch(e=>show(e.message,true));logout.o
 (async()=>{
  try{
   const session=await requireSession();identity.textContent=session.user.email||'Signed in';
-  const {data:members,error:mErr}=await confluenceSupabase.from('campaign_members').select('campaign_id,role').eq('user_id',session.user.id).eq('role','GM');if(mErr)throw mErr;
+  const {data:members,error:mErr}=await confluenceApi.from('campaign_members').select('campaign_id,role').eq('user_id',session.user.id).eq('role','GM');if(mErr)throw mErr;
   const ids=(members||[]).map(x=>x.campaign_id);if(!ids.length)throw new Error('This account is not a GM in any campaign.');
-  const {data:camps,error:cErr}=await confluenceSupabase.from('campaigns').select('id,name').in('id',ids).order('name');if(cErr)throw cErr;
+  const {data:camps,error:cErr}=await confluenceApi.from('campaigns').select('id,name').in('id',ids).order('name');if(cErr)throw cErr;
   campaigns=camps||[];campaignSelect.innerHTML=campaigns.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
   await loadCatalog();await loadRoster();show('GM campaign access verified.');
  }catch(e){show(e.message,true)}

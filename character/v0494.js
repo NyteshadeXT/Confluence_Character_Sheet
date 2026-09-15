@@ -19,7 +19,7 @@ async function advanceSkill(name){
  if(CONNECTED_BACKEND.readOnly){toast('GM character view is read-only');return}
  const s=skillRankStatus(name);if(!s.ok){toast(s.reason);return}
  try{
-  const {data,error}=await withTimeout(confluenceSupabase.rpc('player_rank_skill',{p_character_id:CONNECTED_BACKEND.characterId,p_skill_name:name}),10000,'Skill rank');
+  const {data,error}=await withTimeout(confluenceApi.rpc('player_rank_skill',{p_character_id:CONNECTED_BACKEND.characterId,p_skill_name:name}),10000,'Skill rank');
   if(error)throw error;
   await refreshFromBackend();toast(`${name} advanced to Rank ${data?.rank||s.next}`);
  }catch(err){toast(err.message||String(err))}

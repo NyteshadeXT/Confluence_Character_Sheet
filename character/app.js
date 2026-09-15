@@ -66,16 +66,16 @@ function withTimeout(promise,ms,label='Request'){
 
 async function backendRequest(action,{body}={}){
  if(action==='snapshot'){
-   const {data,error}=await withTimeout(confluenceSupabase.rpc('get_character_snapshot',{p_character_id:CONNECTED_BACKEND.characterId}),10000,'Character snapshot');
+   const {data,error}=await withTimeout(confluenceApi.rpc('get_character_snapshot',{p_character_id:CONNECTED_BACKEND.characterId}),10000,'Character snapshot');
    if(error)throw error;return data;
  }
  if(CONNECTED_BACKEND.readOnly)throw new Error('GM character view is read-only');
  if(action==='runtime'){
-   const {data,error}=await withTimeout(confluenceSupabase.rpc('player_update_runtime',{p_character_id:CONNECTED_BACKEND.characterId,p_state:body}),10000,'Runtime save');
+   const {data,error}=await withTimeout(confluenceApi.rpc('player_update_runtime',{p_character_id:CONNECTED_BACKEND.characterId,p_state:body}),10000,'Runtime save');
    if(error)throw error;return data;
  }
  if(action==='profile'){
-   const {data,error}=await withTimeout(confluenceSupabase.rpc('player_update_profile_state',{
+   const {data,error}=await withTimeout(confluenceApi.rpc('player_update_profile_state',{
      p_character_id:CONNECTED_BACKEND.characterId,
      p_training:body.training_json,p_equipment:body.equipment_json,
      p_loadout:body.loadout_json,p_essence_choices:body.essence_choices_json
@@ -83,7 +83,7 @@ async function backendRequest(action,{body}={}){
    if(error)throw error;return data;
  }
  if(action==='rank'){
-   const {data,error}=await withTimeout(confluenceSupabase.rpc('player_rank_power',{p_character_power_id:body.character_power_id}),10000,'Power rank');
+   const {data,error}=await withTimeout(confluenceApi.rpc('player_rank_power',{p_character_power_id:body.character_power_id}),10000,'Power rank');
    if(error)throw error;return data;
  }
  throw new Error('Unknown backend action');

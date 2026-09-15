@@ -1,4 +1,4 @@
-# v0.4.11.1 — Power Ability & Bronze Breakthrough Progression
+# v0.4.11.3 — Power Ability & Bronze Breakthrough Progression
 
 ## Power Ability Association
 

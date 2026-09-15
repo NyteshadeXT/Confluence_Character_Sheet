@@ -15,7 +15,7 @@ async function advanceTrainingRank(name){
  const s=rankableTrainingStatus(name);if(!s.ok){toast(s.reason);return}
  try{
   const {data,error}=await withTimeout(
-   confluenceSupabase.rpc('player_rank_skill',{p_character_id:CONNECTED_BACKEND.characterId,p_skill_name:name}),
+   confluenceApi.rpc('player_rank_skill',{p_character_id:CONNECTED_BACKEND.characterId,p_skill_name:name}),
    10000,'Training rank'
   );
   if(error)throw error;

@@ -8,12 +8,16 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script src="supabase-auth.js"></script>
+<script src="neon-config.js"></script>
+<script src="neon-bootstrap.js"></script>
+<script src="confluence-auth.js"></script>
+<script src="confluence-api.js"></script>
 </head>
 <body>
 <div class="app">
 <header class="hero">
   <div>
-    <div class="eyebrow">CONFLUENCE CHARACTER · HOSTED PROTOTYPE v0.4.11.1</div>
+    <div class="eyebrow">CONFLUENCE CHARACTER · HOSTED PROTOTYPE v0.4.11.3</div>
     <h1>Character Portal</h1>
     <div class="muted" id="identity">Checking authentication…</div>
   </div>
@@ -36,15 +40,15 @@ function ancestryName(id){return portalAncestries.find(a=>a.id===id)?.name||id||
 async function loadPortal(){
  portalSession=await requireSession();identity.textContent=portalSession.user.email||'Signed in';const uid=portalSession.user.id;
  const [{data:memberships,error:mErr},{data:ancestries,error:aErr}]=await Promise.all([
-  confluenceSupabase.from('campaign_members').select('campaign_id,role').eq('user_id',uid),
-  confluenceSupabase.from('ancestry_definitions').select('id,name,definition').eq('is_active',true).order('name')
+  confluenceApi.from('campaign_members').select('campaign_id,role').eq('user_id',uid),
+  confluenceApi.from('ancestry_definitions').select('id,name,definition').eq('is_active',true).order('name')
  ]);
  if(mErr)throw mErr;if(aErr)throw aErr;portalMemberships=memberships||[];portalAncestries=ancestries||[];
  const campaignIds=[...new Set(portalMemberships.map(x=>x.campaign_id))];
- if(campaignIds.length){const {data,error}=await confluenceSupabase.from('campaigns').select('id,name').in('id',campaignIds).order('name');if(error)throw error;portalCampaigns=data||[]}else portalCampaigns=[];
- const {data:owned,error:oErr}=await confluenceSupabase.from('character_users').select('character_id,access_role').eq('user_id',uid).eq('access_role','OWNER');if(oErr)throw oErr;
+ if(campaignIds.length){const {data,error}=await confluenceApi.from('campaigns').select('id,name').in('id',campaignIds).order('name');if(error)throw error;portalCampaigns=data||[]}else portalCampaigns=[];
+ const {data:owned,error:oErr}=await confluenceApi.from('character_users').select('character_id,access_role').eq('user_id',uid).eq('access_role','OWNER');if(oErr)throw oErr;
  const ids=(owned||[]).map(x=>x.character_id);
- if(ids.length){const {data,error}=await confluenceSupabase.from('characters').select('id,campaign_id,name,ancestry_definition_id,available_xp').in('id',ids).order('name');if(error)throw error;portalCharacters=data||[]}else portalCharacters=[];
+ if(ids.length){const {data,error}=await confluenceApi.from('characters').select('id,campaign_id,name,ancestry_definition_id,available_xp').in('id',ids).order('name');if(error)throw error;portalCharacters=data||[]}else portalCharacters=[];
  renderPortal();showPortal('Connected to Confluence Character.');
 }
 function ancestryOptions(selected=''){return `<option value="">— Select Ancestry —</option>`+portalAncestries.map(a=>`<option value="${esc(a.id)}" ${selected===a.id?'selected':''}>${esc(a.name)}</option>`).join('')}
@@ -95,7 +99,7 @@ async function createMyCharacter(campaignId){
    attrs[k]=finalScore-(Number(mods[k])||0);
  }
  showPortal(`Creating ${name}…`);
- const {error}=await confluenceSupabase.rpc('player_create_character',{p_campaign_id:campaignId,p_name:name,p_ancestry:ancestry,p_attributes:attrs});
+ const {error}=await confluenceApi.rpc('player_create_character',{p_campaign_id:campaignId,p_name:name,p_ancestry:ancestry,p_attributes:attrs});
  if(error)return showPortal(error.message,true);
  await loadPortal();showPortal(`${name} created. Select the character above to open the sheet.`);
 }

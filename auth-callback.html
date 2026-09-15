@@ -7,26 +7,21 @@
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
+<script src="supabase-auth.js"></script>
+<script src="neon-config.js"></script>
+<script src="neon-bootstrap.js"></script>
+<script src="confluence-auth.js"></script>
 </head>
 <body>
 <div class="app auth-shell"><section class="panel auth-card"><div class="eyebrow">CONFLUENCE CHARACTER</div><h1>Signing in…</h1><div id="notice" class="status">Completing authentication.</div></section></div>
 <script>
-const client=supabase.createClient(
-  window.CONFLUENCE_SUPABASE.url,
-  window.CONFLUENCE_SUPABASE.publishableKey,
-  {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}
-);
-const next=new URLSearchParams(location.search).get('next')||'/';
 (async()=>{
-  const {data:{session},error}=await client.auth.getSession();
-  if(error){notice.textContent=error.message;notice.className='status bad';return}
-  if(session){location.href=next;return}
-  const {data:{subscription}}=client.auth.onAuthStateChange((event,newSession)=>{
-    if(newSession){subscription.unsubscribe();location.href=next}
-  });
-  setTimeout(()=>{
-    if(!location.pathname.includes('login')){notice.textContent='Authentication did not complete. Return to sign in and request a new link.';notice.className='status bad'}
-  },5000);
+ const next=new URLSearchParams(location.search).get('next')||'/';
+ for(let i=0;i<20;i++){
+  try{const session=await window.confluenceAuth.getSession();if(session){location.replace(next);return}}catch(e){}
+  await new Promise(r=>setTimeout(r,250));
+ }
+ document.getElementById('msg').textContent='Sign-in could not be completed. Return to login and try again.';
 })();
 </script>
 </body>

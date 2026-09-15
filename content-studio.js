@@ -31,7 +31,7 @@ document.querySelectorAll('.studio-tab').forEach(b=>b.onclick=()=>setTab(b.datas
 async function requireGm(){
   const session=await requireSession();
   identity.textContent=session.user.email||'Signed in';
-  const {data,error}=await confluenceSupabase.rpc('is_system_gm');
+  const {data,error}=await confluenceApi.rpc('is_system_gm');
   if(error)throw error;
   if(!data)throw new Error('GM access is required to use the System Data Studio.');
   return session;
@@ -39,10 +39,10 @@ async function requireGm(){
 
 async function loadLibrary(preserve=true){
   const [{data:a,error:aErr},{data:e,error:eErr},{data:p,error:pErr},{data:x,error:xErr}]=await Promise.all([
-    confluenceSupabase.from('ancestry_definitions').select('id,name,definition,is_active').order('name'),
-    confluenceSupabase.from('essence_definitions').select('id,name,associated_ability,definition,is_active').order('name'),
-    confluenceSupabase.from('power_definitions').select('id,name,slot_index,definition,is_active').order('slot_index').order('name'),
-    confluenceSupabase.from('essence_power_eligibility').select('essence_id,power_id')
+    confluenceApi.from('ancestry_definitions').select('id,name,definition,is_active').order('name'),
+    confluenceApi.from('essence_definitions').select('id,name,associated_ability,definition,is_active').order('name'),
+    confluenceApi.from('power_definitions').select('id,name,slot_index,definition,is_active').order('slot_index').order('name'),
+    confluenceApi.from('essence_power_eligibility').select('essence_id,power_id')
   ]);
   if(aErr)throw aErr;if(eErr)throw eErr;if(pErr)throw pErr;if(xErr)throw xErr;
   ancestryRows=a||[];essenceRows=e||[];powerRows=p||[];eligibilityRows=x||[];
@@ -60,7 +60,7 @@ function renderAncestryList(){
 }
 function newAncestryEditor(){editingAncestryId=null;ancestryEditorTitle.textContent='New Ancestry';ancestryStatus.textContent='Unsaved';ancestryId.disabled=false;ancestryId.value='';ancestryName.value='';ancestryDescription.value='';for(const id of ['ancestryStr','ancestryDex','ancestryCon','ancestryInt','ancestryWis','ancestryCha','ancestryHp','ancestryMana','ancestryStamina','ancestrySurges'])document.getElementById(id).value=0;ancestryPowersJson.value='[]';ancestryExtraJson.value='{}';ancestryActive.checked=true;renderAncestryList();ancestryName.focus()}
 function loadAncestry(id){const row=ancestryRows.find(x=>x.id===id);if(!row)return;editingAncestryId=id;const d=row.definition||{},m=d.mods||{},r=d.resources||{};ancestryEditorTitle.textContent=row.name;ancestryStatus.textContent=row.is_active?'Active':'Inactive';ancestryId.value=row.id;ancestryId.disabled=true;ancestryName.value=row.name;ancestryDescription.value=d.description||'';ancestryStr.value=m.Str||0;ancestryDex.value=m.Dex||0;ancestryCon.value=m.Con||0;ancestryInt.value=m.Int||0;ancestryWis.value=m.Wis||0;ancestryCha.value=m.Cha||0;ancestryHp.value=r.hp||0;ancestryMana.value=r.mana||0;ancestryStamina.value=r.stamina||0;ancestrySurges.value=r.surges||0;ancestryPowersJson.value=pretty(Array.isArray(d.powers)?d.powers:[]);const known=new Set(['id','name','description','mods','resources','powers']);ancestryExtraJson.value=pretty(Object.fromEntries(Object.entries(d).filter(([k])=>!known.has(k))));ancestryActive.checked=!!row.is_active;renderAncestryList()}
-async function saveAncestryRecord(){const id=editingAncestryId||slugify(ancestryId.value||ancestryName.value),name=ancestryName.value.trim();if(!id)throw new Error('Ancestry ID is required.');if(!name)throw new Error('Ancestry name is required.');const powers=parseJsonField(ancestryPowersJson,'Ancestry Powers','array');const extra=parseJsonField(ancestryExtraJson,'Advanced Ancestry JSON','object');const definition={...extra,id,name,description:ancestryDescription.value.trim(),mods:{Str:+ancestryStr.value||0,Dex:+ancestryDex.value||0,Con:+ancestryCon.value||0,Int:+ancestryInt.value||0,Wis:+ancestryWis.value||0,Cha:+ancestryCha.value||0},resources:{hp:+ancestryHp.value||0,mana:+ancestryMana.value||0,stamina:+ancestryStamina.value||0,surges:+ancestrySurges.value||0},powers};const {error}=await confluenceSupabase.rpc('gm_upsert_ancestry_definition',{p_id:id,p_name:name,p_definition:definition,p_is_active:ancestryActive.checked});if(error)throw error;editingAncestryId=id;await loadLibrary(false);loadAncestry(id);show(`Saved Ancestry: ${name}`)}
+async function saveAncestryRecord(){const id=editingAncestryId||slugify(ancestryId.value||ancestryName.value),name=ancestryName.value.trim();if(!id)throw new Error('Ancestry ID is required.');if(!name)throw new Error('Ancestry name is required.');const powers=parseJsonField(ancestryPowersJson,'Ancestry Powers','array');const extra=parseJsonField(ancestryExtraJson,'Advanced Ancestry JSON','object');const definition={...extra,id,name,description:ancestryDescription.value.trim(),mods:{Str:+ancestryStr.value||0,Dex:+ancestryDex.value||0,Con:+ancestryCon.value||0,Int:+ancestryInt.value||0,Wis:+ancestryWis.value||0,Cha:+ancestryCha.value||0},resources:{hp:+ancestryHp.value||0,mana:+ancestryMana.value||0,stamina:+ancestryStamina.value||0,surges:+ancestrySurges.value||0},powers};const {error}=await confluenceApi.rpc('gm_upsert_ancestry_definition',{p_id:id,p_name:name,p_definition:definition,p_is_active:ancestryActive.checked});if(error)throw error;editingAncestryId=id;await loadLibrary(false);loadAncestry(id);show(`Saved Ancestry: ${name}`)}
 function duplicateAncestryRecord(){if(!editingAncestryId)return;editingAncestryId=null;ancestryId.disabled=false;ancestryId.value='';ancestryName.value=`${ancestryName.value} Copy`;ancestryEditorTitle.textContent='New Ancestry from Copy';ancestryStatus.textContent='Unsaved';renderAncestryList()}
 
 function renderEssenceList(){
@@ -128,7 +128,7 @@ async function saveEssenceRecord(){
   const definition={...extra,id,name,tier:essenceTier.value,description:essenceDescription.value.trim(),
     primary_traits:essenceTraits.value.split(',').map(x=>x.trim()).filter(Boolean),
     associated_scores:scores,associated_ability:essenceAbility.value};
-  const {error}=await confluenceSupabase.rpc('gm_upsert_essence_definition',{
+  const {error}=await confluenceApi.rpc('gm_upsert_essence_definition',{
     p_id:id,p_name:name,p_associated_ability:essenceAbility.value,p_definition:definition,p_is_active:essenceActive.checked
   });
   if(error)throw error;
@@ -181,7 +181,7 @@ async function savePowerRecord(){
   let definition=parseJsonField(powerDefinitionJson,'Power Definition JSON','object');
   definition={...definition,id,name,slot:{...(definition.slot||{}),index:slot,category:meta.category,frequency:powerFrequency.value},
     eligible_essences:ids.map(eid=>essenceRows.find(e=>e.id===eid)?.name||eid)};
-  const {error}=await confluenceSupabase.rpc('gm_upsert_power_definition',{
+  const {error}=await confluenceApi.rpc('gm_upsert_power_definition',{
     p_id:id,p_name:name,p_slot_index:slot,p_definition:definition,p_eligible_essence_ids:ids,p_is_active:powerActive.checked
   });
   if(error)throw error;

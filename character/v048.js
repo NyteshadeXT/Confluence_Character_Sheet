@@ -28,7 +28,7 @@ function structuredConditionModifier(kind,name='',attr=''){
 }
 async function loadMasterConditions(){
  try{
-  const {data,error}=await confluenceSupabase.from('condition_definitions').select('id,name,definition,is_active').eq('is_active',true).order('name');
+  const {data,error}=await confluenceApi.from('condition_definitions').select('id,name,definition,is_active').eq('is_active',true).order('name');
   if(error)throw error;
   MASTER_CONDITION_MODELS=data||[];
   for(const row of MASTER_CONDITION_MODELS){

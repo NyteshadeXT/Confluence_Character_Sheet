@@ -96,7 +96,7 @@ function parseConditionModifiers(text){
 }
 function formatConditionModifiers(mods){return (mods||[]).map(m=>`${m.target} = ${m.valueFromCondition===-1?'-value':m.valueFromCondition===1?'value':m.value}`).join('\n')}
 async function loadConditions(){
- const {data,error}=await confluenceSupabase.from('condition_definitions').select('id,name,definition,is_active').order('name');if(error)throw error;conditionRows=data||[];renderConditionList();
+ const {data,error}=await confluenceApi.from('condition_definitions').select('id,name,definition,is_active').order('name');if(error)throw error;conditionRows=data||[];renderConditionList();
 }
 function renderConditionList(){
  const q=conditionSearch.value.trim().toLowerCase(),show=showInactiveConditions.checked;
@@ -114,7 +114,7 @@ async function saveConditionRecord(){
  const id=editingConditionId||slugify(conditionId.value||conditionName.value),name=conditionName.value.trim();if(!id||!name)throw new Error('Condition ID and Name are required.');
  const extra=parseJsonField(conditionExtraJson,'Advanced Condition JSON','object'),life=conditionLifecycle.value;
  const definition={...extra,id,name,valueType:conditionValueType.value,lifecycle:{type:life,...(life==='round_decay'||life==='rest_decay'?{amount:1}: {})},summary:conditionSummary.value.trim(),reminder:conditionReminder.value.trim(),modifiers:parseConditionModifiers(conditionModifiers.value),derived:conditionDerived.value.split(',').map(x=>x.trim()).filter(Boolean).map(conditionId=>({conditionId})),overrides:conditionOverrides.value.split(',').map(x=>x.trim()).filter(Boolean)};
- const {error}=await confluenceSupabase.rpc('gm_upsert_condition_definition',{p_id:id,p_name:name,p_definition:definition,p_is_active:conditionActive.checked});if(error)throw error;editingConditionId=id;await loadConditions();loadCondition(id);show(`Saved Condition: ${name}`);
+ const {error}=await confluenceApi.rpc('gm_upsert_condition_definition',{p_id:id,p_name:name,p_definition:definition,p_is_active:conditionActive.checked});if(error)throw error;editingConditionId=id;await loadConditions();loadCondition(id);show(`Saved Condition: ${name}`);
 }
 function bindConditionStudio(){
  conditionSearch.oninput=renderConditionList;showInactiveConditions.onchange=renderConditionList;newCondition.onclick=newConditionEditor;saveCondition.onclick=()=>saveConditionRecord().catch(e=>show(e.message,true));duplicateCondition.onclick=()=>{editingConditionId=null;conditionId.disabled=false;conditionId.value='';conditionName.value+=' Copy';conditionEditorTitle.textContent='New Condition from Copy';conditionStatus.textContent='Unsaved'};
