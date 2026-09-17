@@ -1,5 +1,10 @@
 # Confluence Character Sheet
 
+## Current release — v0.4.12.6
+
+Adds an automated RPC contract drift guard. `neon/rpc-contract.json` is the machine-readable browser RPC inventory and `node tools/validate-rpc-contract.mjs` verifies that the frontend facade, canonical SQL functions, authenticated permissions, and deployment contract check remain synchronized. No production database or Auth configuration is changed by this release.
+
+
 **Current hosted migration candidate: v0.4.12.5 — RPC-Centric Application Contract**
 
 Hosted character-management application for the **Confluence System**.

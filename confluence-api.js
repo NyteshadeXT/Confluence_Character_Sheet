@@ -1,4 +1,4 @@
-/* Confluence provider-neutral RPC facade (v0.4.12.5).
+/* Confluence provider-neutral RPC facade (v0.4.12.6).
  * The browser application is intentionally RPC-only: application table access is not
  * exposed here. Neon JWT forwarding is handled by the official neon-js SDK rather than
  * by application code.
