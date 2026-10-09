@@ -1,9 +1,9 @@
 // Non-secret browser configuration. Keep provider="supabase" until Neon preview validation passes.
 window.CONFLUENCE_BACKEND_PROVIDER = window.CONFLUENCE_BACKEND_PROVIDER || 'supabase';
 window.CONFLUENCE_NEON = {
-  environment: 'rpc-validation',
-  authBaseUrl: 'https://ep-raspy-star-b4ijq3v7.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth',
-  dataApiUrl: 'https://ep-raspy-star-b4ijq3v7.apirest.c-6.us-east-2.aws.neon.tech/neondb/rest/v1'
+  environment: 'production',
+  authBaseUrl: 'https://ep-fragrant-bird-b4mxh0oc.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth',
+  dataApiUrl: 'https://ep-fragrant-bird-b4mxh0oc.apirest.c-6.us-east-2.aws.neon.tech/neondb/rest/v1'
 };
 
 
