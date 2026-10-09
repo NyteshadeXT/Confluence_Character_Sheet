@@ -39,5 +39,5 @@ select e.proname,e.identity_args as expected_signature,
        coalesce(string_agg(a.identity_args,' | ' order by a.identity_args),'MISSING') as actual_signature
 from expected e left join actual a on a.proname=e.proname
 group by e.proname,e.identity_args
-having not bool_or(coalesce(a.identity_args='','')=e.identity_args)
+having not bool_or(coalesce(a.identity_args = e.identity_args,false))
 order by e.proname;
