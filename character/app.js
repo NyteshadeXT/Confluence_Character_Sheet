@@ -77,8 +77,8 @@ async function backendRequest(action,{body}={}){
  if(action==='profile'){
    const {data,error}=await withTimeout(confluenceApi.rpc('player_update_profile_state',{
      p_character_id:CONNECTED_BACKEND.characterId,
-     p_training_json:body.training_json,p_equipment_json:body.equipment_json,
-     p_loadout_json:body.loadout_json,p_essence_choices_json:body.essence_choices_json
+     p_training:body.training_json,p_equipment:body.equipment_json,
+     p_loadout:body.loadout_json,p_essence_choices:body.essence_choices_json
    }),10000,'Profile save');
    if(error)throw error;return data;
  }
