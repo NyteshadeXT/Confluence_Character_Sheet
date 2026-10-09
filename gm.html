@@ -149,7 +149,11 @@ async function saveOwner(){
  const rpc=uid?'gm_assign_character_owner':'gm_unassign_character_owner';
  const args=uid?{p_character_id:selectedId,p_user_id:uid}:{p_character_id:selectedId};
  const {error}=await confluenceApi.rpc(rpc,args);if(error)return show(error.message,true);
- await loadRoster();await selectChar(selectedId);show(uid?'Character owner assigned.':'Character is now unclaimed.');
+ await loadRoster();
+ const verified=roster.characters.find(ch=>ch.id===selectedId);
+ if(!verified||String(verified.owner_user_id||'')!==uid)return show('Ownership could not be confirmed. Reload the roster and try again.',true);
+ await selectChar(selectedId);
+ show(uid?'Character owner verified. The assigned player can open this character from their portal.':'Character confirmed unclaimed.');
 }
 async function deleteSelectedCharacter(){
  if(!selectedId||!current)return;
