@@ -84,7 +84,8 @@ function show(msg,bad=false){notice.textContent=msg;notice.className='status '+(
 async function loadCatalog(){
  const cid=campaignSelect.value;if(!cid)return;
  const {data,error}=await confluenceApi.rpc('gm_get_catalog',{p_campaign_id:cid});if(error)throw error;
- catalog=data||{essences:[],powers:[],eligibility:[],ancestries:[]};
+ const payload=data||{};
+ catalog={essences:Array.isArray(payload.essences)?payload.essences:[],powers:Array.isArray(payload.powers)?payload.powers:[],eligibility:Array.isArray(payload.eligibility)?payload.eligibility:[],ancestries:Array.isArray(payload.ancestries)?payload.ancestries:[]};
  essenceSelect.innerHTML=catalog.essences.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('');
  newCharacterAncestry.innerHTML='<option value="">— Select Ancestry —</option>'+catalog.ancestries.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
 }
