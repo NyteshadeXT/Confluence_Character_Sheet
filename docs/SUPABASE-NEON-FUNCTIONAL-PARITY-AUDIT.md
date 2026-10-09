@@ -37,3 +37,18 @@ For each behavior, capture original Supabase output and Neon output using the sa
 
 ## Safety
 All testing and writes remain on `neon-migration` and the Neon validation branch. No production cutover is implied by this audit.
+
+## Bulk catalog parity verification (2026-10-09)
+Compared source Supabase and Neon validation records across **all fields** in five definition tables, including complete nested JSON and activity flags. The comparison was keyed by original IDs (or Essence/Power composite key), with canonical object-key ordering.
+
+| Table | Source | Neon validation | Source records missing or changed | Validation-only |
+|---|---:|---:|---:|---|
+| ancestry_definitions | 8 | 8 | 0 | 0 |
+| essence_definitions | 24 | 25 | 0 | test-might |
+| power_definitions | 16 | 21 | 0 | test-p1 through test-p5 |
+| essence_power_eligibility | 32 | 37 | 0 | 5 Test Might mappings |
+| condition_definitions | 7 | 7 | 0 | 0 |
+
+Condition definitions were imported verbatim into Neon validation and a repeatable non-destructive SQL migration was committed as `neon/16_original_condition_catalog.sql`.
+
+**Scope:** This proves catalog record parity, not end-to-end behavior or production cutover. Original runtime character/campaign/account records and browser interaction parity remain separate checks. Do not copy Supabase Auth UUIDs directly into Neon identity columns.
