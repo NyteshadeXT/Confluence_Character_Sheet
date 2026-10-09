@@ -121,7 +121,23 @@ function stateFromBackend(data){
  return normalize(d);
 }
 async function refreshFromBackend(message=null){
+ // A reload or rank-up refresh must not overwrite unsaved local changes.
+ // Wait for the serialized Neon write queue to drain before fetching a snapshot.
+ if(CONNECTED_BACKEND.connected&&!CONNECTED_BACKEND.readOnly){
+   clearTimeout(CONNECTED_BACKEND.timer);
+   if(CONNECTED_BACKEND.syncing){
+     while(CONNECTED_BACKEND.syncing)await new Promise(resolve=>setTimeout(resolve,40));
+   }
+   if(backendSavedRevision<backendEditRevision){
+     await syncStateToBackend();
+     if(backendSavedRevision<backendEditRevision)
+       throw new Error('Unsaved character changes remain. Resolve the sync error before reloading.');
+   }
+ }
  const data=await backendRequest('snapshot');
+ // Changes made while the snapshot was in flight must not be overwritten.
+ if(CONNECTED_BACKEND.connected&&!CONNECTED_BACKEND.readOnly&&backendSavedRevision<backendEditRevision)
+   throw new Error('New character changes are still saving. Please reload again.');
  state=stateFromBackend(data);CONNECTED_BACKEND.connected=true;render();
  const e=document.getElementById('saveState');
  if(e)e.textContent=CONNECTED_BACKEND.readOnly?'GM read-only view':(message||'Connected · saved to backend');
