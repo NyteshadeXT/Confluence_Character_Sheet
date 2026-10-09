@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Confluence Character Login</title>
 <link rel="stylesheet" href="styles.css">
+<style>
+.auth-switch{margin-top:1rem;text-align:center}
+.auth-link{background:none;border:0;padding:0;color:#e2b866;text-decoration:underline;cursor:pointer;font:inherit}
+.auth-link:hover,.auth-link:focus-visible{color:#ffe1a0}
+</style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script src="supabase-auth.js"></script>
@@ -16,13 +21,8 @@
 <div class="app auth-shell">
 <section class="panel auth-card">
   <div class="eyebrow">CONFLUENCE CHARACTER · v0.4.5</div>
-  <h1>Sign in</h1>
-  <p class="muted">Sign in with your email and password, or create an account.</p>
-
-  <div class="auth-tabs">
-    <button class="auth-tab active" data-auth-tab="password">Password</button>
-    <button class="auth-tab" data-auth-tab="register">Create Account</button>
-  </div>
+  <h1 id="authHeading">Sign In</h1>
+  <p id="authIntro" class="muted">Welcome back. Enter your email and password to access your characters.</p>
 
   <section id="passwordPanel" class="auth-panel">
     <label>Email
@@ -32,6 +32,7 @@
       <input id="password" type="password" autocomplete="current-password" placeholder="Password">
     </label>
     <button id="passwordSignIn" class="primary wide">Sign In</button>
+    <p class="field-help auth-switch">New to Confluence Character? <button type="button" id="showRegister" class="auth-link">Create an Account</button></p>
   </section>
 
   <section id="registerPanel" class="auth-panel hidden">
@@ -40,7 +41,8 @@
     <label>Password <input id="registerPassword" type="password" autocomplete="new-password" placeholder="Create password"></label>
     <label>Confirm Password <input id="registerConfirm" type="password" autocomplete="new-password" placeholder="Confirm password"></label>
     <button id="registerSubmit" class="primary wide">Create Account</button>
-    <p class="field-help">Create a Neon account, then ask your GM to add your email to the campaign.</p>
+    <p class="field-help">After registration, your GM can add your email to a campaign.</p>
+    <p class="field-help auth-switch">Already have an account? <button type="button" id="showSignIn" class="auth-link">Sign In</button></p>
   </section>
 
   <div id="notice" class="status">Your browser keeps your authenticated session so you normally stay signed in.</div>
@@ -70,13 +72,17 @@ function show(message,bad=false){
   notice.className='status '+(bad?'bad':'good');
 }
 function setTab(tab){
-  document.querySelectorAll('.auth-tab').forEach(b=>b.classList.toggle('active',b.dataset.authTab===tab));
-  passwordPanel.classList.toggle('hidden',tab!=='password');
-  registerPanel.classList.toggle('hidden',tab!=='register');
+  const registering=tab==='register'&&activeBackend==='neon';
+  passwordPanel.classList.toggle('hidden',registering);
+  registerPanel.classList.toggle('hidden',!registering);
+  authHeading.textContent=registering?'Create Account':'Sign In';
+  authIntro.textContent=registering?'Create your player account to join a campaign.':'Welcome back. Enter your email and password to access your characters.';
+  notice.textContent='';
+  notice.className='status hidden';
 }
-document.querySelectorAll('.auth-tab').forEach(b=>b.onclick=()=>setTab(b.dataset.authTab));
-if(activeBackend!=='neon')document.querySelector('[data-auth-tab="register"]').hidden=true;
-if(activeBackend==='neon')document.querySelector('.auth-card > .muted').textContent='Sign in or create an account using your email and password.';
+showRegister.onclick=()=>setTab('register');
+showSignIn.onclick=()=>setTab('password');
+if(activeBackend!=='neon')showRegister.hidden=true;
 
 registerSubmit.onclick=async()=>{
  const name=registerName.value.trim(),email=registerEmail.value.trim(),pwd=registerPassword.value;
