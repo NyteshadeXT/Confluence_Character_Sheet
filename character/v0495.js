@@ -14,6 +14,7 @@ async function advanceTrainingRank(name){
  if(CONNECTED_BACKEND.readOnly){toast('GM character view is read-only');return}
  const s=rankableTrainingStatus(name);if(!s.ok){toast(s.reason);return}
  try{
+  await flushPendingBackendEdits();
   const {data,error}=await withTimeout(
    confluenceApi.rpc('player_rank_skill',{p_character_id:CONNECTED_BACKEND.characterId,p_skill_name:name}),
    10000,'Training rank'
