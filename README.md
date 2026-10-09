@@ -1,3 +1,5 @@
+Confluence Character Sheet v0.4.12.7 — MVP readiness smoke test
+
 # Confluence Character Sheet
 
 ## Current release — v0.4.12.6

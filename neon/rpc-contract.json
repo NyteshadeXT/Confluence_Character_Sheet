@@ -1,5 +1,5 @@
 {
-  "version": "0.4.12.6",
+  "version": "0.4.12.7",
   "browserRpcNames": [
     "get_my_home",
     "gm_get_catalog",
@@ -29,6 +29,13 @@
     "player_update_profile_state",
     "player_update_runtime"
   ],
-  "backendOnlyRpcNames": ["create_campaign"],
-  "securityHelperNames": ["current_user_id", "owns_character", "is_campaign_gm", "can_read_character"]
+  "backendOnlyRpcNames": [
+    "create_campaign"
+  ],
+  "securityHelperNames": [
+    "current_user_id",
+    "owns_character",
+    "is_campaign_gm",
+    "can_read_character"
+  ]
 }

@@ -1,4 +1,4 @@
-# Neon Migration Package — v0.4.12.4
+# Neon Migration Package — v0.4.12.7
 
 This directory is the canonical Neon-target database package for Confluence.
 
@@ -36,7 +36,7 @@ For production-data cutover preparation, run `07_neon_data_migration_preflight.s
 
 ## External blocker
 
-The validation browser path currently receives HTTP 400 `jwk not found` from Neon Data API before PostgreSQL execution, despite the outgoing Neon Auth JWT `kid` matching the live managed JWKS. This has been escalated to Neon. Do not weaken RLS or add custom JWT verification as a workaround.
+The previous `jwk not found` failure was not reproduced in the latest browser validation: `is_system_gm` returned HTTP 200. Treat this as a promising single-path result, not a guarantee that the complete RPC package is deployed or that the issue cannot recur. Do not weaken RLS or add custom JWT verification.
 
 ## Production safety
 
