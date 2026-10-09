@@ -983,8 +983,8 @@ function renderLoadout(){
  loadoutEl.innerHTML=LOADOUT_SLOTS.map(([label,cat])=>{
   const current=state.loadout[label]||null;
   const opts=ownedIds.filter(id=>powerMeta(pdef(id))?.category===cat)
-    .sort((a,b)=>sourceEssenceForPower(a).localeCompare(sourceEssenceForPower(b))||pdef(a).name.localeCompare(pdef(b).name))
-    .map(id=>`<option value="${id}" ${current===id?'selected':''}>${pdef(id).name} — ${sourceEssenceForPower(id)}</option>`).join('');
+    .sort((a,b)=>String(sourceEssenceForPower(a)||'').localeCompare(String(sourceEssenceForPower(b)||''))||String(pdef(a)?.name||a).localeCompare(String(pdef(b)?.name||b)))
+    .map(id=>`<option value="${id}" ${current===id?'selected':''}>${pdef(id)?.name||basePowerId(id)} — ${sourceEssenceForPower(id)||'Unknown Essence'}</option>`).join('');
   const locked=!!current&&!state.combat.loadoutUnlocked;
   const emptyLabel=current?'— Empty —':'— Choose Power —';
   return `<div class="slot-row ${locked?'slot-locked':'slot-open'}"><div class="slot-label">${label}</div><select data-loadout="${label}" ${locked?'disabled':''}><option value="">${emptyLabel}</option>${opts}</select>${locked?'<span class="small">Locked until Long Rest</span>':(!current&&!state.combat.loadoutUnlocked?'<span class="small good">Empty slot may be filled</span>':'')}</div>`;
@@ -1007,7 +1007,7 @@ function renderPowerLibrary(){
  if(!ids.length){el.innerHTML='<div class="empty">No Essence Powers are known yet. Powers appear here only after the GM reveals them.</div>';return}
  const essenceOrder=[...state.essences,...new Set(ids.map(sourceEssenceForPower).filter(Boolean).filter(x=>!state.essences.includes(x)))];
  el.innerHTML=essenceOrder.map(essence=>{
-   const group=ids.filter(id=>sourceEssenceForPower(id)===essence).sort((a,b)=>(powerMeta(pdef(a))?.slot||99)-(powerMeta(pdef(b))?.slot||99)||pdef(a).name.localeCompare(pdef(b).name));
+   const group=ids.filter(id=>sourceEssenceForPower(id)===essence).sort((a,b)=>(powerMeta(pdef(a))?.slot||99)-(powerMeta(pdef(b))?.slot||99)||String(pdef(a)?.name||a).localeCompare(String(pdef(b)?.name||b)));
    if(!group.length)return '';
    return `<details class="owned-essence-group" open>
     <summary class="owned-essence-head"><span><span class="collapse-chevron">▾</span><b>${essence} Essence</b></span><span>${group.length}/5 Powers</span></summary>
@@ -1366,6 +1366,7 @@ async function bootstrapConnectedCharacter(){
    if(saveState)saveState.textContent=CONNECTED_BACKEND.readOnly?'GM read-only view':'Connected · saved to backend';
  }catch(err){
    const raw=String(err?.message||err||'Unknown error');
+   console.error('[Confluence Character Snapshot/Render]',err);
    fail(/Character not found/i.test(raw)
      ? 'This Character no longer exists. Return to the Character Portal and choose one of your current Characters.'
      : `Character failed to load: ${raw}`);
