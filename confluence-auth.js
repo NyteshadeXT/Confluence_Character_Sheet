@@ -111,6 +111,24 @@
       return supabaseAuth().signUp(credentials);
     },
 
+    async requestPasswordReset(email, redirectTo) {
+      if (providerName() === 'neon') {
+        const client = await neonAuth();
+        if (!client.requestPasswordReset) throw new Error('Password reset is unavailable in the loaded Neon Auth client.');
+        return client.requestPasswordReset({ email, redirectTo: new URL(redirectTo, location.origin).href });
+      }
+      return supabaseAuth().resetPasswordForEmail(email, { redirectTo: new URL(redirectTo, location.origin).href });
+    },
+
+    async resetPassword(token, newPassword) {
+      if (providerName() === 'neon') {
+        const client = await neonAuth();
+        if (!client.resetPassword) throw new Error('Password reset is unavailable in the loaded Neon Auth client.');
+        return client.resetPassword({ token, newPassword });
+      }
+      return supabaseAuth().updateUser({ password: newPassword });
+    },
+
     async signInWithOtp(options) {
       if (providerName() === 'neon') {
         throw new Error('Magic-link sign-in is not enabled in the Neon validation facade. Password validation is used during migration testing.');
