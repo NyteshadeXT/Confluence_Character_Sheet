@@ -126,31 +126,48 @@ async function refreshFromBackend(message=null){
  const e=document.getElementById('saveState');
  if(e)e.textContent=CONNECTED_BACKEND.readOnly?'GM read-only view':(message||'Connected · saved to backend');
 }
+// Serialize backend writes. Every local edit increments a revision; edits made while
+// a request is in flight are flushed after that request rather than silently lost.
+let backendEditRevision=0;
+let backendSavedRevision=0;
 function scheduleBackendSync(){
  if(!CONNECTED_BACKEND.connected||CONNECTED_BACKEND.readOnly)return;
+ backendEditRevision++;
  clearTimeout(CONNECTED_BACKEND.timer);
  const e=document.getElementById('saveState');if(e)e.textContent='Saving…';
- CONNECTED_BACKEND.timer=setTimeout(syncStateToBackend,180);
+ if(!CONNECTED_BACKEND.syncing)CONNECTED_BACKEND.timer=setTimeout(syncStateToBackend,180);
 }
 async function syncStateToBackend(){
- if(!CONNECTED_BACKEND.connected||CONNECTED_BACKEND.syncing||CONNECTED_BACKEND.readOnly)return;
+ if(!CONNECTED_BACKEND.connected||CONNECTED_BACKEND.readOnly||CONNECTED_BACKEND.syncing)return;
  CONNECTED_BACKEND.syncing=true;
  try{
-   await backendRequest('runtime',{body:{
-     current_hp:state.resources.hp,current_mana:state.resources.mana,current_stamina:state.resources.stamina,
-     current_healing_surges:state.resources.surges,temporary_hp:state.resources.tempHp,barrier:state.resources.barrier,
-     combat_active:state.combat.active,round_number:state.combat.round,
-     short_rest_recovery_available:state.combat.shortRestRecoveryAvailable,loadout_unlocked:state.combat.loadoutUnlocked,
-     conditions_json:state.combat.conditions,modifiers_json:state.combat.modifiers,daily_expended_json:state.combat.dailyExpended
-   }});
-   await backendRequest('profile',{body:{
-     training_json:state.training,equipment_json:state.equipment,loadout_json:state.loadout,essence_choices_json:state.essenceChoices
-   }});
+   while(backendSavedRevision<backendEditRevision){
+     const revision=backendEditRevision;
+     const runtime={
+       current_hp:state.resources.hp,current_mana:state.resources.mana,current_stamina:state.resources.stamina,
+       current_healing_surges:state.resources.surges,temporary_hp:state.resources.tempHp,barrier:state.resources.barrier,
+       combat_active:state.combat.active,round_number:state.combat.round,
+       short_rest_recovery_available:state.combat.shortRestRecoveryAvailable,loadout_unlocked:state.combat.loadoutUnlocked,
+       conditions_json:clone(state.combat.conditions),modifiers_json:clone(state.combat.modifiers),
+       daily_expended_json:clone(state.combat.dailyExpended)
+     };
+     const profile={
+       training_json:clone(state.training),equipment_json:clone(state.equipment),
+       loadout_json:clone(state.loadout),essence_choices_json:clone(state.essenceChoices)
+     };
+     await backendRequest('runtime',{body:runtime});
+     await backendRequest('profile',{body:profile});
+     backendSavedRevision=revision;
+   }
    const e=document.getElementById('saveState');if(e)e.textContent='Saved to backend';
  }catch(err){
    const e=document.getElementById('saveState');if(e)e.textContent='Sync error';
    toast(err.message);
- }finally{CONNECTED_BACKEND.syncing=false}
+ }finally{
+   CONNECTED_BACKEND.syncing=false;
+   // A failed write must not be silently retried forever. A subsequent user edit
+   // schedules another attempt, including any previously unsaved revisions.
+ }
 }
 function applyAccessMode(){
  if(!CONNECTED_BACKEND.connected)return;
