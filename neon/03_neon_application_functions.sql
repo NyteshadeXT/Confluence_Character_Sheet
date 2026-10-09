@@ -1,3 +1,12 @@
+create or replace function public.confluence_skill_xp_cost(p_tier text,p_next_rank integer)
+returns integer language sql immutable as $$
+ select (case p_next_rank when 2 then 10 when 3 then 15 when 4 then 20
+ when 5 then 25 when 6 then 35 when 7 then 45 when 8 then 60
+ when 9 then 75 when 10 then 100 end)
+ * (case p_tier when 'Iron' then 1 when 'Bronze' then 2
+ when 'Silver' then 3 when 'Gold' then 4 end)
+$$;
+
 -- 03_neon_application_functions.sql
 -- Complete hosted RPC surface adapted to Neon Auth identity.
 
@@ -5,7 +14,7 @@ create or replace function public.create_campaign(p_name text) returns public.ca
 language plpgsql security definer set search_path=public as $$
 declare c public.campaigns; uid uuid:=public.current_user_id();
 begin
- if uid is null then raise exception 'Authentication required'; end if;
+ if uid is null or not public.is_system_gm() then raise exception 'GM access required'; end if;
  insert into public.campaigns(name,created_by) values(p_name,uid) returning * into c;
  insert into public.campaign_members(campaign_id,user_id,role) values(c.id,uid,'GM');
  return c;
@@ -13,27 +22,18 @@ end $$;
 
 create or replace function public.get_my_home() returns jsonb
 language plpgsql security definer set search_path=public as $$
-declare uid uuid:=public.current_user_id(); v_campaigns jsonb; v_ancestries jsonb;
+declare uid uuid:=public.current_user_id(); gm boolean; v_campaigns jsonb; v_ancestries jsonb;
 begin
  if uid is null then raise exception 'Authentication required'; end if;
+ gm:=public.is_system_gm();
  select coalesce(jsonb_agg(jsonb_build_object(
-   'id',c.id,'name',c.name,'role',cm.role,
-   'characters',(select coalesce(jsonb_agg(jsonb_build_object(
-      'id',ch.id,'name',ch.name,'ancestry_definition_id',ch.ancestry_definition_id,
-      'available_xp',ch.available_xp) order by ch.name),'[]'::jsonb)
-     from public.characters ch
-     where ch.campaign_id=c.id
-       and (cm.role='GM' or exists(select 1 from public.character_users cu where cu.character_id=ch.id and cu.user_id=uid))
-   )
- ) order by c.name),'[]'::jsonb)
- into v_campaigns
- from public.campaigns c join public.campaign_members cm on cm.campaign_id=c.id
- where cm.user_id=uid;
-
- select coalesce(jsonb_agg(jsonb_build_object('id',id,'name',name,'definition',definition) order by name),'[]'::jsonb)
- into v_ancestries from public.ancestry_definitions where is_active;
-
- return jsonb_build_object('campaigns',coalesce(v_campaigns,'[]'::jsonb),'ancestries',coalesce(v_ancestries,'[]'::jsonb));
+ 'id',c.id,'name',c.name,'role',case when gm then 'GM' else cm.role::text end,
+ 'characters',(select coalesce(jsonb_agg(jsonb_build_object('id',ch.id,'name',ch.name,'ancestry_definition_id',ch.ancestry_definition_id,'available_xp',ch.available_xp) order by ch.name),'[]'::jsonb) from public.characters ch where ch.campaign_id=c.id and (gm or exists(select 1 from public.character_users cu where cu.character_id=ch.id and cu.user_id=uid)))
+ ) order by c.name),'[]'::jsonb) into v_campaigns
+ from public.campaigns c left join public.campaign_members cm on cm.campaign_id=c.id and cm.user_id=uid
+ where gm or cm.user_id is not null;
+ select coalesce(jsonb_agg(jsonb_build_object('id',id,'name',name,'definition',definition) order by name),'[]'::jsonb) into v_ancestries from public.ancestry_definitions where is_active;
+ return jsonb_build_object('campaigns',v_campaigns,'ancestries',v_ancestries);
 end $$;
 
 create or replace function public.gm_add_player_by_email(p_campaign_id uuid,p_email text) returns uuid
@@ -174,22 +174,79 @@ declare r public.character_runtime_state;begin if not public.owns_character(p_ch
  insert into public.character_runtime_state(character_id) values(p_character_id) on conflict(character_id) do nothing;
  update public.character_runtime_state set current_hp=coalesce((p_state->>'current_hp')::int,current_hp),current_mana=coalesce((p_state->>'current_mana')::int,current_mana),current_stamina=coalesce((p_state->>'current_stamina')::int,current_stamina),current_healing_surges=coalesce((p_state->>'current_healing_surges')::int,current_healing_surges),temporary_hp=coalesce((p_state->>'temporary_hp')::int,temporary_hp),barrier=coalesce((p_state->>'barrier')::int,barrier),combat_active=coalesce((p_state->>'combat_active')::boolean,combat_active),round_number=coalesce((p_state->>'round_number')::int,round_number),short_rest_recovery_available=coalesce((p_state->>'short_rest_recovery_available')::boolean,short_rest_recovery_available),loadout_unlocked=coalesce((p_state->>'loadout_unlocked')::boolean,loadout_unlocked),conditions_json=coalesce(p_state->'conditions_json',conditions_json),modifiers_json=coalesce(p_state->'modifiers_json',modifiers_json),daily_expended_json=coalesce(p_state->'daily_expended_json',daily_expended_json),updated_at=now() where character_id=p_character_id returning * into r;return r;end $$;
 
-create or replace function public.player_rank_skill(p_character_id uuid,p_skill_name text) returns jsonb
-language plpgsql security definer set search_path=public as $$
-declare c public.characters;v_training jsonb;v_entry jsonb;v_status text;v_current int;v_new int;v_cost int;v_tier text;v_cap int;
-begin if not public.owns_character(p_character_id) then raise exception 'Character ownership required';end if;select * into c from public.characters where id=p_character_id for update;
- v_training:=coalesce(c.training_json,'{}');v_entry:=v_training->p_skill_name;if v_entry is null then raise exception 'Training entry is not available';end if;
- v_status:=coalesce(v_entry->>'status','Untrained');if v_status='Untrained' then raise exception 'Training is required before spending XP on ranks';end if;
- v_current:=greatest(1,coalesce((v_entry->>'rating')::int,1));v_new:=v_current+1;
- select ce.current_tier into v_tier from public.character_essences ce where ce.character_id=p_character_id order by case ce.current_tier when 'Iron' then 0 when 'Bronze' then 1 when 'Silver' then 2 when 'Gold' then 3 when 'Platinum' then 4 else 5 end limit 1;
- v_tier:=coalesce(v_tier,'Iron');v_cap:=case v_tier when 'Iron' then 10 when 'Bronze' then 20 when 'Silver' then 30 when 'Gold' then 40 else null end;
- if v_cap is not null and v_new>v_cap then raise exception '% Training Rank cap is %',v_tier,v_cap;end if;
- v_cost:=case v_new when 2 then 10 when 3 then 15 when 4 then 20 when 5 then 25 when 6 then 35 when 7 then 45 when 8 then 60 when 9 then 75 when 10 then 100 else null end;
- if v_cost is null then raise exception 'Training XP cost is not configured for Rank % yet',v_new;end if;if c.available_xp<v_cost then raise exception 'Not enough XP. Need % XP',v_cost;end if;
- v_entry:=jsonb_set(v_entry,'{rating}',to_jsonb(v_new),true);v_training:=jsonb_set(v_training,array[p_skill_name],v_entry,true);
- update public.characters set training_json=v_training,available_xp=available_xp-v_cost,updated_at=now() where id=p_character_id;
- insert into public.character_xp_ledger(character_id,amount,transaction_type,note,actor_user_id) values(p_character_id,-v_cost,'SKILL_RANK_PURCHASE','Training advancement: '||p_skill_name||' Rank '||v_new,public.current_user_id());
- return jsonb_build_object('training',p_skill_name,'rank',v_new,'cost',v_cost,'available_xp',c.available_xp-v_cost,'tier',v_tier,'cap',v_cap);end $$;
+create or replace function public.player_rank_skill(p_character_id uuid, p_skill_name text)
+returns jsonb language plpgsql security definer set search_path=public as $fn$
+declare
+ c public.characters;
+ v_training jsonb;
+ v_entry jsonb;
+ v_status text;
+ v_tier text;
+ v_rank integer;
+ v_new integer;
+ v_cost integer;
+ v_tier_order integer;
+ v_character_order integer;
+ v_breakthrough boolean := false;
+begin
+ if not public.owns_character(p_character_id) then
+   raise exception 'Character ownership required';
+ end if;
+ select * into c from public.characters where id=p_character_id for update;
+ if c.id is null then raise exception 'Character not found'; end if;
+ v_training := coalesce(c.training_json,'{}'::jsonb);
+ v_entry := v_training -> p_skill_name;
+ if v_entry is null or jsonb_typeof(v_entry)<>'object' then
+   raise exception 'Training entry is not available';
+ end if;
+ v_status := coalesce(v_entry->>'status',v_entry->>'proficiency','Untrained');
+ if lower(v_status)='untrained' then
+   raise exception 'Training is required before spending XP on ranks';
+ end if;
+ v_tier := coalesce(v_entry->>'tier','Iron');
+ v_tier_order := case v_tier when 'Iron' then 1 when 'Bronze' then 2
+                     when 'Silver' then 3 when 'Gold' then 4 else null end;
+ if v_tier_order is null then raise exception 'Unsupported skill tier %',v_tier; end if;
+ -- Legacy rating is cumulative (1..40); legacy rank is tier-local (1..10).
+ v_rank := coalesce(nullif(v_entry->>'rank','')::integer,
+                    ((nullif(v_entry->>'rating','')::integer-1)%10)+1,1);
+ if v_rank<1 or v_rank>10 then raise exception 'Skill rank must be between 1 and 10'; end if;
+ select coalesce(max(case current_tier when 'Iron' then 1 when 'Bronze' then 2
+                    when 'Silver' then 3 when 'Gold' then 4 else 0 end),1)
+ into v_character_order
+ from public.character_essences where character_id=p_character_id;
+ if v_tier_order>v_character_order then
+   raise exception 'Skill tier exceeds character tier';
+ end if;
+ if v_rank=10 then
+   if v_tier_order>=4 then raise exception 'Further skill breakthroughs are not implemented'; end if;
+   if v_tier_order>=v_character_order then
+     raise exception 'Advance the character to the next tier before purchasing this skill breakthrough';
+   end if;
+   v_tier_order := v_tier_order+1;
+   v_tier := case v_tier_order when 2 then 'Bronze' when 3 then 'Silver' when 4 then 'Gold' end;
+   v_new := 1;
+   v_cost := 150;
+   v_breakthrough := true;
+ else
+   v_new := v_rank+1;
+   v_cost := public.confluence_skill_xp_cost(v_tier,v_new);
+ end if;
+ if c.available_xp<v_cost then raise exception 'Not enough XP. Need % XP',v_cost; end if;
+ v_entry := jsonb_set(v_entry,'{tier}',to_jsonb(v_tier),true);
+ v_entry := jsonb_set(v_entry,'{rank}',to_jsonb(v_new),true);
+ v_entry := jsonb_set(v_entry,'{rating}',to_jsonb((v_tier_order-1)*10+v_new),true);
+ v_training := jsonb_set(v_training,array[p_skill_name],v_entry,true);
+ update public.characters set training_json=v_training,
+   available_xp=available_xp-v_cost,updated_at=now() where id=p_character_id;
+ insert into public.character_xp_ledger(character_id,amount,transaction_type,note,actor_user_id)
+ values(p_character_id,-v_cost,'SKILL_RANK_PURCHASE',
+   (case when v_breakthrough then 'Skill breakthrough: ' else 'Training advancement: ' end)
+   ||p_skill_name||' '||v_tier||' Rank '||v_new,public.current_user_id());
+ return jsonb_build_object('training',p_skill_name,'tier',v_tier,'rank',v_new,
+   'rating',(v_tier_order-1)*10+v_new,'cost',v_cost,
+   'breakthrough',v_breakthrough,'available_xp',c.available_xp-v_cost);
+end $fn$;
 
 create or replace function public.gm_get_catalog(p_campaign_id uuid) returns jsonb
 language plpgsql security definer set search_path=public as $$

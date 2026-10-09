@@ -59,3 +59,8 @@ grant execute on function public.gm_upsert_power_definition(text,text,integer,js
 grant execute on function public.player_rank_power(uuid) to authenticated;
 grant execute on function public.gm_delete_power_definition(text) to authenticated;
 grant execute on function public.is_system_gm() to authenticated;
+
+-- RC1: keep skill XP helper internal; browser only invokes player_rank_skill.
+revoke execute on function public.confluence_skill_xp_cost(text,integer) from public,anonymous,authenticated;
+revoke execute on function public.player_rank_skill(uuid,text) from public,anonymous;
+grant execute on function public.player_rank_skill(uuid,text) to authenticated;

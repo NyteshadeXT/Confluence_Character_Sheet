@@ -9,16 +9,30 @@ language sql stable security definer set search_path=public as $$
  select exists(select 1 from public.character_users cu
  where cu.character_id=target_character and cu.user_id=public.current_user_id() and cu.access_role='OWNER');
 $$;
-create or replace function public.is_campaign_gm(target_campaign uuid) returns boolean
-language sql stable security definer set search_path=public as $$
- select exists(select 1 from public.campaign_members cm
- where cm.campaign_id=target_campaign and cm.user_id=public.current_user_id() and cm.role='GM');
-$$;
+-- Exactly one designated GM across all campaigns. Set the GM identity only
+-- after Neon Auth has created that user, using the separate bootstrap template.
+create table if not exists public.confluence_gm (
+ singleton boolean primary key default true check (singleton),
+ user_id uuid not null unique references neon_auth."user"(id),
+ assigned_at timestamptz not null default now()
+);
+alter table public.confluence_gm enable row level security;
+revoke all on public.confluence_gm from public, anonymous, authenticated;
+
 create or replace function public.is_system_gm() returns boolean
 language sql stable security definer set search_path=public as $$
- select exists(select 1 from public.campaign_members cm
- where cm.user_id=public.current_user_id() and cm.role='GM');
+ select exists(select 1 from public.confluence_gm g
+ where g.user_id=public.current_user_id());
 $$;
+create or replace function public.is_campaign_gm(target_campaign uuid) returns boolean
+language sql stable security definer set search_path=public as $$
+ select public.is_system_gm() and exists(
+ select 1 from public.campaigns c where c.id=target_campaign);
+$$;
+revoke execute on function public.is_system_gm(),public.is_campaign_gm(uuid)
+ from public,anonymous;
+grant execute on function public.is_system_gm(),public.is_campaign_gm(uuid)
+ to authenticated;
 create or replace function public.can_read_character(target_character uuid) returns boolean
 language sql stable security definer set search_path=public as $$
  select public.owns_character(target_character)
@@ -43,13 +57,16 @@ alter table public.character_powers enable row level security;
 
 create policy profiles_self_read on public.profiles for select using(user_id=public.current_user_id());
 create policy profiles_self_update on public.profiles for update using(user_id=public.current_user_id()) with check(user_id=public.current_user_id());
-create policy campaigns_create on public.campaigns for insert with check(created_by=public.current_user_id());
+create policy campaigns_create on public.campaigns for insert with check(public.is_system_gm() and created_by=public.current_user_id());
 create policy campaigns_gm_update on public.campaigns for update using(public.is_campaign_gm(id)) with check(public.is_campaign_gm(id));
-create policy campaigns_member_read on public.campaigns for select using(exists(select 1 from public.campaign_members cm where cm.campaign_id=campaigns.id and cm.user_id=public.current_user_id()));
+create policy campaigns_member_read on public.campaigns for select using(public.is_system_gm() or exists(select 1 from public.campaign_members cm where cm.campaign_id=campaigns.id and cm.user_id=public.current_user_id()));
 create policy campaign_members_gm_manage on public.campaign_members for all using(public.is_campaign_gm(campaign_id)) with check(public.is_campaign_gm(campaign_id));
 create policy campaign_members_member_read on public.campaign_members for select using(user_id=public.current_user_id() or public.is_campaign_gm(campaign_id));
 create policy characters_gm_manage on public.characters for all using(public.is_campaign_gm(campaign_id)) with check(public.is_campaign_gm(campaign_id));
-create policy characters_player_update on public.characters for update using(public.owns_character(id)) with check(public.owns_character(id));
+-- Player character writes must go through SECURITY DEFINER RPCs that validate
+-- XP, training, ownership and progression rules. Do not add a player UPDATE policy.
+-- This DROP also removes the old permissive policy when upgrading an existing DB.
+drop policy if exists characters_player_update on public.characters;
 create policy characters_read on public.characters for select using(public.can_read_character(id));
 create policy character_users_gm_manage on public.character_users for all using(exists(select 1 from public.characters c where c.id=character_users.character_id and public.is_campaign_gm(c.campaign_id))) with check(exists(select 1 from public.characters c where c.id=character_users.character_id and public.is_campaign_gm(c.campaign_id)));
 create policy character_users_read on public.character_users for select using(user_id=public.current_user_id() or public.can_read_character(character_id));
@@ -65,6 +82,6 @@ create policy character_powers_read on public.character_powers for select using(
 create policy ancestry_defs_read on public.ancestry_definitions for select using(is_active or public.is_system_gm());
 create policy condition_definitions_authenticated_read on public.condition_definitions for select using(true);
 create policy condition_definitions_system_gm_write on public.condition_definitions for all using(public.is_system_gm()) with check(public.is_system_gm());
-create policy essence_defs_gm_read on public.essence_definitions for select using(exists(select 1 from public.campaign_members cm where cm.user_id=public.current_user_id() and cm.role='GM'));
-create policy power_defs_gm_read on public.power_definitions for select using(exists(select 1 from public.campaign_members cm where cm.user_id=public.current_user_id() and cm.role='GM'));
-create policy eligibility_gm_read on public.essence_power_eligibility for select using(exists(select 1 from public.campaign_members cm where cm.user_id=public.current_user_id() and cm.role='GM'));
+create policy essence_defs_gm_read on public.essence_definitions for select using(public.is_system_gm());
+create policy power_defs_gm_read on public.power_definitions for select using(public.is_system_gm());
+create policy eligibility_gm_read on public.essence_power_eligibility for select using(public.is_system_gm());
