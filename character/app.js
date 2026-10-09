@@ -1349,7 +1349,7 @@ async function bootstrapConnectedCharacter(){
    return;
  }
  try{
-   await withTimeout(requireSession(),5000,'Authentication check');
+   await withTimeout(window.confluenceAuth.requireSession(),5000,'Authentication check');
    const data=await backendRequest('snapshot');
    if(!data?.id)throw new Error('Character not found. It may have been deleted.');
 
