@@ -56,7 +56,8 @@ function withAuthTimeout(promise, label) {
 }
 const params=new URLSearchParams(location.search);
 const next=params.get('next')||'/';
-const activeBackend=params.get('backend');
+const nextParams=new URL(next,location.origin).searchParams;
+const activeBackend=params.get('backend')||nextParams.get('backend')||window.CONFLUENCE_BACKEND_PROVIDER;
 
 function withActiveBackend(url){
   const target=new URL(url,location.origin);
