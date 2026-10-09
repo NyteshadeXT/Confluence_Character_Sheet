@@ -38,7 +38,7 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function showPortal(msg,bad=false){notice.textContent=msg;notice.className='status '+(bad?'bad':'good')}
 function ancestryName(id){return portalAncestries.find(a=>a.id===id)?.name||id||'Ancestry not set'}
 async function loadPortal(){
- portalSession=await requireSession();identity.textContent=portalSession.user.email||'Signed in';
+ portalSession=await window.confluenceAuth.requireSession();identity.textContent=portalSession.user.email||'Signed in';
  const {data,error}=await confluenceApi.rpc('get_my_home',{});if(error)throw error;
  const home=data||{campaigns:[],ancestries:[]};
  portalAncestries=home.ancestries||[];
@@ -116,7 +116,8 @@ document.addEventListener('input',e=>{
 });
 
 document.querySelectorAll('[data-provider-link]').forEach(a=>a.href=navUrl(a.getAttribute('href')));
-logout.onclick=signOut;loadPortal().catch(err=>showPortal(err.message||String(err),true));
+logout.onclick=()=>window.confluenceAuth.signOutAndRedirect()
+  .catch(err=>showPortal(err.message||String(err),true));loadPortal().catch(err=>showPortal(err.message||String(err),true));
 </script>
 </body>
 </html>
