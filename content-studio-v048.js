@@ -95,8 +95,13 @@ function parseConditionModifiers(text){
  });
 }
 function formatConditionModifiers(mods){return (mods||[]).map(m=>`${m.target} = ${m.valueFromCondition===-1?'-value':m.valueFromCondition===1?'value':m.value}`).join('\n')}
+let conditionLoadGeneration=0;
 async function loadConditions(){
- const {data,error}=await confluenceApi.rpc('gm_get_system_catalog');if(error)throw error;conditionRows=(data&&data.conditions)||[];renderConditionList();
+ const generation=++conditionLoadGeneration;
+ const {data,error}=await confluenceApi.rpc('gm_get_system_catalog');
+ if(generation!==conditionLoadGeneration)return;
+ if(error)throw error;
+ conditionRows=(data&&data.conditions)||[];renderConditionList();
 }
 function renderConditionList(){
  const q=conditionSearch.value.trim().toLowerCase(),show=showInactiveConditions.checked;
