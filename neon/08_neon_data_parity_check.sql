@@ -1,6 +1,11 @@
 -- 08_neon_data_parity_check.sql
 -- READ ONLY. Run after a data import. Expected source counts are the live Supabase snapshot
 -- captured on 2026-09-15. Any mismatch must be investigated before cutover.
+-- IMPORTANT: The RPC validation branch contains synthetic campaigns/characters and
+-- may contain newer definition records. Its row counts are NOT production migration
+-- parity evidence. Run this against a dedicated, clean migration rehearsal branch
+-- populated from a current Supabase export; update expected counts from that same
+-- export before treating any OK result as evidence of cutover readiness.
 
 with expected(table_name, expected_rows) as (
   values
