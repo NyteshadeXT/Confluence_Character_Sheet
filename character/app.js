@@ -1441,6 +1441,10 @@ async function bootstrapConnectedCharacter(){
    CONNECTED_BACKEND.connected=true;
    hide(errorPanel);show(main);
    render();
+   // The original condition loader runs at script startup, which can precede
+   // Neon cookie-session bootstrap. Reload after authentication so conditions
+   // and their modifiers are available to the actual character session.
+   if(typeof loadMasterConditions==='function')await loadMasterConditions();
    if(CONNECTED_BACKEND.readOnly)show(banner);else hide(banner);
    if(saveState)saveState.textContent=CONNECTED_BACKEND.readOnly?'GM read-only view':'Connected · saved to backend';
  }catch(err){
