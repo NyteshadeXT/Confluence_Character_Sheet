@@ -121,8 +121,14 @@ function renderRoster(){
  </button>`).join('')||'<div class="empty">No characters created yet.</div>';
 }
 
+let characterSelectionRequest=0;
 async function selectChar(id){
- selectedId=id;const {data,error}=await confluenceApi.rpc('get_character_snapshot',{p_character_id:id});if(error)throw error;
+ const request=++characterSelectionRequest;
+ selectedId=id;
+ const {data,error}=await confluenceApi.rpc('get_character_snapshot',{p_character_id:id});
+ // The user may have selected a different character while Neon was responding.
+ if(request!==characterSelectionRequest||selectedId!==id)return;
+ if(error)throw error;
  current=data;renderCurrent();renderRoster();show(`Selected ${current.name}`);
 }
 function renderCurrent(){
@@ -162,7 +168,7 @@ async function deleteSelectedCharacter(){
  if(typed!==current.name)return show('Character deletion cancelled.',true);
  const {error}=await confluenceApi.rpc('gm_delete_character',{p_character_id:selectedId});
  if(error)return show(error.message,true);
- const deleted=current.name;selectedId=null;current=null;selected.innerHTML='<div class="muted">Select a character.</div>';powers.innerHTML='';await loadRoster();show(`${deleted} deleted.`);
+ const deleted=current.name;characterSelectionRequest++;selectedId=null;current=null;selected.innerHTML='<div class="muted">Select a character.</div>';powers.innerHTML='';await loadRoster();show(`${deleted} deleted.`);
 }
 
 async function removeAssignedEssence(essenceId){
