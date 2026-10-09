@@ -31,7 +31,7 @@ with expected(proname,identity_args) as (values
  ('gm_delete_power_definition','text'),
  ('is_system_gm','')
 ), actual as (
- select p.proname, pg_get_function_identity_arguments(p.oid) identity_args
+ select p.proname, oidvectortypes(p.proargtypes) identity_args
  from pg_proc p join pg_namespace n on n.oid=p.pronamespace
  where n.nspname='public'
 )
