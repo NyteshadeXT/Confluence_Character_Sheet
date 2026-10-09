@@ -32,7 +32,17 @@
       <input id="password" type="password" autocomplete="current-password" placeholder="Password">
     </label>
     <button id="passwordSignIn" class="primary wide">Sign In</button>
+    <p class="field-help auth-switch"><button type="button" id="showForgot" class="auth-link">Forgot Password?</button></p>
     <p class="field-help auth-switch">New to Confluence Character? <button type="button" id="showRegister" class="auth-link">Create an Account</button></p>
+  </section>
+
+  <section id="forgotPanel" class="auth-panel hidden">
+    <label>Email
+      <input id="forgotEmail" type="email" autocomplete="email" placeholder="you@example.com">
+    </label>
+    <button id="forgotSubmit" class="primary wide">Send Reset Email</button>
+    <p class="field-help">If this email belongs to an account, you will receive a password reset link. Check your spam folder too.</p>
+    <p class="field-help auth-switch"><button type="button" id="forgotBack" class="auth-link">Back to Sign In</button></p>
   </section>
 
   <section id="registerPanel" class="auth-panel hidden">
@@ -73,15 +83,34 @@ function show(message,bad=false){
 }
 function setTab(tab){
   const registering=tab==='register'&&activeBackend==='neon';
-  passwordPanel.classList.toggle('hidden',registering);
+  const forgot=tab==='forgot';
+  passwordPanel.classList.toggle('hidden',registering||forgot);
   registerPanel.classList.toggle('hidden',!registering);
-  authHeading.textContent=registering?'Create Account':'Sign In';
-  authIntro.textContent=registering?'Create your player account to join a campaign.':'Welcome back. Enter your email and password to access your characters.';
+  forgotPanel.classList.toggle('hidden',!forgot);
+  authHeading.textContent=forgot?'Reset Password':registering?'Create Account':'Sign In';
+  authIntro.textContent=forgot?'Enter your account email to receive a password reset link.':registering?'Create your player account to join a campaign.':'Welcome back. Enter your email and password to access your characters.';
   notice.textContent='';
   notice.className='status hidden';
 }
 showRegister.onclick=()=>setTab('register');
 showSignIn.onclick=()=>setTab('password');
+showForgot.onclick=()=>{forgotEmail.value=passwordEmail.value.trim();setTab('forgot')};
+forgotBack.onclick=()=>setTab('password');
+forgotSubmit.onclick=async()=>{
+  const email=forgotEmail.value.trim();
+  if(!email)return show('Enter your account email.',true);
+  forgotSubmit.disabled=true;
+  show('Requesting reset email…');
+  try{
+    const result=await withAuthTimeout(
+      window.confluenceAuth.requestPasswordReset(email,withActiveBackend('/reset-password.html')),
+      'Password reset request'
+    );
+    if(result?.error)return show(result.error.message||String(result.error),true);
+    show('If an account exists for that email, a password reset message will arrive shortly. Check your spam folder.');
+  }catch(error){show(error.message||String(error),true)}
+  finally{forgotSubmit.disabled=false}
+};
 if(activeBackend!=='neon')showRegister.hidden=true;
 
 registerSubmit.onclick=async()=>{
