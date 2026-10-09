@@ -97,8 +97,9 @@ async function createMyCharacter(campaignId){
    attrs[k]=finalScore-(Number(mods[k])||0);
  }
  showPortal(`Creating ${name}…`);
- const {error}=await confluenceApi.rpc('player_create_character',{p_campaign_id:campaignId,p_name:name,p_ancestry:ancestry,p_attributes:attrs});
+ const {data:characterId,error}=await confluenceApi.rpc('player_create_character',{p_campaign_id:campaignId,p_name:name,p_ancestry:ancestry,p_attributes:attrs});
  if(error)return showPortal(error.message,true);
+ if(characterId){window.location.assign(navUrl(`character/index.html?character=${encodeURIComponent(characterId)}`));return;}
  await loadPortal();showPortal(`${name} created. Select the character above to open the sheet.`);
 }
 document.addEventListener('click',e=>{const b=e.target.closest('[data-create-character]');if(b)createMyCharacter(b.dataset.createCharacter).catch(err=>showPortal(err.message,true))});
