@@ -120,6 +120,16 @@ function stateFromBackend(data){
    modifiers:data.runtime?.modifiers||[],dailyExpended:data.runtime?.daily_expended||{},conditionReview:false};
  return normalize(d);
 }
+// Drain pending edits before server-authoritative advancement RPCs, so a stale
+// training/profile save cannot overwrite a rank just granted by the database.
+async function flushPendingBackendEdits(){
+ if(!CONNECTED_BACKEND.connected||CONNECTED_BACKEND.readOnly)return;
+ clearTimeout(CONNECTED_BACKEND.timer);
+ while(CONNECTED_BACKEND.syncing)await new Promise(resolve=>setTimeout(resolve,40));
+ if(backendSavedRevision<backendEditRevision)await syncStateToBackend();
+ if(backendSavedRevision<backendEditRevision)
+   throw new Error('Unsaved character changes remain. Resolve the sync error before continuing.');
+}
 async function refreshFromBackend(message=null){
  // A reload or rank-up refresh must not overwrite unsaved local changes.
  // Wait for the serialized Neon write queue to drain before fetching a snapshot.
@@ -886,6 +896,7 @@ async function advancePower(id){
  const cp=state.powers[id],serverId=cp?.serverOwnedId;
  if(!serverId){toast('This Power is not connected to a backend ownership record');return}
  try{
+   await flushPendingBackendEdits();
    await backendRequest('rank',{body:{character_power_id:serverId}});
    await refreshFromBackend();toast(`${pdef(id)?.name||'Power'} advanced`);
  }catch(err){toast(err.message)}
