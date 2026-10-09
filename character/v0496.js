@@ -57,7 +57,13 @@ function v0496ApplyTextOperation(model,op){
    if(idx>=0)current=current.slice(0,idx)+String(op.replace??'')+current.slice(idx+find.length);
   }
  }else if(op.operation==='replace_text'){
-  if(op.find==='__CURRENT_DAMAGE_DICE__'){
+  if(op.find==='__CURRENT_DAMAGE_DICE__'&&String(op.replace||'').includes('|')){
+   // Legacy Content Studio stores a targeted replacement as "Section | old text | new text".
+   // This is not a dice expression; replacing a dice token leaves the Power unchanged.
+   const pieces=String(op.replace).split('|').map(s=>s.trim());
+   const before=pieces[1],after=pieces.slice(2).join('|').trim();
+   if(before&&current.includes(before))current=current.replace(before,after);
+  }else if(op.find==='__CURRENT_DAMAGE_DICE__'){
    current=current.replace(/\b\d+d\d+\b/i,String(op.replace??''));
   }else if(op.find==='__CURRENT_DAMAGE_FORMULA__'){
    current=current.replace(/\b\d+d\d+(?:\s*[+\-]\s*[^.,;\n]+)?/i,String(op.replace??''));
