@@ -983,12 +983,13 @@ function renderLoadout(){
  loadoutEl.innerHTML=LOADOUT_SLOTS.map(([label,cat])=>{
   const current=state.loadout[label]||null;
   const assignedElsewhere=new Set(Object.entries(state.loadout).filter(([slot,id])=>slot!==label&&id).map(([,id])=>id));
-  const opts=ownedIds.filter(id=>powerMeta(pdef(id))?.category===cat&&!assignedElsewhere.has(id))
+  const duplicateCurrent=!!current&&assignedElsewhere.has(current);
+  const opts=ownedIds.filter(id=>powerMeta(pdef(id))?.category===cat&&(id===current||!assignedElsewhere.has(id)))
     .sort((a,b)=>String(sourceEssenceForPower(a)||'').localeCompare(String(sourceEssenceForPower(b)||''))||String(pdef(a)?.name||a).localeCompare(String(pdef(b)?.name||b)))
     .map(id=>`<option value="${id}" ${current===id?'selected':''}>${pdef(id)?.name||basePowerId(id)} — ${sourceEssenceForPower(id)||'Unknown Essence'}</option>`).join('');
   const locked=!!current&&!state.combat.loadoutUnlocked;
   const emptyLabel=current?'— Empty —':'— Choose Power —';
-  return `<div class="slot-row ${locked?'slot-locked':'slot-open'}"><div class="slot-label">${label}</div><select data-loadout="${label}" ${locked?'disabled':''}><option value="">${emptyLabel}</option>${opts}</select>${locked?'<span class="small">Locked until Long Rest</span>':(!current&&!state.combat.loadoutUnlocked?'<span class="small good">Empty slot may be filled</span>':'')}</div>`;
+  return `<div class="slot-row ${locked?'slot-locked':'slot-open'}"><div class="slot-label">${label}</div><select data-loadout="${label}" ${locked?'disabled':''}><option value="">${emptyLabel}</option>${opts}</select>${duplicateCurrent?'<span class="small" style="color:#e5b35a">Duplicate saved assignment — replace after a Long Rest</span>':(locked?'<span class="small">Locked until Long Rest</span>':(!current&&!state.combat.loadoutUnlocked?'<span class="small good">Empty slot may be filled</span>':''))}</div>`;
  }).join('');
  loadoutEl.insertAdjacentHTML('afterbegin',`<div class="loadout-status ${state.combat.loadoutUnlocked?'good':'muted'}">${
    state.combat.loadoutUnlocked
