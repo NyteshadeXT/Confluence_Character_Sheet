@@ -47,7 +47,7 @@
 <script>
 (async()=>{
   try{
-    const session=await requireSession();
+    const session=await window.confluenceAuth.requireSession();
     identity.textContent=session.user.email||'Signed in';
   }catch(e){
     notice.textContent=e.message;
@@ -67,7 +67,7 @@ savePassword.onclick=async()=>{
   notice.textContent='Password saved. You can now use Password sign-in from this browser or another device.';
   notice.className='status good';
 };
-logout.onclick=signOut;
+logout.onclick=()=>window.confluenceAuth.signOutAndRedirect();
 </script>
 </body>
 </html>
