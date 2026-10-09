@@ -117,7 +117,16 @@ document.addEventListener('input',e=>{
 });
 
 document.querySelectorAll('[data-provider-link]').forEach(a=>a.href=navUrl(a.getAttribute('href')));
-logout.onclick=()=>window.confluenceAuth.signOutAndRedirect();loadPortal().catch(err=>showPortal(err.message||String(err),true));
+logout.onclick=()=>window.confluenceAuth.signOutAndRedirect();
+loadPortal().catch(err=>{
+ const provider=window.confluenceAuth?.provider||'unknown';
+ const message=err?.message||String(err);
+ if(message==='Authentication required'){
+   showPortal('No active '+provider+' session was found. Please sign in using the '+provider+' login link.',true);
+ }else{
+   showPortal('['+provider+'] '+message,true);
+ }
+});
 </script>
 </body>
 </html>
