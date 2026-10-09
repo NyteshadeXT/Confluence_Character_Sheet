@@ -17,7 +17,7 @@ function rankableTrainingStatus(name){
  if(localRank===10){
    if(tierIndex>=3||charTierIndex<=tierIndex)
      return {ok:false,current,next,cost:null,reason:'Next tier not unlocked'};
-   cost=150;
+   cost=150*(tierIndex+1);
    description=`${tierNames[tierIndex+1]} Rank 1 breakthrough`;
  }else{
    const base=SKILL_XP_COSTS[localRank+1];
