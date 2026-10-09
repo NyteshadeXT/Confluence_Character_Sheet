@@ -22,6 +22,7 @@
   <div class="auth-tabs">
     <button class="auth-tab active" data-auth-tab="password">Password</button>
     <button class="auth-tab" data-auth-tab="magic">Magic Link</button>
+    <button class="auth-tab" data-auth-tab="register">Create Account</button>
   </div>
 
   <section id="passwordPanel" class="auth-panel">
@@ -43,6 +44,15 @@
     <p class="field-help">Passwordless email sign-in is best used for first-time setup or recovery. Availability depends on the active authentication provider.</p>
   </section>
 
+  <section id="registerPanel" class="auth-panel hidden">
+    <label>Name <input id="registerName" autocomplete="name" placeholder="Player name"></label>
+    <label>Email <input id="registerEmail" type="email" autocomplete="email" placeholder="you@example.com"></label>
+    <label>Password <input id="registerPassword" type="password" autocomplete="new-password" placeholder="Create password"></label>
+    <label>Confirm Password <input id="registerConfirm" type="password" autocomplete="new-password" placeholder="Confirm password"></label>
+    <button id="registerSubmit" class="primary wide">Create Account</button>
+    <p class="field-help">Create a Neon account, then ask your GM to add your email to the campaign.</p>
+  </section>
+
   <div id="notice" class="status">Your browser keeps your authenticated session so you normally stay signed in.</div>
 </section>
 </div>
@@ -58,6 +68,7 @@ const params=new URLSearchParams(location.search);
 const next=params.get('next')||'/';
 const nextParams=new URL(next,location.origin).searchParams;
 const activeBackend=params.get('backend')||nextParams.get('backend')||window.CONFLUENCE_BACKEND_PROVIDER;
+if(activeBackend==='neon')magicPanel.classList.add('hidden');
 
 function withActiveBackend(url){
   const target=new URL(url,location.origin);
@@ -73,8 +84,26 @@ function setTab(tab){
   document.querySelectorAll('.auth-tab').forEach(b=>b.classList.toggle('active',b.dataset.authTab===tab));
   passwordPanel.classList.toggle('hidden',tab!=='password');
   magicPanel.classList.toggle('hidden',tab!=='magic');
+  registerPanel.classList.toggle('hidden',tab!=='register');
 }
-document.querySelectorAll('.auth-tab').forEach(b=>b.onclick=()=>setTab(b.dataset.authTab));
+document.querySelectorAll('.auth-tab').forEach(b=>{if(activeBackend==='neon'&&b.dataset.authTab==='magic')b.hidden=true;b.onclick=()=>setTab(b.dataset.authTab)});
+if(activeBackend!=='neon')document.querySelector('[data-auth-tab="register"]').hidden=true;
+if(activeBackend==='neon')document.querySelector('.auth-card > .muted').textContent='Sign in or create an account using your email and password.';
+
+registerSubmit.onclick=async()=>{
+ const name=registerName.value.trim(),email=registerEmail.value.trim(),pwd=registerPassword.value;
+ if(!name||!email||!pwd)return show('Name, email, and password are required.',true);
+ if(pwd!==registerConfirm.value)return show('Passwords do not match.',true);
+ registerSubmit.disabled=true;show('Creating account…');
+ try{
+  const result=await withAuthTimeout(window.confluenceAuth.signUp({name,email,password:pwd}),'Registration');
+  if(result?.error)return show(result.error.message||String(result.error),true);
+  const session=await window.confluenceAuth.getSession();
+  if(session){location.href=withActiveBackend(next);return;}
+  setTab('password');passwordEmail.value=email;
+  show('Account created. Sign in with your email and password. If email verification is required, check your inbox first.');
+ }catch(err){show(err.message||String(err),true)}finally{registerSubmit.disabled=false}
+};
 
 passwordSignIn.onclick=async()=>{
   const email=passwordEmail.value.trim(),pwd=password.value;
@@ -101,15 +130,16 @@ sendMagic.onclick=async()=>{
   if(!email)return show('Enter your email address.',true);
   sendMagic.disabled=true;
   show('Requesting magic link…');
-  const {error}=await window.confluenceAuth.signInWithOtp({
+  try{
+  const {error}=await withAuthTimeout(window.confluenceAuth.signInWithOtp({
     email,
     options:{
       emailRedirectTo:location.origin+'/auth-callback.html?next='+encodeURIComponent(next),
       shouldCreateUser:true
     }
-  });
-  sendMagic.disabled=false;
+  }), 'Magic-link request');
   show(error?error.message:'Magic link sent. Check your email.',!!error);
+  }catch(error){show(error.message||String(error),true)}finally{sendMagic.disabled=false}
 };
 
 (async()=>{
