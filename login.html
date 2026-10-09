@@ -7,6 +7,11 @@
 <link rel="stylesheet" href="styles.css">
 <style>
 .auth-switch{margin-top:1rem;text-align:center}
+.auth-card .auth-panel.hidden,.auth-card .status.hidden{display:none!important}
+.auth-card .auth-panel{margin-top:1.2rem}
+.auth-card .auth-switch{margin-bottom:.35rem}
+.auth-card .auth-link{display:inline-block}
+.auth-card #notice:empty{display:none}
 .auth-link{background:none;border:0;padding:0;color:#e2b866;text-decoration:underline;cursor:pointer;font:inherit}
 .auth-link:hover,.auth-link:focus-visible{color:#ffe1a0}
 </style>
@@ -55,7 +60,7 @@
     <p class="field-help auth-switch">Already have an account? <button type="button" id="showSignIn" class="auth-link">Sign In</button></p>
   </section>
 
-  <div id="notice" class="status">Your browser keeps your authenticated session so you normally stay signed in.</div>
+  <div id="notice" class="status hidden" role="status" aria-live="polite"></div>
 </section>
 </div>
 
@@ -112,6 +117,7 @@ forgotSubmit.onclick=async()=>{
   finally{forgotSubmit.disabled=false}
 };
 if(activeBackend!=='neon')showRegister.hidden=true;
+setTab('password');
 
 registerSubmit.onclick=async()=>{
  const name=registerName.value.trim(),email=registerEmail.value.trim(),pwd=registerPassword.value;
