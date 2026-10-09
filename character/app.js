@@ -278,11 +278,45 @@ function applyExpressionOperation(model,op){
    else{let root=model;for(const seg of op.path.split('.'))root=root?.[seg];if(Array.isArray(root))root.push(clone(op.effect));}
  }
 }
+function legacyRankExpressions(power,owned){
+ const expressions=power?.rank_expressions;
+ if(!expressions||Array.isArray(expressions)||!owned)return [];
+ return (expressions[owned.tier]||[]).filter(x=>Number(x.rank)<=Number(owned.rank));
+}
+function applyLegacyTextOperation(model,op){
+ if(!model.text||!['replace_text','append_text'].includes(op.operation))return false;
+ const section=String(op.section||'hit').toLowerCase();
+ if(!Object.prototype.hasOwnProperty.call(model.text,section))return false;
+ const original=String(model.text[section]||'');
+ if(op.operation==='append_text'){
+   const addition=String(op.value||op.ui_value||'').trim();
+   if(!addition)return false;
+   model.text[section]=original+(original?' ':'')+addition;
+   return true;
+ }
+ // Legacy replacement data encodes: "Section | old wording | new wording".
+ const parts=String(op.replace||op.ui_value||'').split('|').map(x=>x.trim());
+ if(parts.length<3)return false;
+ const before=parts[1],after=parts.slice(2).join('|').trim();
+ if(!before||!original.includes(before))return false;
+ model.text[section]=original.replace(before,after);
+ return true;
+}
 function resolvedPowerModel(id){
  const source=pdef(id);if(!source)return null;
  const model=clone(source);
  for(const ex of activeExpressions(id))for(const op of ex.operations||[]){
    if(['modify','add','replace','remove','unlock'].includes(op.operation) && !op.trigger)applyExpressionOperation(model,op);
+ }
+ const owned=ownedPower(id);
+ for(const ex of legacyRankExpressions(source,owned)){
+   let applied=false;
+   for(const op of ex.operations||[])if(applyLegacyTextOperation(model,op))applied=true;
+   // An effect without an applicable text operation still needs to appear.
+   if(!applied&&ex.effect){
+     model.resolved_rank_effects=model.resolved_rank_effects||[];
+     model.resolved_rank_effects.push({type:'text_rule',text:ex.effect,name:ex.name});
+   }
  }
  return model;
 }
@@ -389,7 +423,9 @@ function compactCombatPowerCard(id){
  const r=p?.profile?.resolution||p?.resolution,attack=r?.attack||r?.attacks?.[0],hit=r?.hit||[],miss=r?.miss||[],effects=p?.profile?.effects||p?.effects||[];
  const freq=powerFrequency(id),displayFreq=freq==='resource'||freq==='encounter'?'Resource':freq.replaceAll('_',' '),expended=freq==='daily'&&state.combat.dailyExpended?.[id];
  const cost=powerResourceCost(id).map(c=>c.label).join(' + ');
+ const legacyLines=p.text?['hit','miss','effect','special'].filter(key=>p.text[key]&&!(key==='hit'&&hit.length)&&!(key==='miss'&&miss.length)&&!(key==='effect'&&effects.length)).map(key=>`<div><b>${key[0].toUpperCase()+key.slice(1)}</b> ${replaceModifierReferences(p.text[key],id)}</div>`):[];
  const effectLines=[
+   ...legacyLines,
    hit.length?`<div><b>Hit</b> ${replaceModifierReferences(hit.map(effectText).join('; '),id)}</div>`:'',
    miss.length?`<div><b>Miss</b> ${replaceModifierReferences(miss.map(effectText).join('; '),id)}</div>`:'',
    effects.length?`<div><b>Effect</b> ${replaceModifierReferences(effects.map(effectText).join('; '),id)}</div>`:'',
@@ -425,6 +461,12 @@ function resolvedPowerCard(id,combat=false){
  if(hit.length)body+=`<div class="power-resolve"><b>Hit:</b> ${hit.map(effectText).join('; ')}</div>`;
  if(miss.length)body+=`<div class="power-resolve"><b>Miss:</b> ${miss.map(effectText).join('; ')}</div>`;
  if(effects.length)body+=`<div class="power-resolve"><b>Effect:</b> ${effects.map(effectText).join('; ')}</div>`;
+ if(p.text){
+   for(const [key,label] of [['attack','Attack'],['hit','Hit'],['miss','Miss'],['effect','Effect'],['special','Special'],['sustain','Sustain']]){
+     if(p.text[key]&&!(key==='hit'&&hit.length)&&!(key==='miss'&&miss.length)&&!(key==='effect'&&effects.length))
+       body+=`<div class="power-resolve"><b>${label}:</b> ${replaceModifierReferences(p.text[key],id)}</div>`;
+   }
+ }
  const resolvedRankEffects=p.resolved_rank_effects||[];
  if(resolvedRankEffects.length)body+=`<div class="power-resolve">${resolvedRankEffects.map(effectText).join('; ')}</div>`;
  const costs=(p.costs||[]).map(c=>`${c.amount} ${c.resource}`).join(' + ')||'—';
