@@ -144,10 +144,12 @@ async function refreshFromBackend(message=null){
        throw new Error('Unsaved character changes remain. Resolve the sync error before reloading.');
    }
  }
+ const revisionAtFetch=backendEditRevision;
  const data=await backendRequest('snapshot');
- // Changes made while the snapshot was in flight must not be overwritten.
- if(CONNECTED_BACKEND.connected&&!CONNECTED_BACKEND.readOnly&&backendSavedRevision<backendEditRevision)
-   throw new Error('New character changes are still saving. Please reload again.');
+ // A local edit during the fetch invalidates its snapshot, even if the edit
+ // finishes saving before the older snapshot response arrives.
+ if(CONNECTED_BACKEND.connected&&!CONNECTED_BACKEND.readOnly&&backendEditRevision!==revisionAtFetch)
+   throw new Error('Character changed while reloading. Please reload again to avoid overwriting newer edits.');
  state=stateFromBackend(data);CONNECTED_BACKEND.connected=true;render();
  const e=document.getElementById('saveState');
  if(e)e.textContent=CONNECTED_BACKEND.readOnly?'GM read-only view':(message||'Connected · saved to backend');
