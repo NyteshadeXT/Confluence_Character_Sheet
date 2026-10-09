@@ -982,7 +982,8 @@ function renderLoadout(){
  const loadoutEl=document.getElementById('loadout');
  loadoutEl.innerHTML=LOADOUT_SLOTS.map(([label,cat])=>{
   const current=state.loadout[label]||null;
-  const opts=ownedIds.filter(id=>powerMeta(pdef(id))?.category===cat)
+  const assignedElsewhere=new Set(Object.entries(state.loadout).filter(([slot,id])=>slot!==label&&id).map(([,id])=>id));
+  const opts=ownedIds.filter(id=>powerMeta(pdef(id))?.category===cat&&!assignedElsewhere.has(id))
     .sort((a,b)=>String(sourceEssenceForPower(a)||'').localeCompare(String(sourceEssenceForPower(b)||''))||String(pdef(a)?.name||a).localeCompare(String(pdef(b)?.name||b)))
     .map(id=>`<option value="${id}" ${current===id?'selected':''}>${pdef(id)?.name||basePowerId(id)} — ${sourceEssenceForPower(id)||'Unknown Essence'}</option>`).join('');
   const locked=!!current&&!state.combat.loadoutUnlocked;
@@ -1307,6 +1308,9 @@ document.addEventListener('change',e=>{
  if(e.target.dataset.loadout!=null){
    const label=e.target.dataset.loadout,current=state.loadout[label]||null,next=e.target.value||null;
    if(current&&!state.combat.loadoutUnlocked){toast('Readied Powers can only be swapped after a Long Rest');render();return}
+   if(next&&Object.entries(state.loadout).some(([slot,id])=>slot!==label&&id===next)){
+     toast('That Power is already readied in another slot');render();return;
+   }
    state.loadout[label]=next;save();render();
    if(next&&!current&&!state.combat.loadoutUnlocked)toast('Power readied in empty slot');
  }
