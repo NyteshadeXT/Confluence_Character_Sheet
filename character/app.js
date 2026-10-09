@@ -736,12 +736,27 @@ function defenses(){
 function powerCanAdvance(id){
  const cp=ownedPower(id), pd=pdef(id), essence=sourceEssenceForPower(id);
  if(!cp||cp.ancestry||!pd||!essence)return {ok:false,reason:'Not rankable'};
- if(state.xp<XP_PER_POWER_RANK)return {ok:false,reason:`Need ${XP_PER_POWER_RANK} XP`};
- const ei=essenceInfo(essence), pi=tierIndex(cp.tier), eiTier=tierIndex(ei.tier);
- if(pi>eiTier&&cp.rank===0)return {ok:false,reason:`Waiting for ${essence} Essence to reach ${cp.tier}`};
- if(pi===eiTier&&cp.rank<9)return {ok:true,next:`${cp.tier} ${cp.rank+1}`};
- if(pi===eiTier&&cp.rank===9&&pi<TIERS.length-1)return {ok:true,next:`${TIERS[pi+1]} 0`};
- return {ok:false,reason:'Maximum progression for current rules'};
+ const siblings=Object.entries(state.powers).filter(([key,p])=>!p.ancestry&&sourceEssenceForPower(key)===essence).map(([,p])=>p);
+ let cost,next;
+ if(cp.tier==='Iron'){
+   if(cp.rank<1)return {ok:false,reason:'Iron 0 is not rankable under current backend rules'};
+   if(cp.rank<9){
+     cost=({2:10,3:15,4:20,5:25,6:30,7:35,8:40,9:50})[cp.rank+1];
+     next=`Iron ${cp.rank+1}`;
+   }else if(cp.rank===9){
+     if(siblings.length!==5||siblings.some(p=>p.tier!=='Bronze'&&!(p.tier==='Iron'&&p.rank===9)))
+       return {ok:false,reason:'Bronze requires all five Essence Powers at Iron 9'};
+     cost=150;next='Bronze 0';
+   }else return {ok:false,reason:'Invalid Iron rank'};
+ }else if(cp.tier==='Bronze'){
+   if(siblings.filter(p=>p.tier==='Bronze').length!==5)
+     return {ok:false,reason:'All five Powers must reach Bronze 0 first'};
+   if(cp.rank>=9)return {ok:false,reason:'Silver breakthrough not implemented yet'};
+   cost=({1:25,2:30,3:40,4:50,5:65,6:80,7:100,8:125,9:150})[cp.rank+1];
+   next=`Bronze ${cp.rank+1}`;
+ }else return {ok:false,reason:`${cp.tier} advancement not implemented yet`};
+ if(state.xp<cost)return {ok:false,reason:`Need ${cost} XP (have ${state.xp})`,cost,next};
+ return {ok:true,cost,next};
 }
 function assignPowerToSlot(essence,slot,powerId,manualName){
  const role=POWER_SLOT_ROLES[slot];
@@ -1015,7 +1030,7 @@ function renderPowerLibrary(){
     <summary class="owned-essence-head"><span><span class="collapse-chevron">▾</span><b>${essence} Essence</b></span><span>${group.length}/5 Powers</span></summary>
     <div class="owned-essence-body">${group.map(id=>{
      const a=powerCanAdvance(id),slot=powerMeta(pdef(id))?.slot;
-     return `<div class="owned-power-row"><div class="owned-slot">SLOT ${slot}</div><div class="owned-power-card">${resolvedPowerCard(id)}<div class="actions power-rank-actions"><button class="primary" data-rank-power="${id}" ${a.ok?'':'disabled'}>Rank Up · ${XP_PER_POWER_RANK} XP</button><span class="small">${a.ok?`Next: ${a.next}`:a.reason}</span></div></div></div>`;
+     return `<div class="owned-power-row"><div class="owned-slot">SLOT ${slot}</div><div class="owned-power-card">${resolvedPowerCard(id)}<div class="actions power-rank-actions"><button class="primary" data-rank-power="${id}" ${a.ok?'':'disabled'}>Rank Up · ${a.cost!=null?a.cost+' XP':'Unavailable'}</button><span class="small">${a.ok?`Next: ${a.next}`:a.reason}</span></div></div></div>`;
    }).join('')}</div></details>`;
  }).join('');
 }
