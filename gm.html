@@ -83,7 +83,7 @@ function show(msg,bad=false){notice.textContent=msg;notice.className='status '+(
 
 async function loadCatalog(){
  const cid=campaignSelect.value;if(!cid)return;
- const {data,error}=await confluenceApi.rpc('gm_get_catalog',{p_campaign_id:cid});if(error)throw error;
+ const {data,error}=await confluenceApi.rpc('gm_get_catalog',{p_campaign_id:cid});if(cid!==campaignSelect.value)return;if(error)throw error;
  const payload=data||{};
  catalog={essences:Array.isArray(payload.essences)?payload.essences:[],powers:Array.isArray(payload.powers)?payload.powers:[],eligibility:Array.isArray(payload.eligibility)?payload.eligibility:[],ancestries:Array.isArray(payload.ancestries)?payload.ancestries:[]};
  essenceSelect.innerHTML=catalog.essences.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('');
@@ -109,7 +109,7 @@ function refreshGmCreationAttributes(){
 
 async function loadRoster(){
  const cid=campaignSelect.value;if(!cid)return;
- const {data,error}=await confluenceApi.rpc('gm_get_campaign_roster',{p_campaign_id:cid});if(error)throw error;
+ const {data,error}=await confluenceApi.rpc('gm_get_campaign_roster',{p_campaign_id:cid});if(cid!==campaignSelect.value)return;if(error)throw error;
  roster=data||{players:[],characters:[]};renderRoster();
 }
 
@@ -217,7 +217,13 @@ newCharacterAncestry.onchange=refreshGmCreationAttributes;
 for(const [k,input] of Object.entries({Str:attrStr,Dex:attrDex,Con:attrCon,Int:attrInt,Wis:attrWis,Cha:attrCha})){
  input.addEventListener('input',()=>{const mods=gmAncestryMods();input.dataset.baseScore=String((Number(input.value)||0)-(Number(mods[k])||0))});
 }
-campaignSelect.onchange=()=>Promise.all([loadCatalog(),loadRoster()]).catch(e=>show(e.message,true));logout.onclick=()=>window.confluenceAuth.signOutAndRedirect();
+campaignSelect.onchange=()=>{
+ characterSelectionRequest++;selectedId=null;current=null;
+ selected.innerHTML='<div class="muted">Select a character.</div>';powers.innerHTML='';
+ lastPowerEssence='';catalog={essences:[],powers:[],eligibility:[],ancestries:[]};
+ roster={players:[],characters:[]};renderRoster();
+ Promise.all([loadCatalog(),loadRoster()]).catch(e=>show(e.message,true));
+};logout.onclick=()=>window.confluenceAuth.signOutAndRedirect();
 
 (async()=>{
  try{
