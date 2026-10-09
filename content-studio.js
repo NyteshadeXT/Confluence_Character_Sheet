@@ -37,8 +37,12 @@ async function requireGm(){
   return session;
 }
 
+let libraryLoadGeneration=0;
 async function loadLibrary(preserve=true){
+  const generation=++libraryLoadGeneration;
   const {data,error}=await confluenceApi.rpc('gm_get_system_catalog');
+  // Earlier catalog responses must not replace a more recent save/reload.
+  if(generation!==libraryLoadGeneration)return;
   if(error)throw error;
   const catalog=data||{};
   ancestryRows=catalog.ancestries||[];essenceRows=catalog.essences||[];powerRows=catalog.powers||[];eligibilityRows=catalog.eligibility||[];
