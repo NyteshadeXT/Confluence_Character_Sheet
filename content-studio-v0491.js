@@ -147,6 +147,6 @@ saveEssenceRecord=async function(){
  if(!id)throw new Error('Essence ID is required.');if(!name)throw new Error('Essence name is required.');
  delete extra.training_interaction;
  const definition={...extra,id,name,tier:essenceTier.value,description:essenceDescription.value.trim(),core_concept:essenceCoreConcept.value.split(',').map(x=>x.trim()).filter(Boolean),primary_traits:essenceTraits.value.split(',').map(x=>x.trim()).filter(Boolean),associated_ability:essenceAbility.value,associated_scores:[],progression_flavor:{durability:essenceDurability.value.trim(),recovery:essenceRecovery.value.trim(),exertion:essenceExertion.value.trim(),focus:essenceFocus.value.trim()},tier_progression:v0491MergeProgression(collectResourceProgression(),essenceMilestoneDraft)};
- const {error}=await confluenceSupabase.rpc('gm_upsert_essence_definition',{p_id:id,p_name:name,p_associated_ability:essenceAbility.value,p_definition:definition,p_is_active:essenceActive.checked});if(error)throw error;
+ const {error}=await confluenceApi.rpc('gm_upsert_essence_definition',{p_id:id,p_name:name,p_associated_ability:essenceAbility.value,p_definition:definition,p_is_active:essenceActive.checked});if(error)throw error;
  editingEssenceId=id;await loadLibrary(false);loadEssence(id);show(`Saved Essence: ${name}`);
 };

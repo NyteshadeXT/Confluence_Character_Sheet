@@ -14,8 +14,9 @@ async function advanceTrainingRank(name){
  if(CONNECTED_BACKEND.readOnly){toast('GM character view is read-only');return}
  const s=rankableTrainingStatus(name);if(!s.ok){toast(s.reason);return}
  try{
+  await flushPendingBackendEdits();
   const {data,error}=await withTimeout(
-   confluenceSupabase.rpc('player_rank_skill',{p_character_id:CONNECTED_BACKEND.characterId,p_skill_name:name}),
+   confluenceApi.rpc('player_rank_skill',{p_character_id:CONNECTED_BACKEND.characterId,p_skill_name:name}),
    10000,'Training rank'
   );
   if(error)throw error;
@@ -70,7 +71,7 @@ renderPowerLibrary=function(){
  if(!ids.length){el.innerHTML='<div class="empty">No Essence Powers are known yet. Powers appear here only after the GM reveals them.</div>';return}
  const essenceOrder=[...state.essences,...new Set(ids.map(sourceEssenceForPower).filter(Boolean).filter(x=>!state.essences.includes(x)))];
  el.innerHTML=essenceOrder.map(essence=>{
-  const group=ids.filter(id=>sourceEssenceForPower(id)===essence).sort((a,b)=>(powerMeta(pdef(a))?.slot||99)-(powerMeta(pdef(b))?.slot||99)||pdef(a).name.localeCompare(pdef(b).name));
+  const group=ids.filter(id=>sourceEssenceForPower(id)===essence).sort((a,b)=>(powerMeta(pdef(a))?.slot||99)-(powerMeta(pdef(b))?.slot||99)||String(pdef(a)?.name||a).localeCompare(String(pdef(b)?.name||b)));
   if(!group.length)return '';
   return `<details class="owned-essence-group">
    <summary class="owned-essence-head"><span><span class="collapse-chevron">▾</span><b>${essence} Essence</b></span><span>${group.length} Powers</span></summary>

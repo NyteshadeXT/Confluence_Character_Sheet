@@ -1,4 +1,4 @@
-# v0.4.11.1 — Canonical Supabase Snapshot
+# v0.4.11.3 — Canonical Supabase Snapshot
 
 Migration-preparation release. Adds a canonical production snapshot inventory based on direct live
 database inspection, preserves the authoritative Bronze breakthrough function, documents RLS/Auth

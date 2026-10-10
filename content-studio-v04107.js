@@ -43,7 +43,7 @@ This cannot be undone.`;
 
  deletePower.disabled=true;
  try{
-  const {data,error}=await confluenceSupabase.rpc('gm_delete_power_definition',{p_power_id:editingPowerId});
+  const {data,error}=await confluenceApi.rpc('gm_delete_power_definition',{p_power_id:editingPowerId});
   if(error)throw error;
   const removedChars=Number(data?.character_assignments_removed||0);
   const removedEligibility=Number(data?.eligibility_links_removed||0);

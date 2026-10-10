@@ -5,20 +5,29 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Confluence Character Login</title>
 <link rel="stylesheet" href="styles.css">
+<style>
+.auth-switch{margin-top:1rem;text-align:center}
+.auth-card .auth-panel.hidden,.auth-card .status.hidden{display:none!important}
+.auth-card .auth-panel{margin-top:1.2rem}
+.auth-card .auth-switch{margin-bottom:.35rem}
+.auth-card .auth-link{display:inline-block}
+.auth-card #notice:empty{display:none}
+.auth-link{background:none;border:0;padding:0;color:#e2b866;text-decoration:underline;cursor:pointer;font:inherit}
+.auth-link:hover,.auth-link:focus-visible{color:#ffe1a0}
+</style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
+<script src="supabase-auth.js"></script>
+<script src="neon-config.js"></script>
+<script src="neon-bootstrap.js"></script>
+<script src="confluence-auth.js"></script>
 </head>
 <body>
 <div class="app auth-shell">
 <section class="panel auth-card">
   <div class="eyebrow">CONFLUENCE CHARACTER · v0.4.5</div>
-  <h1>Sign in</h1>
-  <p class="muted">Use a password for routine access or a magic link when you need passwordless sign-in.</p>
-
-  <div class="auth-tabs">
-    <button class="auth-tab active" data-auth-tab="password">Password</button>
-    <button class="auth-tab" data-auth-tab="magic">Magic Link</button>
-  </div>
+  <h1 id="authHeading">Sign In</h1>
+  <p id="authIntro" class="muted">Welcome back. Enter your email and password to access your characters.</p>
 
   <section id="passwordPanel" class="auth-panel">
     <label>Email
@@ -28,71 +37,131 @@
       <input id="password" type="password" autocomplete="current-password" placeholder="Password">
     </label>
     <button id="passwordSignIn" class="primary wide">Sign In</button>
-    <p class="field-help">Already using magic links? Sign in once with a magic link, then use <b>Account Security</b> in the Character Portal to set a password.</p>
+    <p class="field-help auth-switch"><button type="button" id="showForgot" class="auth-link">Forgot Password?</button></p>
+    <p class="field-help auth-switch">New to Confluence Character? <button type="button" id="showRegister" class="auth-link">Create an Account</button></p>
   </section>
 
-  <section id="magicPanel" class="auth-panel hidden">
+  <section id="forgotPanel" class="auth-panel hidden">
     <label>Email
-      <input id="magicEmail" type="email" autocomplete="email" placeholder="you@example.com">
+      <input id="forgotEmail" type="email" autocomplete="email" placeholder="you@example.com">
     </label>
-    <button id="sendMagic" class="primary wide">Send Magic Link</button>
-    <p class="field-help">Magic links send email and are subject to Supabase email rate limits. They are best used for first-time setup or recovery.</p>
+    <button id="forgotSubmit" class="primary wide">Send Reset Email</button>
+    <p class="field-help">If this email belongs to an account, you will receive a password reset link. Check your spam folder too.</p>
+    <p class="field-help auth-switch"><button type="button" id="forgotBack" class="auth-link">Back to Sign In</button></p>
   </section>
 
-  <div id="notice" class="status">Your browser keeps the Supabase session so you normally stay signed in.</div>
+  <section id="registerPanel" class="auth-panel hidden">
+    <label>Name <input id="registerName" autocomplete="name" placeholder="Player name"></label>
+    <label>Email <input id="registerEmail" type="email" autocomplete="email" placeholder="you@example.com"></label>
+    <label>Password <input id="registerPassword" type="password" autocomplete="new-password" placeholder="Create password"></label>
+    <label>Confirm Password <input id="registerConfirm" type="password" autocomplete="new-password" placeholder="Confirm password"></label>
+    <button id="registerSubmit" class="primary wide">Create Account</button>
+    <p class="field-help">After registration, your GM can add your email to a campaign.</p>
+    <p class="field-help auth-switch">Already have an account? <button type="button" id="showSignIn" class="auth-link">Sign In</button></p>
+  </section>
+
+  <div id="notice" class="status hidden" role="status" aria-live="polite"></div>
 </section>
 </div>
 
 <script>
-const client=supabase.createClient(
-  window.CONFLUENCE_SUPABASE.url,
-  window.CONFLUENCE_SUPABASE.publishableKey,
-  {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}
-);
-const next=new URLSearchParams(location.search).get('next')||'/';
+function withAuthTimeout(promise, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error((label || 'Authentication request') + ' timed out after 15 seconds.')), 15000))
+  ]);
+}
+const params=new URLSearchParams(location.search);
+const next=params.get('next')||'/';
+const nextParams=new URL(next,location.origin).searchParams;
+const activeBackend=params.get('backend')||nextParams.get('backend')||window.CONFLUENCE_BACKEND_PROVIDER;
+
+function withActiveBackend(url){
+  const target=new URL(url,location.origin);
+  if(activeBackend==='neon')target.searchParams.set('backend','neon');
+  return target.pathname+target.search+target.hash;
+}
 
 function show(message,bad=false){
   notice.textContent=message;
   notice.className='status '+(bad?'bad':'good');
 }
 function setTab(tab){
-  document.querySelectorAll('.auth-tab').forEach(b=>b.classList.toggle('active',b.dataset.authTab===tab));
-  passwordPanel.classList.toggle('hidden',tab!=='password');
-  magicPanel.classList.toggle('hidden',tab!=='magic');
+  const registering=tab==='register'&&activeBackend==='neon';
+  const forgot=tab==='forgot';
+  passwordPanel.classList.toggle('hidden',registering||forgot);
+  registerPanel.classList.toggle('hidden',!registering);
+  forgotPanel.classList.toggle('hidden',!forgot);
+  authHeading.textContent=forgot?'Reset Password':registering?'Create Account':'Sign In';
+  authIntro.textContent=forgot?'Enter your account email to receive a password reset link.':registering?'Create your player account to join a campaign.':'Welcome back. Enter your email and password to access your characters.';
+  notice.textContent='';
+  notice.className='status hidden';
 }
-document.querySelectorAll('.auth-tab').forEach(b=>b.onclick=()=>setTab(b.dataset.authTab));
+showRegister.onclick=()=>setTab('register');
+showSignIn.onclick=()=>setTab('password');
+showForgot.onclick=()=>{forgotEmail.value=passwordEmail.value.trim();setTab('forgot')};
+forgotBack.onclick=()=>setTab('password');
+forgotSubmit.onclick=async()=>{
+  const email=forgotEmail.value.trim();
+  if(!email)return show('Enter your account email.',true);
+  forgotSubmit.disabled=true;
+  show('Requesting reset email…');
+  try{
+    const result=await withAuthTimeout(
+      window.confluenceAuth.requestPasswordReset(email,withActiveBackend('/reset-password.html')),
+      'Password reset request'
+    );
+    if(result?.error)return show(result.error.message||String(result.error),true);
+    show('If an account exists for that email, a password reset message will arrive shortly. Check your spam folder.');
+  }catch(error){show(error.message||String(error),true)}
+  finally{forgotSubmit.disabled=false}
+};
+if(activeBackend!=='neon')showRegister.hidden=true;
+setTab('password');
+
+registerSubmit.onclick=async()=>{
+ const name=registerName.value.trim(),email=registerEmail.value.trim(),pwd=registerPassword.value;
+ if(!name||!email||!pwd)return show('Name, email, and password are required.',true);
+ if(pwd!==registerConfirm.value)return show('Passwords do not match.',true);
+ registerSubmit.disabled=true;show('Creating account…');
+ try{
+  const result=await withAuthTimeout(window.confluenceAuth.signUp({name,email,password:pwd}),'Registration');
+  if(result?.error)return show(result.error.message||String(result.error),true);
+  const session=await window.confluenceAuth.getSession();
+  if(session){location.href=withActiveBackend(next);return;}
+  setTab('password');passwordEmail.value=email;
+  show('Account created. Sign in with your email and password. If email verification is required, check your inbox first.');
+ }catch(err){show(err.message||String(err),true)}finally{registerSubmit.disabled=false}
+};
 
 passwordSignIn.onclick=async()=>{
   const email=passwordEmail.value.trim(),pwd=password.value;
   if(!email||!pwd)return show('Enter both email and password.',true);
   passwordSignIn.disabled=true;
   show('Signing in…');
-  const {data,error}=await client.auth.signInWithPassword({email,password:pwd});
-  passwordSignIn.disabled=false;
-  if(error)return show(error.message,true);
-  if(!data.session)return show('Sign-in did not create a session.',true);
-  location.href=next;
+  try{
+    const {data,error}=await withAuthTimeout(
+      window.confluenceAuth.signInWithPassword({email,password:pwd}),
+      'Sign-in'
+    );
+    passwordSignIn.disabled=false;
+    if(error)return show(error.message||String(error),true);
+    if(!data||!data.session)return show('Sign-in succeeded but no active session could be verified.',true);
+    location.href=withActiveBackend(next);
+  }catch(error){
+    passwordSignIn.disabled=false;
+    show(error.message||String(error),true);
+  }
 };
 
-sendMagic.onclick=async()=>{
-  const email=magicEmail.value.trim();
-  if(!email)return show('Enter your email address.',true);
-  sendMagic.disabled=true;
-  show('Requesting magic link…');
-  const {error}=await client.auth.signInWithOtp({
-    email,
-    options:{
-      emailRedirectTo:location.origin+'/auth-callback.html?next='+encodeURIComponent(next),
-      shouldCreateUser:true
-    }
-  });
-  sendMagic.disabled=false;
-  show(error?error.message:'Magic link sent. Check your email.',!!error);
-};
 
 (async()=>{
-  const {data:{session}}=await client.auth.getSession();
-  if(session)location.href=next;
+  try{
+    const session=await window.confluenceAuth.getSession();
+    if(session)location.href=withActiveBackend(next);
+  }catch(error){
+    show(error.message||String(error),true);
+  }
 })();
 </script>
 </body>

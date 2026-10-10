@@ -1,0 +1,1 @@
+RC4: Direct authenticated INSERT/UPDATE/DELETE revoked for characters, character_essences, character_powers and character_xp_ledger on Neon validation. Authorized SECURITY DEFINER RPCs remain the intended write path. Full authenticated regression and clean install not yet completed. Production unchanged.

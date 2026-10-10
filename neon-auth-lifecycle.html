@@ -1,0 +1,47 @@
+<!doctype html>
+<html><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Confluence Neon Auth Lifecycle</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;background:#111;color:#eee}
+.card{background:#1b1b1b;border:1px solid #444;border-radius:10px;padding:18px;margin:14px 0}
+.ok{color:#7ee787}.bad{color:#ff7b72}.muted{color:#aaa}pre{white-space:pre-wrap;word-break:break-word}
+button{padding:9px 14px;margin-right:8px}
+</style>
+<script>window.CONFLUENCE_BACKEND_PROVIDER='supabase';</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js"></script><script src="/supabase-auth.js"></script>
+<script src="/neon-config.js"></script><script src="/neon-bootstrap.js"></script>
+<script src="/confluence-auth.js"></script>
+</head><body>
+<h1>Neon Auth Lifecycle</h1>
+<p class="muted">Validation-only session test. No password, cookie, session token, or JWT is displayed.</p>
+<div class="card"><b>Provider:</b> <span id="provider"></span></div>
+<div class="card"><b>Current session:</b><pre id="session">Checking…</pre></div>
+<div class="card"><b>Last action:</b><pre id="action">None</pre></div>
+<button id="refresh">Recheck Session</button>
+<button id="login">Go to Login</button>
+<button id="signout">Sign Out + Verify</button>
+<script>
+(async()=>{
+ const out=(id,v,ok)=>{const e=document.getElementById(id);e.textContent=typeof v==='string'?v:JSON.stringify(v,null,2);e.className=ok?'ok':'bad'};
+ const summarize=(s)=>s?{authenticated:true,user:s.user?{id:s.user.id,email:s.user.email}:null}:{authenticated:false};
+ async function check(){
+   try{const s=await window.confluenceAuth.getSession();out('session',summarize(s),true);return s;}
+   catch(e){out('session',{error:e.message||String(e)},false);return null;}
+ }
+ document.getElementById('provider').textContent=window.confluenceAuth.provider;
+ await check();
+ document.getElementById('refresh').onclick=check;
+ document.getElementById('login').onclick=()=>location.href='/login.html?backend=neon&next='+encodeURIComponent('/neon-auth-lifecycle.html?backend=neon');
+ document.getElementById('signout').onclick=async()=>{
+   try{
+     await window.confluenceAuth.signOut();
+     const after=await window.confluenceAuth.getSession();
+     out('action',{signOutReturned:true,sessionAfterSignOut:summarize(after)},!after);
+     await check();
+   }catch(e){out('action',{error:e.message||String(e)},false);await check();}
+ };
+})();
+</script>
+</body></html>

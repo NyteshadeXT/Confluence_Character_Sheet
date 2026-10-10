@@ -66,16 +66,16 @@ function withTimeout(promise,ms,label='Request'){
 
 async function backendRequest(action,{body}={}){
  if(action==='snapshot'){
-   const {data,error}=await withTimeout(confluenceSupabase.rpc('get_character_snapshot',{p_character_id:CONNECTED_BACKEND.characterId}),10000,'Character snapshot');
+   const {data,error}=await withTimeout(confluenceApi.rpc('get_character_snapshot',{p_character_id:CONNECTED_BACKEND.characterId}),10000,'Character snapshot');
    if(error)throw error;return data;
  }
  if(CONNECTED_BACKEND.readOnly)throw new Error('GM character view is read-only');
  if(action==='runtime'){
-   const {data,error}=await withTimeout(confluenceSupabase.rpc('player_update_runtime',{p_character_id:CONNECTED_BACKEND.characterId,p_state:body}),10000,'Runtime save');
+   const {data,error}=await withTimeout(confluenceApi.rpc('player_update_runtime',{p_character_id:CONNECTED_BACKEND.characterId,p_state:body}),10000,'Runtime save');
    if(error)throw error;return data;
  }
  if(action==='profile'){
-   const {data,error}=await withTimeout(confluenceSupabase.rpc('player_update_profile_state',{
+   const {data,error}=await withTimeout(confluenceApi.rpc('player_update_profile_state',{
      p_character_id:CONNECTED_BACKEND.characterId,
      p_training:body.training_json,p_equipment:body.equipment_json,
      p_loadout:body.loadout_json,p_essence_choices:body.essence_choices_json
@@ -83,7 +83,7 @@ async function backendRequest(action,{body}={}){
    if(error)throw error;return data;
  }
  if(action==='rank'){
-   const {data,error}=await withTimeout(confluenceSupabase.rpc('player_rank_power',{p_character_power_id:body.character_power_id}),10000,'Power rank');
+   const {data,error}=await withTimeout(confluenceApi.rpc('player_rank_power',{p_character_power_id:body.character_power_id}),10000,'Power rank');
    if(error)throw error;return data;
  }
  throw new Error('Unknown backend action');
@@ -120,37 +120,82 @@ function stateFromBackend(data){
    modifiers:data.runtime?.modifiers||[],dailyExpended:data.runtime?.daily_expended||{},conditionReview:false};
  return normalize(d);
 }
+// Drain pending edits before server-authoritative advancement RPCs, so a stale
+// training/profile save cannot overwrite a rank just granted by the database.
+async function flushPendingBackendEdits(){
+ if(!CONNECTED_BACKEND.connected||CONNECTED_BACKEND.readOnly)return;
+ clearTimeout(CONNECTED_BACKEND.timer);
+ while(CONNECTED_BACKEND.syncing)await new Promise(resolve=>setTimeout(resolve,40));
+ if(backendSavedRevision<backendEditRevision)await syncStateToBackend();
+ if(backendSavedRevision<backendEditRevision)
+   throw new Error('Unsaved character changes remain. Resolve the sync error before continuing.');
+}
 async function refreshFromBackend(message=null){
+ // A reload or rank-up refresh must not overwrite unsaved local changes.
+ // Wait for the serialized Neon write queue to drain before fetching a snapshot.
+ if(CONNECTED_BACKEND.connected&&!CONNECTED_BACKEND.readOnly){
+   clearTimeout(CONNECTED_BACKEND.timer);
+   if(CONNECTED_BACKEND.syncing){
+     while(CONNECTED_BACKEND.syncing)await new Promise(resolve=>setTimeout(resolve,40));
+   }
+   if(backendSavedRevision<backendEditRevision){
+     await syncStateToBackend();
+     if(backendSavedRevision<backendEditRevision)
+       throw new Error('Unsaved character changes remain. Resolve the sync error before reloading.');
+   }
+ }
+ const revisionAtFetch=backendEditRevision;
  const data=await backendRequest('snapshot');
+ // A local edit during the fetch invalidates its snapshot, even if the edit
+ // finishes saving before the older snapshot response arrives.
+ if(CONNECTED_BACKEND.connected&&!CONNECTED_BACKEND.readOnly&&backendEditRevision!==revisionAtFetch)
+   throw new Error('Character changed while reloading. Please reload again to avoid overwriting newer edits.');
  state=stateFromBackend(data);CONNECTED_BACKEND.connected=true;render();
  const e=document.getElementById('saveState');
  if(e)e.textContent=CONNECTED_BACKEND.readOnly?'GM read-only view':(message||'Connected · saved to backend');
 }
+// Serialize backend writes. Every local edit increments a revision; edits made while
+// a request is in flight are flushed after that request rather than silently lost.
+let backendEditRevision=0;
+let backendSavedRevision=0;
 function scheduleBackendSync(){
  if(!CONNECTED_BACKEND.connected||CONNECTED_BACKEND.readOnly)return;
+ backendEditRevision++;
  clearTimeout(CONNECTED_BACKEND.timer);
  const e=document.getElementById('saveState');if(e)e.textContent='Saving…';
- CONNECTED_BACKEND.timer=setTimeout(syncStateToBackend,180);
+ if(!CONNECTED_BACKEND.syncing)CONNECTED_BACKEND.timer=setTimeout(syncStateToBackend,180);
 }
 async function syncStateToBackend(){
- if(!CONNECTED_BACKEND.connected||CONNECTED_BACKEND.syncing||CONNECTED_BACKEND.readOnly)return;
+ if(!CONNECTED_BACKEND.connected||CONNECTED_BACKEND.readOnly||CONNECTED_BACKEND.syncing)return;
  CONNECTED_BACKEND.syncing=true;
  try{
-   await backendRequest('runtime',{body:{
-     current_hp:state.resources.hp,current_mana:state.resources.mana,current_stamina:state.resources.stamina,
-     current_healing_surges:state.resources.surges,temporary_hp:state.resources.tempHp,barrier:state.resources.barrier,
-     combat_active:state.combat.active,round_number:state.combat.round,
-     short_rest_recovery_available:state.combat.shortRestRecoveryAvailable,loadout_unlocked:state.combat.loadoutUnlocked,
-     conditions_json:state.combat.conditions,modifiers_json:state.combat.modifiers,daily_expended_json:state.combat.dailyExpended
-   }});
-   await backendRequest('profile',{body:{
-     training_json:state.training,equipment_json:state.equipment,loadout_json:state.loadout,essence_choices_json:state.essenceChoices
-   }});
+   while(backendSavedRevision<backendEditRevision){
+     const revision=backendEditRevision;
+     const runtime={
+       current_hp:state.resources.hp,current_mana:state.resources.mana,current_stamina:state.resources.stamina,
+       current_healing_surges:state.resources.surges,temporary_hp:state.resources.tempHp,barrier:state.resources.barrier,
+       combat_active:state.combat.active,round_number:state.combat.round,
+       short_rest_recovery_available:state.combat.shortRestRecoveryAvailable,loadout_unlocked:state.combat.loadoutUnlocked,
+       conditions_json:clone(state.combat.conditions),modifiers_json:clone(state.combat.modifiers),
+       daily_expended_json:clone(state.combat.dailyExpended)
+     };
+     const profile={
+       training_json:clone(state.training),equipment_json:clone(state.equipment),
+       loadout_json:clone(state.loadout),essence_choices_json:clone(state.essenceChoices)
+     };
+     await backendRequest('runtime',{body:runtime});
+     await backendRequest('profile',{body:profile});
+     backendSavedRevision=revision;
+   }
    const e=document.getElementById('saveState');if(e)e.textContent='Saved to backend';
  }catch(err){
    const e=document.getElementById('saveState');if(e)e.textContent='Sync error';
    toast(err.message);
- }finally{CONNECTED_BACKEND.syncing=false}
+ }finally{
+   CONNECTED_BACKEND.syncing=false;
+   // A failed write must not be silently retried forever. A subsequent user edit
+   // schedules another attempt, including any previously unsaved revisions.
+ }
 }
 function applyAccessMode(){
  if(!CONNECTED_BACKEND.connected)return;
@@ -278,11 +323,45 @@ function applyExpressionOperation(model,op){
    else{let root=model;for(const seg of op.path.split('.'))root=root?.[seg];if(Array.isArray(root))root.push(clone(op.effect));}
  }
 }
+function legacyRankExpressions(power,owned){
+ const expressions=power?.rank_expressions;
+ if(!expressions||Array.isArray(expressions)||!owned)return [];
+ return (expressions[owned.tier]||[]).filter(x=>Number(x.rank)<=Number(owned.rank));
+}
+function applyLegacyTextOperation(model,op){
+ if(!model.text||!['replace_text','append_text'].includes(op.operation))return false;
+ const section=String(op.section||'hit').toLowerCase();
+ if(!Object.prototype.hasOwnProperty.call(model.text,section))return false;
+ const original=String(model.text[section]||'');
+ if(op.operation==='append_text'){
+   const addition=String(op.value||op.ui_value||'').trim();
+   if(!addition)return false;
+   model.text[section]=original+(original?' ':'')+addition;
+   return true;
+ }
+ // Legacy replacement data encodes: "Section | old wording | new wording".
+ const parts=String(op.replace||op.ui_value||'').split('|').map(x=>x.trim());
+ if(parts.length<3)return false;
+ const before=parts[1],after=parts.slice(2).join('|').trim();
+ if(!before||!original.includes(before))return false;
+ model.text[section]=original.replace(before,after);
+ return true;
+}
 function resolvedPowerModel(id){
  const source=pdef(id);if(!source)return null;
  const model=clone(source);
  for(const ex of activeExpressions(id))for(const op of ex.operations||[]){
    if(['modify','add','replace','remove','unlock'].includes(op.operation) && !op.trigger)applyExpressionOperation(model,op);
+ }
+ const owned=ownedPower(id);
+ for(const ex of legacyRankExpressions(source,owned)){
+   let applied=false;
+   for(const op of ex.operations||[])if(applyLegacyTextOperation(model,op))applied=true;
+   // An effect without an applicable text operation still needs to appear.
+   if(!applied&&ex.effect){
+     model.resolved_rank_effects=model.resolved_rank_effects||[];
+     model.resolved_rank_effects.push({type:'text_rule',text:ex.effect,name:ex.name});
+   }
  }
  return model;
 }
@@ -389,7 +468,9 @@ function compactCombatPowerCard(id){
  const r=p?.profile?.resolution||p?.resolution,attack=r?.attack||r?.attacks?.[0],hit=r?.hit||[],miss=r?.miss||[],effects=p?.profile?.effects||p?.effects||[];
  const freq=powerFrequency(id),displayFreq=freq==='resource'||freq==='encounter'?'Resource':freq.replaceAll('_',' '),expended=freq==='daily'&&state.combat.dailyExpended?.[id];
  const cost=powerResourceCost(id).map(c=>c.label).join(' + ');
+ const legacyLines=p.text?['hit','miss','effect','special'].filter(key=>p.text[key]&&!(key==='hit'&&hit.length)&&!(key==='miss'&&miss.length)&&!(key==='effect'&&effects.length)).map(key=>`<div><b>${key[0].toUpperCase()+key.slice(1)}</b> ${replaceModifierReferences(p.text[key],id)}</div>`):[];
  const effectLines=[
+   ...legacyLines,
    hit.length?`<div><b>Hit</b> ${replaceModifierReferences(hit.map(effectText).join('; '),id)}</div>`:'',
    miss.length?`<div><b>Miss</b> ${replaceModifierReferences(miss.map(effectText).join('; '),id)}</div>`:'',
    effects.length?`<div><b>Effect</b> ${replaceModifierReferences(effects.map(effectText).join('; '),id)}</div>`:'',
@@ -425,6 +506,12 @@ function resolvedPowerCard(id,combat=false){
  if(hit.length)body+=`<div class="power-resolve"><b>Hit:</b> ${hit.map(effectText).join('; ')}</div>`;
  if(miss.length)body+=`<div class="power-resolve"><b>Miss:</b> ${miss.map(effectText).join('; ')}</div>`;
  if(effects.length)body+=`<div class="power-resolve"><b>Effect:</b> ${effects.map(effectText).join('; ')}</div>`;
+ if(p.text){
+   for(const [key,label] of [['attack','Attack'],['hit','Hit'],['miss','Miss'],['effect','Effect'],['special','Special'],['sustain','Sustain']]){
+     if(p.text[key]&&!(key==='hit'&&hit.length)&&!(key==='miss'&&miss.length)&&!(key==='effect'&&effects.length))
+       body+=`<div class="power-resolve"><b>${label}:</b> ${replaceModifierReferences(p.text[key],id)}</div>`;
+   }
+ }
  const resolvedRankEffects=p.resolved_rank_effects||[];
  if(resolvedRankEffects.length)body+=`<div class="power-resolve">${resolvedRankEffects.map(effectText).join('; ')}</div>`;
  const costs=(p.costs||[]).map(c=>`${c.amount} ${c.resource}`).join(' + ')||'—';
@@ -736,12 +823,27 @@ function defenses(){
 function powerCanAdvance(id){
  const cp=ownedPower(id), pd=pdef(id), essence=sourceEssenceForPower(id);
  if(!cp||cp.ancestry||!pd||!essence)return {ok:false,reason:'Not rankable'};
- if(state.xp<XP_PER_POWER_RANK)return {ok:false,reason:`Need ${XP_PER_POWER_RANK} XP`};
- const ei=essenceInfo(essence), pi=tierIndex(cp.tier), eiTier=tierIndex(ei.tier);
- if(pi>eiTier&&cp.rank===0)return {ok:false,reason:`Waiting for ${essence} Essence to reach ${cp.tier}`};
- if(pi===eiTier&&cp.rank<9)return {ok:true,next:`${cp.tier} ${cp.rank+1}`};
- if(pi===eiTier&&cp.rank===9&&pi<TIERS.length-1)return {ok:true,next:`${TIERS[pi+1]} 0`};
- return {ok:false,reason:'Maximum progression for current rules'};
+ const siblings=Object.entries(state.powers).filter(([key,p])=>!p.ancestry&&sourceEssenceForPower(key)===essence).map(([,p])=>p);
+ let cost,next;
+ if(cp.tier==='Iron'){
+   if(cp.rank<1)return {ok:false,reason:'Iron 0 is not rankable under current backend rules'};
+   if(cp.rank<9){
+     cost=({2:10,3:15,4:20,5:25,6:30,7:35,8:40,9:50})[cp.rank+1];
+     next=`Iron ${cp.rank+1}`;
+   }else if(cp.rank===9){
+     if(siblings.length!==5||siblings.some(p=>p.tier!=='Bronze'&&!(p.tier==='Iron'&&p.rank===9)))
+       return {ok:false,reason:'Bronze requires all five Essence Powers at Iron 9'};
+     cost=150;next='Bronze 0';
+   }else return {ok:false,reason:'Invalid Iron rank'};
+ }else if(cp.tier==='Bronze'){
+   if(siblings.filter(p=>p.tier==='Bronze').length!==5)
+     return {ok:false,reason:'All five Powers must reach Bronze 0 first'};
+   if(cp.rank>=9)return {ok:false,reason:'Silver breakthrough not implemented yet'};
+   cost=({1:25,2:30,3:40,4:50,5:65,6:80,7:100,8:125,9:150})[cp.rank+1];
+   next=`Bronze ${cp.rank+1}`;
+ }else return {ok:false,reason:`${cp.tier} advancement not implemented yet`};
+ if(state.xp<cost)return {ok:false,reason:`Need ${cost} XP (have ${state.xp})`,cost,next};
+ return {ok:true,cost,next};
 }
 function assignPowerToSlot(essence,slot,powerId,manualName){
  const role=POWER_SLOT_ROLES[slot];
@@ -796,6 +898,7 @@ async function advancePower(id){
  const cp=state.powers[id],serverId=cp?.serverOwnedId;
  if(!serverId){toast('This Power is not connected to a backend ownership record');return}
  try{
+   await flushPendingBackendEdits();
    await backendRequest('rank',{body:{character_power_id:serverId}});
    await refreshFromBackend();toast(`${pdef(id)?.name||'Power'} advanced`);
  }catch(err){toast(err.message)}
@@ -982,12 +1085,14 @@ function renderLoadout(){
  const loadoutEl=document.getElementById('loadout');
  loadoutEl.innerHTML=LOADOUT_SLOTS.map(([label,cat])=>{
   const current=state.loadout[label]||null;
-  const opts=ownedIds.filter(id=>powerMeta(pdef(id))?.category===cat)
-    .sort((a,b)=>sourceEssenceForPower(a).localeCompare(sourceEssenceForPower(b))||pdef(a).name.localeCompare(pdef(b).name))
-    .map(id=>`<option value="${id}" ${current===id?'selected':''}>${pdef(id).name} — ${sourceEssenceForPower(id)}</option>`).join('');
+  const assignedElsewhere=new Set(Object.entries(state.loadout).filter(([slot,id])=>slot!==label&&id).map(([,id])=>id));
+  const duplicateCurrent=!!current&&assignedElsewhere.has(current);
+  const opts=ownedIds.filter(id=>powerMeta(pdef(id))?.category===cat&&(id===current||!assignedElsewhere.has(id)))
+    .sort((a,b)=>String(sourceEssenceForPower(a)||'').localeCompare(String(sourceEssenceForPower(b)||''))||String(pdef(a)?.name||a).localeCompare(String(pdef(b)?.name||b)))
+    .map(id=>`<option value="${id}" ${current===id?'selected':''}>${pdef(id)?.name||basePowerId(id)} — ${sourceEssenceForPower(id)||'Unknown Essence'}</option>`).join('');
   const locked=!!current&&!state.combat.loadoutUnlocked;
   const emptyLabel=current?'— Empty —':'— Choose Power —';
-  return `<div class="slot-row ${locked?'slot-locked':'slot-open'}"><div class="slot-label">${label}</div><select data-loadout="${label}" ${locked?'disabled':''}><option value="">${emptyLabel}</option>${opts}</select>${locked?'<span class="small">Locked until Long Rest</span>':(!current&&!state.combat.loadoutUnlocked?'<span class="small good">Empty slot may be filled</span>':'')}</div>`;
+  return `<div class="slot-row ${locked?'slot-locked':'slot-open'}"><div class="slot-label">${label}</div><select data-loadout="${label}" ${locked?'disabled':''}><option value="">${emptyLabel}</option>${opts}</select>${duplicateCurrent?'<span class="small" style="color:#e5b35a">Duplicate saved assignment — replace after a Long Rest</span>':(!current&&!state.combat.loadoutUnlocked?'<span class="small good">Empty slot may be filled</span>':'')}</div>`;
  }).join('');
  loadoutEl.insertAdjacentHTML('afterbegin',`<div class="loadout-status ${state.combat.loadoutUnlocked?'good':'muted'}">${
    state.combat.loadoutUnlocked
@@ -1007,13 +1112,13 @@ function renderPowerLibrary(){
  if(!ids.length){el.innerHTML='<div class="empty">No Essence Powers are known yet. Powers appear here only after the GM reveals them.</div>';return}
  const essenceOrder=[...state.essences,...new Set(ids.map(sourceEssenceForPower).filter(Boolean).filter(x=>!state.essences.includes(x)))];
  el.innerHTML=essenceOrder.map(essence=>{
-   const group=ids.filter(id=>sourceEssenceForPower(id)===essence).sort((a,b)=>(powerMeta(pdef(a))?.slot||99)-(powerMeta(pdef(b))?.slot||99)||pdef(a).name.localeCompare(pdef(b).name));
+   const group=ids.filter(id=>sourceEssenceForPower(id)===essence).sort((a,b)=>(powerMeta(pdef(a))?.slot||99)-(powerMeta(pdef(b))?.slot||99)||String(pdef(a)?.name||a).localeCompare(String(pdef(b)?.name||b)));
    if(!group.length)return '';
    return `<details class="owned-essence-group" open>
     <summary class="owned-essence-head"><span><span class="collapse-chevron">▾</span><b>${essence} Essence</b></span><span>${group.length}/5 Powers</span></summary>
     <div class="owned-essence-body">${group.map(id=>{
      const a=powerCanAdvance(id),slot=powerMeta(pdef(id))?.slot;
-     return `<div class="owned-power-row"><div class="owned-slot">SLOT ${slot}</div><div class="owned-power-card">${resolvedPowerCard(id)}<div class="actions power-rank-actions"><button class="primary" data-rank-power="${id}" ${a.ok?'':'disabled'}>Rank Up · ${XP_PER_POWER_RANK} XP</button><span class="small">${a.ok?`Next: ${a.next}`:a.reason}</span></div></div></div>`;
+     return `<div class="owned-power-row"><div class="owned-slot">SLOT ${slot}</div><div class="owned-power-card">${resolvedPowerCard(id)}<div class="actions power-rank-actions"><button class="primary" data-rank-power="${id}" ${a.ok?'':'disabled'}>Rank Up · ${a.cost!=null?a.cost+' XP':'Unavailable'}</button><span class="small">${a.ok?`Next: ${a.next}`:a.reason}</span></div></div></div>`;
    }).join('')}</div></details>`;
  }).join('');
 }
@@ -1307,6 +1412,9 @@ document.addEventListener('change',e=>{
  if(e.target.dataset.loadout!=null){
    const label=e.target.dataset.loadout,current=state.loadout[label]||null,next=e.target.value||null;
    if(current&&!state.combat.loadoutUnlocked){toast('Readied Powers can only be swapped after a Long Rest');render();return}
+   if(next&&Object.entries(state.loadout).some(([slot,id])=>slot!==label&&id===next)){
+     toast('That Power is already readied in another slot');render();return;
+   }
    state.loadout[label]=next;save();render();
    if(next&&!current&&!state.combat.loadoutUnlocked)toast('Power readied in empty slot');
  }
@@ -1349,7 +1457,7 @@ async function bootstrapConnectedCharacter(){
    return;
  }
  try{
-   await withTimeout(requireSession(),5000,'Authentication check');
+   await withTimeout(window.confluenceAuth.requireSession(),5000,'Authentication check');
    const data=await backendRequest('snapshot');
    if(!data?.id)throw new Error('Character not found. It may have been deleted.');
 
@@ -1362,10 +1470,15 @@ async function bootstrapConnectedCharacter(){
    CONNECTED_BACKEND.connected=true;
    hide(errorPanel);show(main);
    render();
+   // The original condition loader runs at script startup, which can precede
+   // Neon cookie-session bootstrap. Reload after authentication so conditions
+   // and their modifiers are available to the actual character session.
+   if(typeof loadMasterConditions==='function')await loadMasterConditions();
    if(CONNECTED_BACKEND.readOnly)show(banner);else hide(banner);
    if(saveState)saveState.textContent=CONNECTED_BACKEND.readOnly?'GM read-only view':'Connected · saved to backend';
  }catch(err){
    const raw=String(err?.message||err||'Unknown error');
+   console.error('[Confluence Character Snapshot/Render]',err);
    fail(/Character not found/i.test(raw)
      ? 'This Character no longer exists. Return to the Character Portal and choose one of your current Characters.'
      : `Character failed to load: ${raw}`);

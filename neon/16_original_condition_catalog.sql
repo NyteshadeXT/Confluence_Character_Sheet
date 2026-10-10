@@ -1,0 +1,17 @@
+-- Copy of the original Supabase condition catalog for Neon validation.
+-- Source: public.condition_definitions (7 records). Re-runnable and non-destructive.
+-- Do not apply to production without explicit approval and catalog parity review.
+INSERT INTO public.condition_definitions (id, name, definition, is_active)
+VALUES
+  ('blinded', 'Blinded', '{"id":"blinded","name":"Blinded","summary":"Cannot see; visual perception is impaired and normal terrain is difficult terrain.","reminder":"If vision is your only precise sense, Perception checks take -4; visual effects do not affect you.","lifecycle":{"type":"manual"},"modifiers":[{"type":"condition","value":-4,"target":"skill:Perception"}],"valueType":"none"}'::jsonb, true),
+  ('fascinated', 'Fascinated', '{"id":"fascinated","name":"Fascinated","summary":"Distracted by a subject of fascination.","reminder":"-2 Perception and skill checks; concentrate actions are restricted.","lifecycle":{"type":"event"},"modifiers":[{"type":"condition","value":-2,"target":"skill:*"},{"type":"condition","value":-2,"target":"skill:Perception"}],"valueType":"none"}'::jsonb, true),
+  ('fatigued', 'Fatigued', '{"id":"fatigued","name":"Fatigued","summary":"Penalty equal to value to AC and saving throws.","reminder":"Recovered after a full night rest.","lifecycle":{"type":"rest"},"modifiers":[{"type":"condition","target":"defense:AC","valueFromCondition":-1},{"type":"condition","target":"saving:*","valueFromCondition":-1}],"valueType":"required"}'::jsonb, true),
+  ('frightened', 'Frightened', '{"id":"frightened","name":"Frightened","summary":"Penalty equal to value to all checks and DCs.","reminder":"Decreases by 1 when the Round button advances unless an effect says otherwise.","lifecycle":{"type":"round_decay","event":"round","amount":1},"modifiers":[{"type":"condition","target":"check:*","valueFromCondition":-1},{"type":"condition","target":"dc:*","valueFromCondition":-1}],"valueType":"required"}'::jsonb, true),
+  ('off_guard', 'Off-Guard', '{"id":"off_guard","name":"Off-Guard","summary":"Your attention is compromised.","reminder":"-2 circumstance penalty to AC.","lifecycle":{"type":"manual"},"modifiers":[{"type":"circumstance","value":-2,"target":"defense:AC"}],"valueType":"none"}'::jsonb, true),
+  ('prone', 'Prone', '{"id":"prone","name":"Prone","derived":[{"conditionId":"off_guard"}],"summary":"Lying on the ground.","reminder":"Includes Off-Guard and -2 to attack rolls; movement is restricted until you Stand.","lifecycle":{"type":"manual"},"modifiers":[{"type":"condition","value":-2,"target":"attack:*"}],"valueType":"none"}'::jsonb, true),
+  ('unconscious', 'Unconscious', '{"id":"unconscious","name":"Unconscious","derived":[{"conditionId":"blinded"},{"conditionId":"off_guard"},{"conditionId":"prone"}],"summary":"You cannot act.","reminder":"-4 AC, Perception, and Reflex; includes Blinded, Off-Guard, and Prone.","lifecycle":{"type":"event"},"modifiers":[{"type":"condition","value":-4,"target":"defense:AC"},{"type":"condition","value":-4,"target":"skill:Perception"},{"type":"condition","value":-4,"target":"saving:Reflex"}],"valueType":"none"}'::jsonb, true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Validation: expect seven source conditions (additional target conditions are allowed).
+SELECT id, name, is_active FROM public.condition_definitions
+WHERE id IN ('blinded', 'fascinated', 'fatigued', 'frightened', 'off_guard', 'prone', 'unconscious') ORDER BY id;

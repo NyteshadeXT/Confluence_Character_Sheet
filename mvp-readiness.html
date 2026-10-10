@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Confluence — MVP Readiness</title>
+<style>body{font:16px system-ui,sans-serif;max-width:850px;margin:2rem auto;padding:0 1rem;background:#10131a;color:#edf2f7}h1{margin-bottom:.2rem}p{color:#aeb8c9}.panel{border:1px solid #394252;border-radius:10px;padding:1rem;margin:1rem 0;background:#19202b}button{background:#c9a45e;color:#171717;padding:.7rem 1rem;border:0;border-radius:6px;font-weight:bold;cursor:pointer}button:disabled{opacity:.55}pre{white-space:pre-wrap;overflow-wrap:anywhere}.pass{color:#8de4b1}.fail{color:#ff9999}.skip{color:#e5c681}a{color:#a7c8ff}small{color:#aeb8c9}</style>
+<script src="/neon-config.js"></script><script src="/neon-bootstrap.js"></script><script src="/confluence-auth.js"></script><script src="/confluence-api.js"></script></head>
+<body><h1>Confluence MVP Readiness</h1><p>Non-destructive, authenticated checks against the selected Neon validation backend. No campaign or character data is modified.</p>
+<div class="panel"><strong>Backend:</strong> <span id="backend">Checking…</span><p id="notice"></p><button id="run">Run read-only checks</button> <a href="/login.html?backend=neon">Neon sign-in</a></div>
+<div class="panel"><h2>Checks</h2><div id="results" aria-live="polite">Not run.</div></div>
+<div class="panel"><h2>Report</h2><p>Copy this sanitized report when asking for help. No access tokens or passwords are included.</p><button id="copy" disabled>Copy report</button><pre id="report">Not run.</pre></div>
+<script src="/mvp-readiness.js"></script></body></html>
