@@ -1,5 +1,5 @@
-// Non-secret browser configuration. Keep provider="supabase" until Neon preview validation passes.
-window.CONFLUENCE_BACKEND_PROVIDER = window.CONFLUENCE_BACKEND_PROVIDER || 'supabase';
+// Production cutover candidate: Neon is the default; explicit ?backend=supabase remains available for rollback testing.
+window.CONFLUENCE_BACKEND_PROVIDER = window.CONFLUENCE_BACKEND_PROVIDER || 'neon';
 window.CONFLUENCE_NEON = {
   environment: 'production',
   authBaseUrl: 'https://ep-fragrant-bird-b4mxh0oc.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth',
@@ -9,7 +9,7 @@ window.CONFLUENCE_NEON = {
 
 /* v0.4.11.7 validation-preview switch.
  * This package may opt into Neon with ?backend=neon.
- * Normal navigation without the parameter remains on Supabase.
+ * Normal navigation without the parameter defaults to Neon.
  */
 (function () {
   const requested = new URLSearchParams(location.search).get('backend');
