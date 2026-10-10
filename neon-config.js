@@ -21,8 +21,7 @@ window.CONFLUENCE_NEON = {
     sessionStorage.setItem('confluenceBackendProvider', 'supabase');
   } else {
     window.CONFLUENCE_BACKEND_PROVIDER =
-      sessionStorage.getItem('confluenceBackendProvider') ||
       window.CONFLUENCE_BACKEND_PROVIDER ||
-      'supabase';
+      'neon';
   }
 })();
